@@ -47,11 +47,9 @@ final class TemplateDesignerController
 
         wp_localize_script('vdm-designer', 'VDMDesignerConfig', [
             'ready' => true,
-            'pageId' => 0,
+            'pageId' => 'global-' . $slot,
             'templateSlot' => $slot,
             'restBase' => esc_url_raw(rest_url(RestController::NAMESPACE)),
-            'saveUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/templates/' . $slot)),
-            'renderUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/render')),
             'nonce' => wp_create_nonce('wp_rest'),
             'document' => TemplateRepository::get($slot),
             'version' => TemplateRepository::version($slot),
