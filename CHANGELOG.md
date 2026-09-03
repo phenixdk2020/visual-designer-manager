@@ -1,5 +1,27 @@
 # Changelog
 
+## 2.0.0-alpha.8
+
+- Added the V2-native `vdm_gallery` album content type with title, editor, featured cover and explicit image ordering.
+- Added WordPress Media Library multi-selection, remove-all, individual removal and drag-based image ordering in the album editor.
+- Added a Gallery Designer node for album count, columns, spacing, padding, radius, colors, cover visibility and summary visibility.
+- Added canonical album-card rendering with cover fallback to the first album image, image count, summary and detail link.
+- Added canonical album detail rendering with responsive image grid, captions and full-image links.
+- Added optional VDM site-shell routing for album details using the same Header/Footer/Site Design stack.
+- Added responsive Gallery CSS for desktop, laptop/tablet and mobile.
+- Expanded QA with the alpha.8 Gallery contract.
+
+## 2.0.0-alpha.7
+
+- Added the V2-native `vdm_vehicle` content type for vehicles and material.
+- Added fixed technical fields for type, manufacturer, model, year, origin, status, engine, power, weight, dimensions and crew.
+- Added flexible per-vehicle technical field rows so specialized material is not limited to one fixed schema.
+- Added a Vehicles Designer node with count, columns, spacing, card padding, radius, colors and display toggles.
+- Added canonical Vehicle card rendering and detail rendering.
+- Vehicle detail uses image-left / technical-data-right geometry on desktop and stacks responsively on smaller screens.
+- Added optional VDM site-shell routing for Vehicle details.
+- Expanded QA with the alpha.7 Vehicles contract.
+
 ## 2.0.0-alpha.6
 
 - Added the V2-native `vdm_event` content type with title, editor and featured image support.
