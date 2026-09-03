@@ -62,3 +62,6 @@ jobs:
 
       - name: Alpha 8 Gallery contract
         run: python3 tests/alpha8_gallery_contract.py
+
+      - name: Beta 1 Forms contract
+        run: python3 tests/beta1_forms_contract.py
