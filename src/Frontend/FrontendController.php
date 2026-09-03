@@ -28,6 +28,25 @@ final class FrontendController
             [],
             VDM_VERSION
         );
+        wp_register_script(
+            'vdm-frontend-runtime',
+            VDM_URL . 'assets/frontend.js',
+            [],
+            VDM_VERSION,
+            true
+        );
+    }
+
+    public static function enqueueAssets(): void
+    {
+        if (!wp_style_is('vdm-frontend', 'registered')) {
+            wp_register_style('vdm-frontend', VDM_URL . 'assets/frontend.css', [], VDM_VERSION);
+        }
+        if (!wp_script_is('vdm-frontend-runtime', 'registered')) {
+            wp_register_script('vdm-frontend-runtime', VDM_URL . 'assets/frontend.js', [], VDM_VERSION, true);
+        }
+        wp_enqueue_style('vdm-frontend');
+        wp_enqueue_script('vdm-frontend-runtime');
     }
 
     public static function templateInclude(string $template): string
@@ -51,7 +70,7 @@ final class FrontendController
             return $template;
         }
 
-        wp_enqueue_style('vdm-frontend');
+        self::enqueueAssets();
         return $shell;
     }
 
@@ -75,7 +94,7 @@ final class FrontendController
             return $content;
         }
 
-        wp_enqueue_style('vdm-frontend');
+        self::enqueueAssets();
         return Renderer::render($document);
     }
 }
