@@ -171,3 +171,38 @@
     .vdm-form{padding:min(var(--vdm-form-padding,20px),16px)}
     .vdm-form-submit{width:100%}
 }
+
+.vdm-node--navigation{overflow:visible;z-index:5}
+.vdm-navigation{position:relative;width:100%;min-width:0;background:var(--vdm-navigation-background,transparent);color:var(--vdm-navigation-text,#222);font-size:var(--vdm-navigation-font-size,16px);font-weight:var(--vdm-navigation-font-weight,600)}
+.vdm-navigation-panel{width:100%;min-width:0}
+.vdm-navigation-menu,.vdm-navigation-menu .sub-menu{list-style:none;margin:0;padding:0}
+.vdm-navigation-menu{display:flex;align-items:center;justify-content:var(--vdm-navigation-justify,flex-start);gap:var(--vdm-navigation-gap,24px);min-width:0}
+.vdm-navigation--vertical .vdm-navigation-menu{flex-direction:column;align-items:stretch}
+.vdm-navigation-menu li{position:relative;margin:0;padding:0}
+.vdm-navigation-menu a{display:flex;align-items:center;min-height:40px;color:var(--vdm-navigation-text,#222)!important;text-decoration:none;line-height:1.25;white-space:nowrap}
+.vdm-navigation-menu a:hover,.vdm-navigation-menu a:focus,.vdm-navigation-menu .current-menu-item>a,.vdm-navigation-menu .current-menu-ancestor>a{color:var(--vdm-navigation-hover,#2271b1)!important}
+.vdm-navigation-menu .sub-menu{display:none;position:absolute;z-index:100;left:0;top:100%;min-width:210px;padding:8px 0;background:var(--vdm-navigation-submenu-background,#fff);box-shadow:0 6px 20px rgba(0,0,0,.14)}
+.vdm-navigation-menu .sub-menu .sub-menu{left:100%;top:0}
+.vdm-navigation--vertical .vdm-navigation-menu>.menu-item>.sub-menu{left:100%;top:0}
+.vdm-navigation-menu li:hover>.sub-menu,.vdm-navigation-menu li:focus-within>.sub-menu{display:block}
+.vdm-navigation-menu .sub-menu a{min-height:36px;padding:6px 14px;color:var(--vdm-navigation-submenu-text,#222)!important}
+.vdm-navigation-menu .sub-menu a:hover,.vdm-navigation-menu .sub-menu a:focus,.vdm-navigation-menu .sub-menu .current-menu-item>a{color:var(--vdm-navigation-hover,#2271b1)!important}
+.vdm-navigation-toggle{display:none;align-items:center;gap:9px;min-height:42px;padding:8px 12px;border:1px solid currentColor;border-radius:4px;background:transparent;color:var(--vdm-navigation-text,#222);font:inherit;font-weight:inherit;cursor:pointer}
+.vdm-navigation-toggle-icon{display:grid;gap:3px;width:18px}
+.vdm-navigation-toggle-icon span{display:block;height:2px;background:currentColor}
+.vdm-navigation-placeholder{display:flex;align-items:center;min-height:48px;padding:10px 12px;border:1px dashed #a7aaad;background:#f6f7f7;color:#50575e;font-size:14px;font-weight:400;box-sizing:border-box}
+@media (max-width:782px){
+    .vdm-navigation-toggle{display:inline-flex}
+    .vdm-navigation-panel{display:none;margin-top:8px}
+    .vdm-navigation.is-open .vdm-navigation-panel{display:block}
+    .vdm-navigation-menu,.vdm-navigation--vertical .vdm-navigation-menu{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0}
+    .vdm-navigation-menu a{min-height:42px;padding:4px 8px;white-space:normal}
+    .vdm-navigation-menu .sub-menu,.vdm-navigation-menu .sub-menu .sub-menu,.vdm-navigation--vertical .vdm-navigation-menu>.menu-item>.sub-menu{display:block;position:static;min-width:0;padding:0 0 0 16px;background:transparent;box-shadow:none}
+    .vdm-navigation-menu .sub-menu a{padding:4px 8px;color:var(--vdm-navigation-text,#222)!important}
+}
+#vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-toggle{display:inline-flex}
+#vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-panel{display:none;margin-top:8px}
+#vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation.is-open .vdm-navigation-panel{display:block}
+#vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-menu{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0}
+#vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-menu a{min-height:42px;padding:4px 8px;white-space:normal}
+#vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-menu .sub-menu{display:block;position:static;min-width:0;padding:0 0 0 16px;background:transparent;box-shadow:none}

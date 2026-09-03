@@ -8,7 +8,9 @@ use VisualDesignerManager\Admin\AdminController;
 use VisualDesignerManager\Admin\DesignerController;
 use VisualDesignerManager\Admin\EventController;
 use VisualDesignerManager\Admin\GalleryController;
+use VisualDesignerManager\Admin\NavigationController;
 use VisualDesignerManager\Admin\SiteDesignController;
+use VisualDesignerManager\Admin\SiteSettingsController;
 use VisualDesignerManager\Admin\TemplateDesignerController;
 use VisualDesignerManager\Admin\VehicleController;
 use VisualDesignerManager\Frontend\EventFrontendController;
@@ -37,6 +39,8 @@ final class Plugin
         DesignerController::register();
         TemplateDesignerController::register();
         SiteDesignController::register();
+        SiteSettingsController::register();
+        NavigationController::register();
         EventController::register();
         VehicleController::register();
         GalleryController::register();

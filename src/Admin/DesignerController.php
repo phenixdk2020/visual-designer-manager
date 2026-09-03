@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace VisualDesignerManager\Admin;
 
 use VisualDesignerManager\Http\RestController;
+use VisualDesignerManager\Navigation\NavigationRepository;
 use VisualDesignerManager\Storage\LayoutRepository;
 
 final class DesignerController
@@ -42,7 +43,8 @@ final class DesignerController
         wp_enqueue_media();
         wp_enqueue_style('vdm-frontend', VDM_URL . 'assets/frontend.css', [], VDM_VERSION);
         wp_enqueue_style('vdm-designer', VDM_URL . 'assets/designer.css', ['vdm-frontend'], VDM_VERSION);
-        wp_enqueue_script('vdm-designer', VDM_URL . 'assets/designer.js', ['media-editor'], VDM_VERSION, true);
+        wp_enqueue_script('vdm-frontend-runtime', VDM_URL . 'assets/frontend.js', [], VDM_VERSION, true);
+        wp_enqueue_script('vdm-designer', VDM_URL . 'assets/designer.js', ['media-editor', 'vdm-frontend-runtime'], VDM_VERSION, true);
 
         $postId = self::requestedPageId();
         wp_localize_script('vdm-designer', 'VDMDesignerConfig', [
@@ -54,7 +56,8 @@ final class DesignerController
             'nonce' => wp_create_nonce('wp_rest'),
             'document' => $postId > 0 ? LayoutRepository::get($postId) : null,
             'version' => $postId > 0 ? LayoutRepository::version($postId) : 0,
-            'themeColors' => self::themeColors(),
+            'themeColors' => DesignerController::themeColors(),
+            'navigationMenus' => NavigationRepository::choices(),
         ]);
     }
 
@@ -111,6 +114,7 @@ final class DesignerController
             'events' => 'Events',
             'vehicles' => 'Køretøjer',
             'galleries' => 'Billedgalleri',
+            'navigation' => 'Navigation',
             'contact-form' => 'Kontaktformular',
             'membership-form' => 'Bliv medlem',
         ] as $type => $label) {

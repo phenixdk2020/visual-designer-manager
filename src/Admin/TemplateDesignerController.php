@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace VisualDesignerManager\Admin;
 
 use VisualDesignerManager\Http\RestController;
+use VisualDesignerManager\Navigation\NavigationRepository;
 use VisualDesignerManager\Storage\TemplateRepository;
 
 final class TemplateDesignerController
@@ -44,7 +45,8 @@ final class TemplateDesignerController
         wp_enqueue_media();
         wp_enqueue_style('vdm-frontend', VDM_URL . 'assets/frontend.css', [], VDM_VERSION);
         wp_enqueue_style('vdm-designer', VDM_URL . 'assets/designer.css', ['vdm-frontend'], VDM_VERSION);
-        wp_enqueue_script('vdm-designer', VDM_URL . 'assets/designer.js', ['media-editor'], VDM_VERSION, true);
+        wp_enqueue_script('vdm-frontend-runtime', VDM_URL . 'assets/frontend.js', [], VDM_VERSION, true);
+        wp_enqueue_script('vdm-designer', VDM_URL . 'assets/designer.js', ['media-editor', 'vdm-frontend-runtime'], VDM_VERSION, true);
 
         wp_localize_script('vdm-designer', 'VDMDesignerConfig', [
             'ready' => true,
@@ -57,6 +59,7 @@ final class TemplateDesignerController
             'document' => TemplateRepository::get($slot),
             'version' => TemplateRepository::version($slot),
             'themeColors' => DesignerController::themeColors(),
+            'navigationMenus' => NavigationRepository::choices(),
         ]);
     }
 
@@ -107,6 +110,7 @@ final class TemplateDesignerController
             'events' => 'Events',
             'vehicles' => 'Køretøjer',
             'galleries' => 'Billedgalleri',
+            'navigation' => 'Navigation',
         ] as $type => $label) {
             echo '<button type="button" class="button vdm-palette-item" data-node-type="' . esc_attr($type) . '">' . esc_html($label) . '</button>';
         }

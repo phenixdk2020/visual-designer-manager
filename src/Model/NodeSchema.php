@@ -18,6 +18,7 @@ final class NodeSchema
     public const GALLERIES = 'galleries';
     public const CONTACT_FORM = 'contact-form';
     public const MEMBERSHIP_FORM = 'membership-form';
+    public const NAVIGATION = 'navigation';
 
     /** @return list<string> */
     public static function types(): array
@@ -35,6 +36,7 @@ final class NodeSchema
             self::GALLERIES,
             self::CONTACT_FORM,
             self::MEMBERSHIP_FORM,
+            self::NAVIGATION,
         ];
     }
 
@@ -135,6 +137,7 @@ final class NodeSchema
             self::GALLERIES => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60],
             self::CONTACT_FORM => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 100],
             self::MEMBERSHIP_FORM => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 128],
+            self::NAVIGATION => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 8],
             default => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4],
         };
     }
@@ -255,6 +258,20 @@ final class NodeSchema
                 'messageRows' => 5,
                 'requireConsent' => true,
                 'consentText' => 'Jeg accepterer, at oplysningerne bruges til at behandle min indmeldelse.',
+            ],
+            self::NAVIGATION => [
+                'menuId' => 0,
+                'orientation' => 'horizontal',
+                'align' => 'left',
+                'gap' => 24,
+                'fontSize' => 16,
+                'fontWeight' => 600,
+                'textColor' => '#222222',
+                'hoverColor' => '#2271b1',
+                'background' => 'transparent',
+                'submenuBackground' => '#ffffff',
+                'submenuTextColor' => '#222222',
+                'toggleLabel' => 'Menu',
             ],
             self::DIVIDER => ['color' => '#d0d0d0', 'thickness' => 1],
             default => [],
@@ -401,6 +418,39 @@ final class NodeSchema
                 'messageRows' => max(3, min(12, (int) ($props['messageRows'] ?? $defaults['messageRows']))),
                 'requireConsent' => !array_key_exists('requireConsent', $props) || !empty($props['requireConsent']),
                 'consentText' => sanitize_text_field((string) ($props['consentText'] ?? $defaults['consentText'])),
+            ];
+        }
+
+        if ($type === self::NAVIGATION) {
+            $orientation = (string) ($props['orientation'] ?? $defaults['orientation']);
+            if (!in_array($orientation, ['horizontal', 'vertical'], true)) {
+                $orientation = 'horizontal';
+            }
+            $align = (string) ($props['align'] ?? $defaults['align']);
+            if (!in_array($align, ['left', 'center', 'right'], true)) {
+                $align = 'left';
+            }
+            $fontWeight = (int) ($props['fontWeight'] ?? $defaults['fontWeight']);
+            if (!in_array($fontWeight, [400, 500, 600, 700], true)) {
+                $fontWeight = 600;
+            }
+            $toggleLabel = sanitize_text_field((string) ($props['toggleLabel'] ?? $defaults['toggleLabel']));
+            if ($toggleLabel === '') {
+                $toggleLabel = 'Menu';
+            }
+            return [
+                'menuId' => absint($props['menuId'] ?? 0),
+                'orientation' => $orientation,
+                'align' => $align,
+                'gap' => max(0, min(80, (int) ($props['gap'] ?? $defaults['gap']))),
+                'fontSize' => max(10, min(40, (int) ($props['fontSize'] ?? $defaults['fontSize']))),
+                'fontWeight' => $fontWeight,
+                'textColor' => self::color((string) ($props['textColor'] ?? $defaults['textColor']), (string) $defaults['textColor']),
+                'hoverColor' => self::color((string) ($props['hoverColor'] ?? $defaults['hoverColor']), (string) $defaults['hoverColor']),
+                'background' => self::color((string) ($props['background'] ?? $defaults['background']), (string) $defaults['background']),
+                'submenuBackground' => self::color((string) ($props['submenuBackground'] ?? $defaults['submenuBackground']), (string) $defaults['submenuBackground']),
+                'submenuTextColor' => self::color((string) ($props['submenuTextColor'] ?? $defaults['submenuTextColor']), (string) $defaults['submenuTextColor']),
+                'toggleLabel' => $toggleLabel,
             ];
         }
 

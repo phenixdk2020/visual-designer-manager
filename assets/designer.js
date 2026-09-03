@@ -42,7 +42,7 @@
     }
 
     function defaultHeight(type) {
-        return {section: 36, container: 24, text: 6, image: 18, button: 6, spacer: 4, divider: 2, events: 60, vehicles: 60, galleries: 60, 'contact-form': 100, 'membership-form': 128}[type] || 4;
+        return {section: 36, container: 24, text: 6, image: 18, button: 6, spacer: 4, divider: 2, events: 60, vehicles: 60, galleries: 60, 'contact-form': 100, 'membership-form': 128, navigation: 8}[type] || 4;
     }
 
     function defaults(type) {
@@ -58,7 +58,8 @@
             vehicles: {x: 0, y: 0, w: 12, h: 60},
             galleries: {x: 0, y: 0, w: 12, h: 60},
             'contact-form': {x: 0, y: 0, w: 12, h: 100},
-            'membership-form': {x: 0, y: 0, w: 12, h: 128}
+            'membership-form': {x: 0, y: 0, w: 12, h: 128},
+            navigation: {x: 0, y: 0, w: 12, h: 8}
         }[type];
         const props = {
             section: {background: '#ffffff', padding: 0, autoHeight: true, minHeightRows: 36},
@@ -72,7 +73,8 @@
             vehicles: {count: 12, columns: 3, gap: 20, padding: 18, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showImage: true, showSummary: true, showFacts: true},
             galleries: {count: 12, columns: 3, gap: 20, padding: 16, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showCover: true, showSummary: true},
             'contact-form': {columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send besked', successMessage: 'Tak. Din henvendelse er sendt.', showPhone: true, showSubject: true, showAddress: false, showMessage: true, messageRows: 6, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at besvare min henvendelse.'},
-            'membership-form': {columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send indmeldelse', successMessage: 'Tak. Din indmeldelse er sendt.', showPhone: true, showSubject: false, showAddress: true, showMessage: true, messageRows: 5, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at behandle min indmeldelse.'}
+            'membership-form': {columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send indmeldelse', successMessage: 'Tak. Din indmeldelse er sendt.', showPhone: true, showSubject: false, showAddress: true, showMessage: true, messageRows: 5, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at behandle min indmeldelse.'},
+            navigation: {menuId: 0, orientation: 'horizontal', align: 'left', gap: 24, fontSize: 16, fontWeight: 600, textColor: '#222222', hoverColor: '#2271b1', background: 'transparent', submenuBackground: '#ffffff', submenuTextColor: '#222222', toggleLabel: 'Menu'}
         }[type] || {};
         return {geometry, props};
     }
@@ -1142,6 +1144,40 @@
             inspector.append(field('Tekstlinjer i besked', numberInput(node.props.messageRows || (isMembershipForm ? 5 : 6), 3, 12, value => commitMutation(() => { node.props.messageRows = value; }))));
             inspector.append(field('Kræv samtykke', checkboxInput(node.props.requireConsent !== false, value => commitMutation(() => { node.props.requireConsent = value; }))));
             inspector.append(field('Samtykketekst', textInput(node.props.consentText || '', value => commitMutation(() => { node.props.consentText = value; }))));
+        }
+
+        if (node.type === 'navigation') {
+            const menuValues = [['0', 'Vælg menu']];
+            if (Array.isArray(config.navigationMenus)) {
+                config.navigationMenus.forEach(menu => {
+                    const count = Number.parseInt(menu.count || 0, 10) || 0;
+                    menuValues.push([String(menu.id || 0), String(menu.name || 'Menu') + ' (' + count + ')']);
+                });
+            }
+            inspector.append(field('WordPress-menu', selectInput(menuValues, String(node.props.menuId || 0), value => commitMutation(() => { node.props.menuId = Number.parseInt(value, 10) || 0; }))));
+            inspector.append(field('Retning', selectInput([
+                ['horizontal', 'Vandret'],
+                ['vertical', 'Lodret']
+            ], node.props.orientation || 'horizontal', value => commitMutation(() => { node.props.orientation = value; }))));
+            inspector.append(field('Justering', selectInput([
+                ['left', 'Venstre'],
+                ['center', 'Centreret'],
+                ['right', 'Højre']
+            ], node.props.align || 'left', value => commitMutation(() => { node.props.align = value; }))));
+            inspector.append(field('Afstand', numberInput(node.props.gap ?? 24, 0, 80, value => commitMutation(() => { node.props.gap = value; }))));
+            inspector.append(field('Skriftstørrelse', numberInput(node.props.fontSize || 16, 10, 40, value => commitMutation(() => { node.props.fontSize = value; }))));
+            inspector.append(field('Skriftvægt', selectInput([
+                ['400', 'Normal'],
+                ['500', 'Medium'],
+                ['600', 'Semibold'],
+                ['700', 'Fed']
+            ], String(node.props.fontWeight || 600), value => commitMutation(() => { node.props.fontWeight = Number.parseInt(value, 10); }))));
+            inspector.append(field('Tekstfarve', colorControl(node.props.textColor || '#222222', value => commitMutation(() => { node.props.textColor = value; }))));
+            inspector.append(field('Hoverfarve', colorControl(node.props.hoverColor || '#2271b1', value => commitMutation(() => { node.props.hoverColor = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? '#ffffff' : (node.props.background || '#ffffff'), value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Undermenu-baggrund', colorControl(node.props.submenuBackground || '#ffffff', value => commitMutation(() => { node.props.submenuBackground = value; }))));
+            inspector.append(field('Undermenu-tekst', colorControl(node.props.submenuTextColor || '#222222', value => commitMutation(() => { node.props.submenuTextColor = value; }))));
+            inspector.append(field('Mobilknap tekst', textInput(node.props.toggleLabel || 'Menu', value => commitMutation(() => { node.props.toggleLabel = value; }))));
         }
 
         if (node.type === 'divider') {

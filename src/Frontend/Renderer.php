@@ -75,6 +75,8 @@ final class Renderer
             echo GalleryRenderer::renderList(is_array($node['props'] ?? null) ? $node['props'] : []); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         } elseif (in_array($type, [NodeSchema::CONTACT_FORM, NodeSchema::MEMBERSHIP_FORM], true)) {
             echo FormRenderer::render($type, is_array($node['props'] ?? null) ? $node['props'] : [], $id); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        } elseif ($type === NodeSchema::NAVIGATION) {
+            echo NavigationRenderer::render(is_array($node['props'] ?? null) ? $node['props'] : [], $id); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         } elseif ($type === NodeSchema::DIVIDER) {
             echo '<hr class="vdm-divider">';
         }
@@ -158,6 +160,22 @@ final class Renderer
             $parts[] = '--vdm-form-border:' . (string) ($props['borderColor'] ?? '#d0d0d0');
             $parts[] = '--vdm-form-accent:' . (string) ($props['accentColor'] ?? '#2f4858');
             $parts[] = '--vdm-form-button-text:' . (string) ($props['buttonTextColor'] ?? '#ffffff');
+        } elseif ($type === NodeSchema::NAVIGATION) {
+            $align = (string) ($props['align'] ?? 'left');
+            $justify = match ($align) {
+                'center' => 'center',
+                'right' => 'flex-end',
+                default => 'flex-start',
+            };
+            $parts[] = '--vdm-navigation-gap:' . (int) ($props['gap'] ?? 24) . 'px';
+            $parts[] = '--vdm-navigation-font-size:' . (int) ($props['fontSize'] ?? 16) . 'px';
+            $parts[] = '--vdm-navigation-font-weight:' . (int) ($props['fontWeight'] ?? 600);
+            $parts[] = '--vdm-navigation-text:' . (string) ($props['textColor'] ?? '#222222');
+            $parts[] = '--vdm-navigation-hover:' . (string) ($props['hoverColor'] ?? '#2271b1');
+            $parts[] = '--vdm-navigation-background:' . (string) ($props['background'] ?? 'transparent');
+            $parts[] = '--vdm-navigation-submenu-background:' . (string) ($props['submenuBackground'] ?? '#ffffff');
+            $parts[] = '--vdm-navigation-submenu-text:' . (string) ($props['submenuTextColor'] ?? '#222222');
+            $parts[] = '--vdm-navigation-justify:' . $justify;
         } elseif ($type === NodeSchema::DIVIDER) {
             $parts[] = '--vdm-divider-color:' . (string) ($props['color'] ?? '#d0d0d0');
             $parts[] = '--vdm-divider-thickness:' . (int) ($props['thickness'] ?? 1) . 'px';

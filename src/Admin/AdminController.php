@@ -39,6 +39,8 @@ final class AdminController
         $designerUrl = admin_url('admin.php?page=' . DesignerController::MENU_SLUG);
         $templateUrl = admin_url('admin.php?page=' . TemplateDesignerController::MENU_SLUG);
         $siteDesignUrl = admin_url('admin.php?page=' . SiteDesignController::MENU_SLUG);
+        $siteSettingsUrl = admin_url('admin.php?page=' . SiteSettingsController::MENU_SLUG);
+        $navigationUrl = admin_url('admin.php?page=' . NavigationController::MENU_SLUG);
 
         echo '<div class="wrap">';
         echo '<h1>Visual Designer Manager</h1>';
@@ -47,7 +49,11 @@ final class AdminController
         echo '<p><a class="button button-primary" href="' . esc_url($designerUrl) . '">Åbn Designer</a> ';
         if (current_user_can('edit_theme_options')) {
             echo '<a class="button" href="' . esc_url($templateUrl) . '">Header / Footer</a> ';
-            echo '<a class="button" href="' . esc_url($siteDesignUrl) . '">Site Design</a>';
+            echo '<a class="button" href="' . esc_url($siteDesignUrl) . '">Site Design</a> ';
+            if (current_user_can('manage_options')) {
+                echo '<a class="button" href="' . esc_url($siteSettingsUrl) . '">Siteindstillinger</a> ';
+            }
+            echo '<a class="button" href="' . esc_url($navigationUrl) . '">Navigation</a>';
         }
         echo '</p></div>';
     }
