@@ -145,9 +145,15 @@ final class NodeSchema
             self::BUTTON => [
                 'label' => 'Knap',
                 'url' => '#',
+                'target' => '_self',
+                'align' => 'left',
                 'background' => '#2f4858',
                 'color' => '#ffffff',
                 'radius' => 4,
+                'paddingX' => 18,
+                'paddingY' => 10,
+                'fontSize' => 16,
+                'fontWeight' => 600,
             ],
             self::DIVIDER => ['color' => '#d0d0d0', 'thickness' => 1],
             default => [],
@@ -191,12 +197,33 @@ final class NodeSchema
         }
 
         if ($type === self::BUTTON) {
+            $target = (string) ($props['target'] ?? $defaults['target']);
+            if (!in_array($target, ['_self', '_blank'], true)) {
+                $target = '_self';
+            }
+
+            $align = (string) ($props['align'] ?? $defaults['align']);
+            if (!in_array($align, ['left', 'center', 'right', 'stretch'], true)) {
+                $align = 'left';
+            }
+
+            $fontWeight = (int) ($props['fontWeight'] ?? $defaults['fontWeight']);
+            if (!in_array($fontWeight, [400, 500, 600, 700], true)) {
+                $fontWeight = 600;
+            }
+
             return [
                 'label' => sanitize_text_field((string) ($props['label'] ?? $defaults['label'])),
                 'url' => esc_url_raw((string) ($props['url'] ?? $defaults['url'])),
+                'target' => $target,
+                'align' => $align,
                 'background' => self::color((string) ($props['background'] ?? $defaults['background']), (string) $defaults['background']),
                 'color' => self::color((string) ($props['color'] ?? $defaults['color']), (string) $defaults['color']),
                 'radius' => max(0, min(80, (int) ($props['radius'] ?? $defaults['radius']))),
+                'paddingX' => max(0, min(120, (int) ($props['paddingX'] ?? $defaults['paddingX']))),
+                'paddingY' => max(0, min(80, (int) ($props['paddingY'] ?? $defaults['paddingY']))),
+                'fontSize' => max(8, min(80, (int) ($props['fontSize'] ?? $defaults['fontSize']))),
+                'fontWeight' => $fontWeight,
             ];
         }
 
