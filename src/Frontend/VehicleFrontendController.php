@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+namespace VisualDesignerManager\Frontend;
+
+use VisualDesignerManager\Storage\SiteDesignRepository;
+use VisualDesignerManager\Vehicles\VehicleRepository;
+
+final class VehicleFrontendController
+{
+    private function __construct()
+    {
+    }
+
+    public static function register(): void
+    {
+        add_filter('template_include', [self::class, 'templateInclude'], 101);
+        add_filter('the_content', [self::class, 'renderContent'], 22);
+    }
+
+    public static function templateInclude(string $template): string
+    {
+        if (is_admin() || !is_singular(VehicleRepository::POST_TYPE)) {
+            return $template;
+        }
+
+        if (empty(SiteDesignRepository::get()['shellEnabled'])) {
+            return $template;
+        }
+
+        $shell = VDM_DIR . 'templates/single-vehicle.php';
+        if (!is_file($shell)) {
+            return $template;
+        }
+
+        wp_enqueue_style('vdm-frontend');
+        return $shell;
+    }
+
+    public static function renderContent(string $content): string
+    {
+        if (is_admin() || !is_singular(VehicleRepository::POST_TYPE) || !in_the_loop() || !is_main_query()) {
+            return $content;
+        }
+
+        if (!empty(SiteDesignRepository::get()['shellEnabled'])) {
+            return $content;
+        }
+
+        $postId = get_the_ID();
+        if ($postId <= 0) {
+            return $content;
+        }
+
+        wp_enqueue_style('vdm-frontend');
+        return VehicleRenderer::renderDetail($postId);
+    }
+}
