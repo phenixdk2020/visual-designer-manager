@@ -40,6 +40,7 @@ final class TemplateDesignerController
         }
 
         $slot = self::requestedSlot();
+        $layoutId = 'global-' . $slot;
         wp_enqueue_media();
         wp_enqueue_style('vdm-frontend', VDM_URL . 'assets/frontend.css', [], VDM_VERSION);
         wp_enqueue_style('vdm-designer', VDM_URL . 'assets/designer.css', ['vdm-frontend'], VDM_VERSION);
@@ -47,9 +48,11 @@ final class TemplateDesignerController
 
         wp_localize_script('vdm-designer', 'VDMDesignerConfig', [
             'ready' => true,
-            'pageId' => 'global-' . $slot,
+            'pageId' => $layoutId,
             'templateSlot' => $slot,
             'restBase' => esc_url_raw(rest_url(RestController::NAMESPACE)),
+            'saveUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/layouts/' . $layoutId)),
+            'renderUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/render')),
             'nonce' => wp_create_nonce('wp_rest'),
             'document' => TemplateRepository::get($slot),
             'version' => TemplateRepository::version($slot),
