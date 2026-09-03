@@ -37,12 +37,18 @@ final class AdminController
         }
 
         $designerUrl = admin_url('admin.php?page=' . DesignerController::MENU_SLUG);
+        $templateUrl = admin_url('admin.php?page=' . TemplateDesignerController::MENU_SLUG);
+        $siteDesignUrl = admin_url('admin.php?page=' . SiteDesignController::MENU_SLUG);
 
         echo '<div class="wrap">';
         echo '<h1>Visual Designer Manager</h1>';
         echo '<p><strong>Version ' . esc_html(VDM_VERSION) . '</strong></p>';
-        echo '<p>V2-kernen bruger sin egen layoutmodel, renderer, lagring og API-kontrakt.</p>';
-        echo '<p><a class="button button-primary" href="' . esc_url($designerUrl) . '">Åbn Designer</a></p>';
-        echo '</div>';
+        echo '<p>V2-kernen bruger sin egen layoutmodel, renderer, lagring, globale skabeloner og API-kontrakt.</p>';
+        echo '<p><a class="button button-primary" href="' . esc_url($designerUrl) . '">Åbn Designer</a> ';
+        if (current_user_can('edit_theme_options')) {
+            echo '<a class="button" href="' . esc_url($templateUrl) . '">Header / Footer</a> ';
+            echo '<a class="button" href="' . esc_url($siteDesignUrl) . '">Site Design</a>';
+        }
+        echo '</p></div>';
     }
 }
