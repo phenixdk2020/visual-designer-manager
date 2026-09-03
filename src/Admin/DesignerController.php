@@ -81,12 +81,16 @@ final class DesignerController
         }
 
         echo '<div class="vdm-designer-toolbar">';
+        echo '<div class="vdm-toolbar-left">';
         echo '<div class="vdm-breakpoints" role="group" aria-label="Breakpoint">';
         foreach (['desktop' => 'Desktop', 'laptop' => 'Laptop', 'tablet' => 'Tablet', 'mobile' => 'Mobil'] as $key => $label) {
             echo '<button type="button" class="button vdm-breakpoint' . ($key === 'desktop' ? ' is-active' : '') . '" data-breakpoint="' . esc_attr($key) . '">' . esc_html($label) . '</button>';
         }
         echo '</div>';
-        echo '<div><span id="vdm-save-status" class="vdm-save-status">Ikke gemt</span> <button type="button" class="button button-primary" id="vdm-save">Gem</button></div>';
+        echo '<button type="button" class="button" id="vdm-undo" disabled title="Fortryd (Ctrl+Z)">Fortryd</button>';
+        echo '<button type="button" class="button" id="vdm-redo" disabled title="Annuller fortryd (Ctrl+Y)">Gentag</button>';
+        echo '</div>';
+        echo '<div class="vdm-toolbar-right"><span id="vdm-save-status" class="vdm-save-status">Ikke gemt</span> <button type="button" class="button button-primary" id="vdm-save" title="Gem (Ctrl+S)">Gem</button></div>';
         echo '</div>';
 
         echo '<div class="vdm-workspace">';
@@ -102,6 +106,7 @@ final class DesignerController
         ] as $type => $label) {
             echo '<button type="button" class="button vdm-palette-item" data-node-type="' . esc_attr($type) . '">' . esc_html($label) . '</button>';
         }
+        echo '<p><small>Træk elementer på canvas. Brug håndtagene på et valgt element til at ændre størrelse. Piletaster flytter ét grid-trin.</small></p>';
         echo '</aside>';
 
         echo '<main class="vdm-stage"><div class="vdm-stage-scroll"><div id="vdm-canvas" data-vdm-breakpoint="desktop" aria-label="Designer canvas"></div></div></main>';
