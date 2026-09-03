@@ -1,23 +1,25 @@
 <?php
 /**
  * Canonical VDM V2 page shell.
- *
- * @var array<string,mixed> $vdmPageDocument
- * @var array<string,mixed> $vdmHeaderDocument
- * @var array<string,mixed> $vdmFooterDocument
- * @var array<string,mixed> $vdmSiteDesign
  */
 
 declare(strict_types=1);
 
 use VisualDesignerManager\Frontend\Renderer;
+use VisualDesignerManager\Storage\LayoutRepository;
 use VisualDesignerManager\Storage\SiteDesignRepository;
+use VisualDesignerManager\Storage\TemplateRepository;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-$style = SiteDesignRepository::cssVariables($vdmSiteDesign ?? null);
+$postId = get_queried_object_id();
+$vdmPageDocument = $postId > 0 ? LayoutRepository::get($postId) : [];
+$vdmHeaderDocument = TemplateRepository::get(TemplateRepository::HEADER);
+$vdmFooterDocument = TemplateRepository::get(TemplateRepository::FOOTER);
+$vdmSiteDesign = SiteDesignRepository::get();
+$style = SiteDesignRepository::cssVariables($vdmSiteDesign);
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
