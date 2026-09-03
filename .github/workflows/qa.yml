@@ -31,6 +31,7 @@ jobs:
           set -euo pipefail
           node --check assets/designer.js
           node --check assets/vehicle-admin.js
+          node --check assets/gallery-admin.js
 
       - name: V2 identity gate
         run: python3 tests/identity_gate.py
@@ -55,3 +56,6 @@ jobs:
 
       - name: Alpha 7 Vehicles contract
         run: python3 tests/alpha7_vehicles_contract.py
+
+      - name: Alpha 8 Gallery contract
+        run: python3 tests/alpha8_gallery_contract.py
