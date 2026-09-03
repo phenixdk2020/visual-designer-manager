@@ -42,7 +42,7 @@
     }
 
     function defaultHeight(type) {
-        return {section: 36, container: 24, text: 6, image: 18, button: 6, spacer: 4, divider: 2, events: 60, vehicles: 60, galleries: 60}[type] || 4;
+        return {section: 36, container: 24, text: 6, image: 18, button: 6, spacer: 4, divider: 2, events: 60, vehicles: 60, galleries: 60, 'contact-form': 100, 'membership-form': 128}[type] || 4;
     }
 
     function defaults(type) {
@@ -56,7 +56,9 @@
             divider: {x: 0, y: 0, w: 12, h: 2},
             events: {x: 0, y: 0, w: 12, h: 60},
             vehicles: {x: 0, y: 0, w: 12, h: 60},
-            galleries: {x: 0, y: 0, w: 12, h: 60}
+            galleries: {x: 0, y: 0, w: 12, h: 60},
+            'contact-form': {x: 0, y: 0, w: 12, h: 100},
+            'membership-form': {x: 0, y: 0, w: 12, h: 128}
         }[type];
         const props = {
             section: {background: '#ffffff', padding: 0, autoHeight: true, minHeightRows: 36},
@@ -68,7 +70,9 @@
             divider: {color: '#d0d0d0', thickness: 1},
             events: {count: 6, showPast: false, columns: 3, gap: 20, padding: 18, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showImage: true, showSummary: true, showFacts: true},
             vehicles: {count: 12, columns: 3, gap: 20, padding: 18, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showImage: true, showSummary: true, showFacts: true},
-            galleries: {count: 12, columns: 3, gap: 20, padding: 16, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showCover: true, showSummary: true}
+            galleries: {count: 12, columns: 3, gap: 20, padding: 16, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showCover: true, showSummary: true},
+            'contact-form': {columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send besked', successMessage: 'Tak. Din henvendelse er sendt.', showPhone: true, showSubject: true, showAddress: false, showMessage: true, messageRows: 6, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at besvare min henvendelse.'},
+            'membership-form': {columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send indmeldelse', successMessage: 'Tak. Din indmeldelse er sendt.', showPhone: true, showSubject: false, showAddress: true, showMessage: true, messageRows: 5, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at behandle min indmeldelse.'}
         }[type] || {};
         return {geometry, props};
     }
@@ -1110,6 +1114,36 @@
             inspector.append(field('Vis kort beskrivelse', checkboxInput(node.props.showSummary !== false, value => commitMutation(() => { node.props.showSummary = value; }))));
         }
 
+        if (['contact-form', 'membership-form'].includes(node.type)) {
+            const isMembershipForm = node.type === 'membership-form';
+            inspector.append(field('Kolonner', selectInput([
+                ['1', '1 kolonne'],
+                ['2', '2 kolonner']
+            ], String(node.props.columns || 2), value => commitMutation(() => { node.props.columns = Number.parseInt(value, 10); }))));
+            inspector.append(field('Afstand', numberInput(node.props.gap ?? 16, 0, 60, value => commitMutation(() => { node.props.gap = value; }))));
+            inspector.append(field('Formular-padding', numberInput(node.props.padding ?? 20, 0, 80, value => commitMutation(() => { node.props.padding = value; }))));
+            inspector.append(field('Hjørneradius', numberInput(node.props.radius ?? 6, 0, 30, value => commitMutation(() => { node.props.radius = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background || '#ffffff', value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Feltbaggrund', colorControl(node.props.fieldBackground || '#ffffff', value => commitMutation(() => { node.props.fieldBackground = value; }))));
+            inspector.append(field('Tekstfarve', colorControl(node.props.textColor || '#222222', value => commitMutation(() => { node.props.textColor = value; }))));
+            inspector.append(field('Labelfarve', colorControl(node.props.labelColor || '#222222', value => commitMutation(() => { node.props.labelColor = value; }))));
+            inspector.append(field('Kantfarve', colorControl(node.props.borderColor || '#d0d0d0', value => commitMutation(() => { node.props.borderColor = value; }))));
+            inspector.append(field('Knapfarve', colorControl(node.props.accentColor || '#2f4858', value => commitMutation(() => { node.props.accentColor = value; }))));
+            inspector.append(field('Knaptekstfarve', colorControl(node.props.buttonTextColor || '#ffffff', value => commitMutation(() => { node.props.buttonTextColor = value; }))));
+            inspector.append(field('Knaptekst', textInput(node.props.submitLabel || (isMembershipForm ? 'Send indmeldelse' : 'Send besked'), value => commitMutation(() => { node.props.submitLabel = value; }))));
+            inspector.append(field('Tak-besked', textInput(node.props.successMessage || '', value => commitMutation(() => { node.props.successMessage = value; }))));
+            inspector.append(field('Vis telefon', checkboxInput(node.props.showPhone !== false, value => commitMutation(() => { node.props.showPhone = value; }))));
+            if (isMembershipForm) {
+                inspector.append(field('Vis adresse', checkboxInput(node.props.showAddress !== false, value => commitMutation(() => { node.props.showAddress = value; }))));
+            } else {
+                inspector.append(field('Vis emne', checkboxInput(node.props.showSubject !== false, value => commitMutation(() => { node.props.showSubject = value; }))));
+            }
+            inspector.append(field('Vis besked', checkboxInput(node.props.showMessage !== false, value => commitMutation(() => { node.props.showMessage = value; }))));
+            inspector.append(field('Tekstlinjer i besked', numberInput(node.props.messageRows || (isMembershipForm ? 5 : 6), 3, 12, value => commitMutation(() => { node.props.messageRows = value; }))));
+            inspector.append(field('Kræv samtykke', checkboxInput(node.props.requireConsent !== false, value => commitMutation(() => { node.props.requireConsent = value; }))));
+            inspector.append(field('Samtykketekst', textInput(node.props.consentText || '', value => commitMutation(() => { node.props.consentText = value; }))));
+        }
+
         if (node.type === 'divider') {
             inspector.append(field('Farve', colorControl(node.props.color, value => commitMutation(() => { node.props.color = value; }))));
             inspector.append(field('Tykkelse', numberInput(node.props.thickness || 1, 1, 20, value => commitMutation(() => { node.props.thickness = value; }))));
@@ -1194,6 +1228,7 @@
     undoButton?.addEventListener('click', undo);
     redoButton?.addEventListener('click', redo);
     saveButton.addEventListener('click', save);
+    canvas.addEventListener('submit', event => event.preventDefault());
 
     window.addEventListener('pointermove', handlePointerMove, {passive: false});
     window.addEventListener('pointerup', finishInteraction);

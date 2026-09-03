@@ -15,6 +15,7 @@ use VisualDesignerManager\Frontend\EventFrontendController;
 use VisualDesignerManager\Frontend\FrontendController;
 use VisualDesignerManager\Frontend\GalleryFrontendController;
 use VisualDesignerManager\Frontend\VehicleFrontendController;
+use VisualDesignerManager\Forms\FormSubmissionController;
 use VisualDesignerManager\Http\RestController;
 
 final class Plugin
@@ -43,6 +44,7 @@ final class Plugin
         EventFrontendController::register();
         VehicleFrontendController::register();
         GalleryFrontendController::register();
+        FormSubmissionController::register();
         RestController::register();
     }
 

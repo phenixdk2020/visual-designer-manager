@@ -73,6 +73,8 @@ final class Renderer
             echo VehicleRenderer::renderList(is_array($node['props'] ?? null) ? $node['props'] : []); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         } elseif ($type === NodeSchema::GALLERIES) {
             echo GalleryRenderer::renderList(is_array($node['props'] ?? null) ? $node['props'] : []); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        } elseif (in_array($type, [NodeSchema::CONTACT_FORM, NodeSchema::MEMBERSHIP_FORM], true)) {
+            echo FormRenderer::render($type, is_array($node['props'] ?? null) ? $node['props'] : [], $id); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         } elseif ($type === NodeSchema::DIVIDER) {
             echo '<hr class="vdm-divider">';
         }
@@ -144,6 +146,18 @@ final class Renderer
             $parts[] = '--vdm-button-font-weight:' . (int) ($props['fontWeight'] ?? 600);
             $parts[] = '--vdm-button-justify:' . $justify;
             $parts[] = '--vdm-button-width:' . ($align === 'stretch' ? '100%' : 'auto');
+        } elseif (in_array($type, [NodeSchema::CONTACT_FORM, NodeSchema::MEMBERSHIP_FORM], true)) {
+            $parts[] = '--vdm-form-columns:' . (int) ($props['columns'] ?? 2);
+            $parts[] = '--vdm-form-gap:' . (int) ($props['gap'] ?? 16) . 'px';
+            $parts[] = '--vdm-form-padding:' . (int) ($props['padding'] ?? 20) . 'px';
+            $parts[] = '--vdm-form-radius:' . (int) ($props['radius'] ?? 6) . 'px';
+            $parts[] = '--vdm-form-background:' . (string) ($props['background'] ?? '#ffffff');
+            $parts[] = '--vdm-form-field-background:' . (string) ($props['fieldBackground'] ?? '#ffffff');
+            $parts[] = '--vdm-form-text:' . (string) ($props['textColor'] ?? '#222222');
+            $parts[] = '--vdm-form-label:' . (string) ($props['labelColor'] ?? '#222222');
+            $parts[] = '--vdm-form-border:' . (string) ($props['borderColor'] ?? '#d0d0d0');
+            $parts[] = '--vdm-form-accent:' . (string) ($props['accentColor'] ?? '#2f4858');
+            $parts[] = '--vdm-form-button-text:' . (string) ($props['buttonTextColor'] ?? '#ffffff');
         } elseif ($type === NodeSchema::DIVIDER) {
             $parts[] = '--vdm-divider-color:' . (string) ($props['color'] ?? '#d0d0d0');
             $parts[] = '--vdm-divider-thickness:' . (int) ($props['thickness'] ?? 1) . 'px';

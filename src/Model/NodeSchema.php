@@ -16,6 +16,8 @@ final class NodeSchema
     public const EVENTS = 'events';
     public const VEHICLES = 'vehicles';
     public const GALLERIES = 'galleries';
+    public const CONTACT_FORM = 'contact-form';
+    public const MEMBERSHIP_FORM = 'membership-form';
 
     /** @return list<string> */
     public static function types(): array
@@ -31,6 +33,8 @@ final class NodeSchema
             self::EVENTS,
             self::VEHICLES,
             self::GALLERIES,
+            self::CONTACT_FORM,
+            self::MEMBERSHIP_FORM,
         ];
     }
 
@@ -129,6 +133,8 @@ final class NodeSchema
             self::EVENTS => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60],
             self::VEHICLES => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60],
             self::GALLERIES => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60],
+            self::CONTACT_FORM => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 100],
+            self::MEMBERSHIP_FORM => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 128],
             default => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4],
         };
     }
@@ -205,6 +211,50 @@ final class NodeSchema
                 'accentColor' => '#2f4858',
                 'showCover' => true,
                 'showSummary' => true,
+            ],
+            self::CONTACT_FORM => [
+                'columns' => 2,
+                'gap' => 16,
+                'padding' => 20,
+                'radius' => 6,
+                'background' => '#ffffff',
+                'fieldBackground' => '#ffffff',
+                'textColor' => '#222222',
+                'labelColor' => '#222222',
+                'borderColor' => '#d0d0d0',
+                'accentColor' => '#2f4858',
+                'buttonTextColor' => '#ffffff',
+                'submitLabel' => 'Send besked',
+                'successMessage' => 'Tak. Din henvendelse er sendt.',
+                'showPhone' => true,
+                'showSubject' => true,
+                'showAddress' => false,
+                'showMessage' => true,
+                'messageRows' => 6,
+                'requireConsent' => true,
+                'consentText' => 'Jeg accepterer, at oplysningerne bruges til at besvare min henvendelse.',
+            ],
+            self::MEMBERSHIP_FORM => [
+                'columns' => 2,
+                'gap' => 16,
+                'padding' => 20,
+                'radius' => 6,
+                'background' => '#ffffff',
+                'fieldBackground' => '#ffffff',
+                'textColor' => '#222222',
+                'labelColor' => '#222222',
+                'borderColor' => '#d0d0d0',
+                'accentColor' => '#2f4858',
+                'buttonTextColor' => '#ffffff',
+                'submitLabel' => 'Send indmeldelse',
+                'successMessage' => 'Tak. Din indmeldelse er sendt.',
+                'showPhone' => true,
+                'showSubject' => false,
+                'showAddress' => true,
+                'showMessage' => true,
+                'messageRows' => 5,
+                'requireConsent' => true,
+                'consentText' => 'Jeg accepterer, at oplysningerne bruges til at behandle min indmeldelse.',
             ],
             self::DIVIDER => ['color' => '#d0d0d0', 'thickness' => 1],
             default => [],
@@ -326,6 +376,31 @@ final class NodeSchema
                 'accentColor' => self::color((string) ($props['accentColor'] ?? $defaults['accentColor']), (string) $defaults['accentColor']),
                 'showCover' => !array_key_exists('showCover', $props) || !empty($props['showCover']),
                 'showSummary' => !array_key_exists('showSummary', $props) || !empty($props['showSummary']),
+            ];
+        }
+
+        if ($type === self::CONTACT_FORM || $type === self::MEMBERSHIP_FORM) {
+            return [
+                'columns' => max(1, min(2, (int) ($props['columns'] ?? $defaults['columns']))),
+                'gap' => max(0, min(60, (int) ($props['gap'] ?? $defaults['gap']))),
+                'padding' => max(0, min(80, (int) ($props['padding'] ?? $defaults['padding']))),
+                'radius' => max(0, min(30, (int) ($props['radius'] ?? $defaults['radius']))),
+                'background' => self::color((string) ($props['background'] ?? $defaults['background']), (string) $defaults['background']),
+                'fieldBackground' => self::color((string) ($props['fieldBackground'] ?? $defaults['fieldBackground']), (string) $defaults['fieldBackground']),
+                'textColor' => self::color((string) ($props['textColor'] ?? $defaults['textColor']), (string) $defaults['textColor']),
+                'labelColor' => self::color((string) ($props['labelColor'] ?? $defaults['labelColor']), (string) $defaults['labelColor']),
+                'borderColor' => self::color((string) ($props['borderColor'] ?? $defaults['borderColor']), (string) $defaults['borderColor']),
+                'accentColor' => self::color((string) ($props['accentColor'] ?? $defaults['accentColor']), (string) $defaults['accentColor']),
+                'buttonTextColor' => self::color((string) ($props['buttonTextColor'] ?? $defaults['buttonTextColor']), (string) $defaults['buttonTextColor']),
+                'submitLabel' => sanitize_text_field((string) ($props['submitLabel'] ?? $defaults['submitLabel'])),
+                'successMessage' => sanitize_text_field((string) ($props['successMessage'] ?? $defaults['successMessage'])),
+                'showPhone' => !array_key_exists('showPhone', $props) || !empty($props['showPhone']),
+                'showSubject' => !empty($props['showSubject']),
+                'showAddress' => !empty($props['showAddress']),
+                'showMessage' => !array_key_exists('showMessage', $props) || !empty($props['showMessage']),
+                'messageRows' => max(3, min(12, (int) ($props['messageRows'] ?? $defaults['messageRows']))),
+                'requireConsent' => !array_key_exists('requireConsent', $props) || !empty($props['requireConsent']),
+                'consentText' => sanitize_text_field((string) ($props['consentText'] ?? $defaults['consentText'])),
             ];
         }
 
