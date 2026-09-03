@@ -64,7 +64,9 @@ final class Renderer
                 echo '<div class="vdm-image-placeholder">Billede</div>';
             }
         } elseif ($type === NodeSchema::BUTTON) {
-            echo '<a class="vdm-button" href="' . esc_url((string) ($node['props']['url'] ?? '#')) . '">' . esc_html((string) ($node['props']['label'] ?? 'Knap')) . '</a>';
+            $target = (string) ($node['props']['target'] ?? '_self');
+            $rel = $target === '_blank' ? ' rel="noopener noreferrer"' : '';
+            echo '<a class="vdm-button" href="' . esc_url((string) ($node['props']['url'] ?? '#')) . '" target="' . esc_attr($target) . '"' . $rel . '>' . esc_html((string) ($node['props']['label'] ?? 'Knap')) . '</a>';
         } elseif ($type === NodeSchema::DIVIDER) {
             echo '<hr class="vdm-divider">';
         }
@@ -121,9 +123,21 @@ final class Renderer
         } elseif ($type === NodeSchema::IMAGE) {
             $parts[] = '--vdm-object-fit:' . (string) ($props['objectFit'] ?? 'cover');
         } elseif ($type === NodeSchema::BUTTON) {
+            $align = (string) ($props['align'] ?? 'left');
+            $justify = match ($align) {
+                'center' => 'center',
+                'right' => 'flex-end',
+                default => 'flex-start',
+            };
             $parts[] = '--vdm-button-background:' . (string) ($props['background'] ?? '#2f4858');
             $parts[] = '--vdm-button-color:' . (string) ($props['color'] ?? '#ffffff');
             $parts[] = '--vdm-button-radius:' . (int) ($props['radius'] ?? 4) . 'px';
+            $parts[] = '--vdm-button-padding-x:' . (int) ($props['paddingX'] ?? 18) . 'px';
+            $parts[] = '--vdm-button-padding-y:' . (int) ($props['paddingY'] ?? 10) . 'px';
+            $parts[] = '--vdm-button-font-size:' . (int) ($props['fontSize'] ?? 16) . 'px';
+            $parts[] = '--vdm-button-font-weight:' . (int) ($props['fontWeight'] ?? 600);
+            $parts[] = '--vdm-button-justify:' . $justify;
+            $parts[] = '--vdm-button-width:' . ($align === 'stretch' ? '100%' : 'auto');
         } elseif ($type === NodeSchema::DIVIDER) {
             $parts[] = '--vdm-divider-color:' . (string) ($props['color'] ?? '#d0d0d0');
             $parts[] = '--vdm-divider-thickness:' . (int) ($props['thickness'] ?? 1) . 'px';
