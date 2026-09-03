@@ -6,6 +6,8 @@ namespace VisualDesignerManager\Core;
 
 use VisualDesignerManager\Admin\AdminController;
 use VisualDesignerManager\Admin\DesignerController;
+use VisualDesignerManager\Admin\SiteDesignController;
+use VisualDesignerManager\Admin\TemplateDesignerController;
 use VisualDesignerManager\Frontend\FrontendController;
 use VisualDesignerManager\Http\RestController;
 
@@ -26,6 +28,8 @@ final class Plugin
         self::$booted = true;
         AdminController::register();
         DesignerController::register();
+        TemplateDesignerController::register();
+        SiteDesignController::register();
         FrontendController::register();
         RestController::register();
     }
