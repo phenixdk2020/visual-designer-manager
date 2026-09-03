@@ -45,3 +45,6 @@ jobs:
 
       - name: Alpha 5 site shell contract
         run: python3 tests/alpha5_site_shell_contract.py
+
+      - name: Alpha 6 Events contract
+        run: python3 tests/alpha6_events_contract.py
