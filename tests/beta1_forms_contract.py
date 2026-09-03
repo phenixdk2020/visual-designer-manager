@@ -28,7 +28,7 @@ if version_match:
         version_ok = number >= 1
 
 checks = {
-    'runtime version beta.1 or newer': version_ok and "define('VDM_VERSION', '2.0.0-beta.1');" in plugin,
+    'runtime version beta.1 or newer': version_ok,
     'form node types': all(token in schema for token in (
         "public const CONTACT_FORM = 'contact-form';",
         "public const MEMBERSHIP_FORM = 'membership-form';",
