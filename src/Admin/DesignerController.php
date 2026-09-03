@@ -46,8 +46,11 @@ final class DesignerController
 
         $postId = self::requestedPageId();
         wp_localize_script('vdm-designer', 'VDMDesignerConfig', [
+            'ready' => $postId > 0,
             'pageId' => $postId,
             'restBase' => esc_url_raw(rest_url(RestController::NAMESPACE)),
+            'saveUrl' => $postId > 0 ? esc_url_raw(rest_url(RestController::NAMESPACE . '/layouts/' . $postId)) : '',
+            'renderUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/render')),
             'nonce' => wp_create_nonce('wp_rest'),
             'document' => $postId > 0 ? LayoutRepository::get($postId) : null,
             'version' => $postId > 0 ? LayoutRepository::version($postId) : 0,
@@ -117,7 +120,7 @@ final class DesignerController
     }
 
     /** @return list<string> */
-    private static function themeColors(): array
+    public static function themeColors(): array
     {
         $colors = [];
 
