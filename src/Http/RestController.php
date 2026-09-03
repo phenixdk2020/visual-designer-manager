@@ -7,6 +7,7 @@ namespace VisualDesignerManager\Http;
 use VisualDesignerManager\Frontend\Renderer;
 use VisualDesignerManager\Model\LayoutDocument;
 use VisualDesignerManager\Storage\LayoutRepository;
+use VisualDesignerManager\Storage\TemplateRepository;
 
 final class RestController
 {
@@ -29,7 +30,7 @@ final class RestController
             'permission_callback' => '__return_true',
         ]);
 
-        register_rest_route(self::NAMESPACE, '/layouts/(?P<id>\d+)', [
+        register_rest_route(self::NAMESPACE, '/layouts/(?P<id>[a-z0-9-]+)', [
             [
                 'methods' => \WP_REST_Server::READABLE,
                 'callback' => [self::class, 'getLayout'],
@@ -45,7 +46,7 @@ final class RestController
         register_rest_route(self::NAMESPACE, '/render', [
             'methods' => \WP_REST_Server::CREATABLE,
             'callback' => [self::class, 'renderLayout'],
-            'permission_callback' => static fn(): bool => current_user_can('edit_pages'),
+            'permission_callback' => static fn(): bool => current_user_can('edit_pages') || current_user_can('edit_theme_options'),
         ]);
     }
 
@@ -61,13 +62,27 @@ final class RestController
 
     public static function canEditLayout(\WP_REST_Request $request): bool
     {
-        $postId = absint($request['id']);
+        $id = sanitize_key((string) $request['id']);
+        if (self::templateSlot($id) !== null) {
+            return current_user_can('edit_theme_options');
+        }
+
+        $postId = absint($id);
         return $postId > 0 && get_post_type($postId) === 'page' && current_user_can('edit_post', $postId);
     }
 
     public static function getLayout(\WP_REST_Request $request): \WP_REST_Response
     {
-        $postId = absint($request['id']);
+        $id = sanitize_key((string) $request['id']);
+        $slot = self::templateSlot($id);
+        if ($slot !== null) {
+            return new \WP_REST_Response([
+                'document' => TemplateRepository::get($slot),
+                'version' => TemplateRepository::version($slot),
+            ], 200);
+        }
+
+        $postId = absint($id);
         return new \WP_REST_Response([
             'document' => LayoutRepository::get($postId),
             'version' => LayoutRepository::version($postId),
@@ -76,12 +91,15 @@ final class RestController
 
     public static function saveLayout(\WP_REST_Request $request): \WP_REST_Response
     {
-        $postId = absint($request['id']);
+        $id = sanitize_key((string) $request['id']);
         $params = $request->get_json_params();
         $document = is_array($params['document'] ?? null) ? $params['document'] : [];
 
         try {
-            $saved = LayoutRepository::save($postId, $document, get_current_user_id());
+            $slot = self::templateSlot($id);
+            $saved = $slot !== null
+                ? TemplateRepository::save($slot, $document, get_current_user_id())
+                : LayoutRepository::save(absint($id), $document, get_current_user_id());
             return new \WP_REST_Response($saved, 200);
         } catch (\Throwable $error) {
             return new \WP_REST_Response([
@@ -108,5 +126,14 @@ final class RestController
                 'message' => $error->getMessage(),
             ], 400);
         }
+    }
+
+    private static function templateSlot(string $id): ?string
+    {
+        return match ($id) {
+            'global-header' => TemplateRepository::HEADER,
+            'global-footer' => TemplateRepository::FOOTER,
+            default => null,
+        };
     }
 }
