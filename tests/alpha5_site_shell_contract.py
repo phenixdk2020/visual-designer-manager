@@ -20,10 +20,19 @@ version_ok = bool(version_match)
 if version_match and version_match.group(1) == 'alpha':
     version_ok = int(version_match.group(2) or 0) >= 5
 
+header_footer_designer_ok = (
+    "public const MENU_SLUG = 'vdm-header-footer';" in template_controller
+    and "$layoutId = 'global-' . $slot;" in template_controller
+    and "'pageId' => $layoutId" in template_controller
+    and "'saveUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/layouts/' . $layoutId))" in template_controller
+    and "'renderUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/render'))" in template_controller
+    and 'TemplateRepository::version($slot)' in template_controller
+)
+
 checks = {
     'runtime version alpha.5 or newer': version_ok,
     'template repository': "public const HEADER = 'header';" in templates and "public const FOOTER = 'footer';" in templates and "vdm_template_" in templates and "_history_v2" in templates,
-    'header footer designer': "public const MENU_SLUG = 'vdm-header-footer';" in template_controller and "'pageId' => 'global-' . $slot" in template_controller and 'TemplateRepository::version($slot)' in template_controller,
+    'header footer designer': header_footer_designer_ok,
     'template REST adapter': "'/layouts/(?P<id>[a-z0-9-]+)'" in rest and "'global-header'" in rest and "'global-footer'" in rest and 'TemplateRepository::save' in rest,
     'site design repository': "public const OPTION = 'vdm_site_design_v2';" in site_design and "'shellEnabled' => false" in site_design and "'headingColor'" in site_design and 'cssVariables' in site_design,
     'site design admin': "public const MENU_SLUG = 'vdm-site-design';" in site_controller and 'vdm_save_site_design' in site_controller and 'Gem Site Design' in site_controller,
