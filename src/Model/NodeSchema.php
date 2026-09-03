@@ -15,6 +15,7 @@ final class NodeSchema
     public const DIVIDER = 'divider';
     public const EVENTS = 'events';
     public const VEHICLES = 'vehicles';
+    public const GALLERIES = 'galleries';
 
     /** @return list<string> */
     public static function types(): array
@@ -29,6 +30,7 @@ final class NodeSchema
             self::DIVIDER,
             self::EVENTS,
             self::VEHICLES,
+            self::GALLERIES,
         ];
     }
 
@@ -126,6 +128,7 @@ final class NodeSchema
             self::DIVIDER => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 2],
             self::EVENTS => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60],
             self::VEHICLES => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60],
+            self::GALLERIES => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60],
             default => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4],
         };
     }
@@ -189,6 +192,19 @@ final class NodeSchema
                 'showImage' => true,
                 'showSummary' => true,
                 'showFacts' => true,
+            ],
+            self::GALLERIES => [
+                'count' => 12,
+                'columns' => 3,
+                'gap' => 20,
+                'padding' => 16,
+                'radius' => 6,
+                'cardBackground' => '#ffffff',
+                'textColor' => '#222222',
+                'headingColor' => '#222222',
+                'accentColor' => '#2f4858',
+                'showCover' => true,
+                'showSummary' => true,
             ],
             self::DIVIDER => ['color' => '#d0d0d0', 'thickness' => 1],
             default => [],
@@ -294,6 +310,22 @@ final class NodeSchema
                 'showImage' => !array_key_exists('showImage', $props) || !empty($props['showImage']),
                 'showSummary' => !array_key_exists('showSummary', $props) || !empty($props['showSummary']),
                 'showFacts' => !array_key_exists('showFacts', $props) || !empty($props['showFacts']),
+            ];
+        }
+
+        if ($type === self::GALLERIES) {
+            return [
+                'count' => max(1, min(50, (int) ($props['count'] ?? $defaults['count']))),
+                'columns' => max(1, min(4, (int) ($props['columns'] ?? $defaults['columns']))),
+                'gap' => max(0, min(80, (int) ($props['gap'] ?? $defaults['gap']))),
+                'padding' => max(0, min(80, (int) ($props['padding'] ?? $defaults['padding']))),
+                'radius' => max(0, min(60, (int) ($props['radius'] ?? $defaults['radius']))),
+                'cardBackground' => self::color((string) ($props['cardBackground'] ?? $defaults['cardBackground']), (string) $defaults['cardBackground']),
+                'textColor' => self::color((string) ($props['textColor'] ?? $defaults['textColor']), (string) $defaults['textColor']),
+                'headingColor' => self::color((string) ($props['headingColor'] ?? $defaults['headingColor']), (string) $defaults['headingColor']),
+                'accentColor' => self::color((string) ($props['accentColor'] ?? $defaults['accentColor']), (string) $defaults['accentColor']),
+                'showCover' => !array_key_exists('showCover', $props) || !empty($props['showCover']),
+                'showSummary' => !array_key_exists('showSummary', $props) || !empty($props['showSummary']),
             ];
         }
 
