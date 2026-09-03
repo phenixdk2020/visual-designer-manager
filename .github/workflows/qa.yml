@@ -73,3 +73,6 @@ jobs:
 
       - name: Beta 3 Portable transfer contract
         run: python3 tests/beta3_portable_transfer_contract.py
+
+      - name: RC.1 schema 1.0 migration contract
+        run: python3 tests/rc1_schema_one_migration_contract.py
