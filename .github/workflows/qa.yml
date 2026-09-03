@@ -70,3 +70,6 @@ jobs:
 
       - name: Beta 2 Navigation and Site Settings contract
         run: python3 tests/beta2_navigation_site_settings_contract.py
+
+      - name: Beta 3 Portable transfer contract
+        run: python3 tests/beta3_portable_transfer_contract.py
