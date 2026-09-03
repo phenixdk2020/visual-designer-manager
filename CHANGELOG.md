@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0-alpha.4
+
+- Added a compact VDM color popup that opens only when a color control is clicked.
+- Added picker and theme modes with `Annuller`, `Tema` / `Farvevælger` and `Anvend` actions.
+- Added WordPress theme-palette discovery plus recently used colors.
+- Removed native browser color inputs from Designer controls.
+- Added rich text editing with paragraph, headings, bold, italic and links.
+- Added WordPress Media Library selection for image nodes.
+- Expanded Button controls with target, alignment, padding, font size and font weight.
+- Kept Button rendering canonical between Designer preview and frontend output.
+- Expanded QA with the alpha.4 editor-controls contract.
+
 ## 2.0.0-alpha.3
 
 - Added pointer-based drag interaction directly on the canonical Designer canvas.
