@@ -7,6 +7,7 @@ namespace VisualDesignerManager\Admin;
 use VisualDesignerManager\Transfer\PortableExporter;
 use VisualDesignerManager\Transfer\PortableImporter;
 use VisualDesignerManager\Transfer\PortablePackage;
+use VisualDesignerManager\Transfer\SchemaOneMigrator;
 
 final class TransferController
 {
@@ -105,8 +106,31 @@ final class TransferController
         }
         @chmod($stagedPath, 0600);
 
+        $migration = null;
         try {
-            $inspection = PortablePackage::inspect($stagedPath);
+            try {
+                $inspection = PortablePackage::inspect($stagedPath);
+            } catch (\Throwable $nativeError) {
+                try {
+                    $converted = SchemaOneMigrator::convert($stagedPath);
+                } catch (\Throwable $migrationError) {
+                    throw new \RuntimeException(
+                        'Pakken er hverken en gyldig native V2-pakke eller en migrerbar schema 1.0-pakke. ' .
+                        'V2-validering: ' . $nativeError->getMessage() . ' Schema 1.0-validering: ' . $migrationError->getMessage()
+                    );
+                }
+
+                $convertedPath = (string) ($converted['path'] ?? '');
+                $convertedInspection = $converted['inspection'] ?? null;
+                if ($convertedPath === '' || !is_file($convertedPath) || !is_array($convertedInspection)) {
+                    throw new \RuntimeException('Schema 1.0-konverteringen returnerede ikke en gyldig native V2-pakke.');
+                }
+                @unlink($stagedPath);
+                $stagedPath = $convertedPath;
+                $inspection = $convertedInspection;
+                $migration = is_array($converted['migration'] ?? null) ? $converted['migration'] : [];
+            }
+
             $sha = hash_file('sha256', $stagedPath);
             if (!is_string($sha)) {
                 throw new \RuntimeException('Importfilens SHA-256 kunne ikke beregnes.');
@@ -117,6 +141,7 @@ final class TransferController
                 'path' => $stagedPath,
                 'sha256' => $sha,
                 'inspection' => $inspection,
+                'migration' => $migration,
                 'createdAt' => time(),
             ], self::PREFLIGHT_TTL);
 
@@ -201,7 +226,7 @@ final class TransferController
 
         echo '<hr><h2>Importér portable V2 ZIP</h2>';
         echo '<p>Import foregår altid i to trin. Først valideres pakken uden at ændre sitet. Derefter skal preflight-resultatet godkendes eksplicit.</p>';
-        echo '<div class="notice notice-warning inline"><p><strong>Bemærk:</strong> Beta.3 accepterer kun native V2 portable schema <code>' . esc_html(PortablePackage::SCHEMA_VERSION) . '</code>. En schema 1.0-pakke kræver den kontrollerede migrationsimport i RC-fasen.</p></div>';
+        echo '<div class="notice notice-info inline"><p><strong>RC.1:</strong> Native V2 schema <code>' . esc_html(PortablePackage::SCHEMA_VERSION) . '</code> importeres direkte. Validerede schema 1.0-sitepakker konverteres isoleret til native V2 under preflight og importeres derefter gennem samme V2-importer.</p></div>';
         echo '<form method="post" enctype="multipart/form-data" action="' . esc_url(admin_url('admin-post.php')) . '">';
         echo '<input type="hidden" name="action" value="vdm_import_preflight">';
         wp_nonce_field('vdm_import_preflight');
@@ -229,6 +254,8 @@ final class TransferController
         $manifest = is_array($inspection['manifest'] ?? null) ? $inspection['manifest'] : [];
         $summary = is_array($inspection['summary'] ?? null) ? array_map('intval', $inspection['summary']) : [];
         $source = is_array($manifest['source'] ?? null) ? $manifest['source'] : [];
+        $migration = is_array($state['migration'] ?? null) ? $state['migration'] : [];
+        $migrationWarnings = is_array($migration['warnings'] ?? null) ? array_values(array_filter(array_map('strval', $migration['warnings']))) : [];
 
         echo '<hr><h2>Preflight godkendt</h2>';
         echo '<table class="widefat striped" style="max-width:900px"><tbody>';
@@ -236,9 +263,21 @@ final class TransferController
         self::row('Schema', (string) ($manifest['schemaVersion'] ?? ''));
         self::row('VDM-kildeversion', (string) ($manifest['managerVersion'] ?? ''));
         self::row('Kildesite', (string) ($source['name'] ?? ''));
+        if ($migration !== []) {
+            self::row('Kildeschema', (string) ($migration['sourceSchemaVersion'] ?? '1.0'));
+            self::row('Konverteret til', (string) ($manifest['schemaVersion'] ?? PortablePackage::SCHEMA_VERSION));
+            self::row('Kilde-VDM', (string) ($migration['sourceManagerVersion'] ?? ''));
+        }
         self::row('Content SHA-256', (string) ($manifest['contentSha256'] ?? ''));
         self::row('Indhold', self::summaryText($summary));
         echo '</tbody></table>';
+        if ($migrationWarnings !== []) {
+            echo '<h3>Migrationsbemærkninger</h3><ul>';
+            foreach ($migrationWarnings as $warning) {
+                echo '<li>' . esc_html($warning) . '</li>';
+            }
+            echo '</ul>';
+        }
         echo '<p><strong>Preflight har ikke ændret WordPress.</strong> Ved import remappes kilde-ID’er til mål-ID’er. Allerede importerede objekter fra samme kilde kan genbruges/opdateres.</p>';
         echo '<div class="notice notice-warning inline"><p>På et site med eksisterende indhold anbefales en frisk backup før import. Nyoprettede objekter ryddes op ved en importfejl, mens opdateringer af allerede eksisterende målobjekter ikke kan garanteres fuldt tilbagerullet.</p></div>';
 
