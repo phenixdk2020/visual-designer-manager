@@ -7,11 +7,13 @@ namespace VisualDesignerManager\Core;
 use VisualDesignerManager\Admin\AdminController;
 use VisualDesignerManager\Admin\DesignerController;
 use VisualDesignerManager\Admin\EventController;
+use VisualDesignerManager\Admin\GalleryController;
 use VisualDesignerManager\Admin\SiteDesignController;
 use VisualDesignerManager\Admin\TemplateDesignerController;
 use VisualDesignerManager\Admin\VehicleController;
 use VisualDesignerManager\Frontend\EventFrontendController;
 use VisualDesignerManager\Frontend\FrontendController;
+use VisualDesignerManager\Frontend\GalleryFrontendController;
 use VisualDesignerManager\Frontend\VehicleFrontendController;
 use VisualDesignerManager\Http\RestController;
 
@@ -36,9 +38,11 @@ final class Plugin
         SiteDesignController::register();
         EventController::register();
         VehicleController::register();
+        GalleryController::register();
         FrontendController::register();
         EventFrontendController::register();
         VehicleFrontendController::register();
+        GalleryFrontendController::register();
         RestController::register();
     }
 
@@ -48,6 +52,7 @@ final class Plugin
         update_option('vdm_plugin_version', VDM_VERSION, true);
         EventController::postType();
         VehicleController::postType();
+        GalleryController::postType();
         flush_rewrite_rules(false);
     }
 
