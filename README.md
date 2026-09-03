@@ -4,7 +4,7 @@ Visual Designer Manager is a model-driven visual WordPress designer.
 
 ## Current version
 
-`2.0.0-alpha.3`
+`2.0.0-alpha.4`
 
 ## Version 2 principles
 
@@ -41,7 +41,7 @@ docs/
 
 ## Current Designer foundation
 
-Alpha.3 includes:
+Alpha.4 includes:
 
 - V2-only page layout storage and version counter.
 - Section, Container, Text, Image, Button, Spacer and Divider node contracts.
@@ -53,6 +53,10 @@ Alpha.3 includes:
 - 12-column horizontal snap and 8 px vertical snap.
 - Undo/Redo with bounded history and keyboard shortcuts.
 - Automatic Section/Container height reconciliation.
+- Rich text editing.
+- WordPress Media Library image selection.
+- Extended Button controls.
+- Compact theme-aware VDM color popup with recent colors.
 
 The V2 layout document uses schema version `2` and an 8 px row grid.
 
@@ -60,8 +64,8 @@ The V2 layout document uses schema version `2` and an 8 px row grid.
 
 1. `2.0.0-alpha.1` — bootstrap, identity gate and canonical model foundation. **Done.**
 2. `2.0.0-alpha.2` — Designer workspace, node model and renderer contract. **Done.**
-3. `2.0.0-alpha.3` — drag/resize, grid snap, auto-height and Undo/Redo. **Current.**
-4. `2.0.0-alpha.4` — text editing, Media Library, button controls and shared theme-aware color picker.
+3. `2.0.0-alpha.3` — drag/resize, grid snap, auto-height and Undo/Redo. **Done.**
+4. `2.0.0-alpha.4` — text editing, Media Library, button controls and shared theme-aware color picker. **Current.**
 5. `2.0.0-alpha.5` — Header/Footer and global site design.
 6. `2.0.0-alpha.6` — Events.
 7. `2.0.0-alpha.7` — Vehicles.
