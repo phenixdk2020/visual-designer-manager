@@ -36,3 +36,6 @@ jobs:
 
       - name: Alpha 2 Designer contract
         run: python3 tests/alpha2_designer_contract.py
+
+      - name: Alpha 3 interaction contract
+        run: python3 tests/alpha3_interaction_contract.py
