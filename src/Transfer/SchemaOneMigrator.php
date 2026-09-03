@@ -639,6 +639,9 @@ final class SchemaOneMigrator
             return [
                 'background' => $background,
                 'padding' => max(0, min(120, (int) ($props['padding'] ?? 0))),
+                'radius' => max(0, min(80, (int) ($props['radius'] ?? 0))),
+                'borderWidth' => max(0, min(20, (int) ($props['borderWidth'] ?? 0))),
+                'borderColor' => self::color((string) ($props['borderColor'] ?? ''), '#d0d0d0'),
                 'autoHeight' => true,
                 'minHeightRows' => max(1, (int) ($props['minHeightRows'] ?? 1)),
             ];
@@ -648,7 +651,18 @@ final class SchemaOneMigrator
             $level = in_array((string) ($props['headingLevel'] ?? ''), ['h1','h2','h3','h4','h5','h6'], true) ? (string) $props['headingLevel'] : 'h2';
             $body = wp_kses_post((string) ($props['text'] ?? ''));
             $content = ($heading !== '' ? '<' . $level . '>' . esc_html($heading) . '</' . $level . '>' : '') . ($body !== '' ? '<div>' . $body . '</div>' : '');
-            return ['content' => $content !== '' ? $content : '<p></p>', 'color' => self::color((string) ($props['textColor'] ?? ''), '#222222'), 'fontSize' => max(8, min(120, (int) ($props['fontSize'] ?? 18)))];
+            return [
+                'content' => $content !== '' ? $content : '<p></p>',
+                'color' => self::color((string) ($props['textColor'] ?? ''), '#222222'),
+                'fontSize' => max(8, min(120, (int) ($props['fontSize'] ?? 18))),
+                'fontWeight' => self::fontWeight($props['fontWeight'] ?? 400),
+                'lineHeight' => max(0.8, min(3.0, (float) ($props['lineHeight'] ?? 1.5))),
+                'align' => in_array((string) ($props['align'] ?? ''), ['left','center','right'], true) ? (string) $props['align'] : 'left',
+                'verticalAlign' => in_array((string) ($props['verticalAlign'] ?? ''), ['top','center','bottom'], true) ? (string) $props['verticalAlign'] : 'top',
+                'background' => !empty($props['backgroundTransparent']) ? 'transparent' : self::colorOrTransparent((string) ($props['background'] ?? ''), 'transparent'),
+                'padding' => max(0, min(120, (int) ($props['padding'] ?? 0))),
+                'radius' => max(0, min(80, (int) ($props['radius'] ?? 0))),
+            ];
         }
         if ($type === 'table') {
             $html = '<table><thead><tr>';
@@ -691,6 +705,8 @@ final class SchemaOneMigrator
                 'paddingY' => max(0, min(80, (int) ($props['paddingY'] ?? 10))),
                 'fontSize' => max(8, min(80, (int) ($props['fontSize'] ?? 16))),
                 'fontWeight' => self::fontWeight($props['fontWeight'] ?? 600),
+                'borderWidth' => max(0, min(20, (int) ($props['borderWidth'] ?? 0))),
+                'borderColor' => self::color((string) ($props['borderColor'] ?? $props['background'] ?? ''), '#2f4858'),
             ];
         }
         if ($type === 'divider') {

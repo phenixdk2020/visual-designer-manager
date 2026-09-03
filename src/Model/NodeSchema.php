@@ -149,16 +149,33 @@ final class NodeSchema
             self::SECTION => [
                 'background' => '#ffffff',
                 'padding' => 0,
+                'radius' => 0,
+                'borderWidth' => 0,
+                'borderColor' => '#d0d0d0',
                 'autoHeight' => true,
                 'minHeightRows' => 36,
             ],
             self::CONTAINER => [
                 'background' => 'transparent',
                 'padding' => 16,
+                'radius' => 0,
+                'borderWidth' => 0,
+                'borderColor' => '#d0d0d0',
                 'autoHeight' => true,
                 'minHeightRows' => 24,
             ],
-            self::TEXT => ['content' => '<p>Tekst</p>', 'color' => '#222222', 'fontSize' => 18],
+            self::TEXT => [
+                'content' => '<p>Tekst</p>',
+                'color' => '#222222',
+                'fontSize' => 18,
+                'fontWeight' => 400,
+                'lineHeight' => 1.5,
+                'align' => 'left',
+                'verticalAlign' => 'top',
+                'background' => 'transparent',
+                'padding' => 0,
+                'radius' => 0,
+            ],
             self::IMAGE => ['attachmentId' => 0, 'alt' => '', 'objectFit' => 'cover'],
             self::BUTTON => [
                 'label' => 'Knap',
@@ -172,6 +189,8 @@ final class NodeSchema
                 'paddingY' => 10,
                 'fontSize' => 16,
                 'fontWeight' => 600,
+                'borderWidth' => 0,
+                'borderColor' => '#2f4858',
             ],
             self::EVENTS => [
                 'count' => 6,
@@ -289,16 +308,38 @@ final class NodeSchema
             return [
                 'background' => self::color((string) ($props['background'] ?? $defaults['background']), (string) $defaults['background']),
                 'padding' => max(0, min(120, (int) ($props['padding'] ?? $defaults['padding']))),
+                'radius' => max(0, min(80, (int) ($props['radius'] ?? $defaults['radius']))),
+                'borderWidth' => max(0, min(20, (int) ($props['borderWidth'] ?? $defaults['borderWidth']))),
+                'borderColor' => self::color((string) ($props['borderColor'] ?? $defaults['borderColor']), (string) $defaults['borderColor']),
                 'autoHeight' => !array_key_exists('autoHeight', $props) || (bool) $props['autoHeight'],
                 'minHeightRows' => max(1, min(2000, (int) ($props['minHeightRows'] ?? $defaults['minHeightRows']))),
             ];
         }
 
         if ($type === self::TEXT) {
+            $align = (string) ($props['align'] ?? $defaults['align']);
+            if (!in_array($align, ['left', 'center', 'right'], true)) {
+                $align = 'left';
+            }
+            $verticalAlign = (string) ($props['verticalAlign'] ?? $defaults['verticalAlign']);
+            if (!in_array($verticalAlign, ['top', 'center', 'bottom'], true)) {
+                $verticalAlign = 'top';
+            }
+            $fontWeight = (int) ($props['fontWeight'] ?? $defaults['fontWeight']);
+            if (!in_array($fontWeight, [400, 500, 600, 700], true)) {
+                $fontWeight = 400;
+            }
             return [
                 'content' => wp_kses_post((string) ($props['content'] ?? $defaults['content'])),
                 'color' => self::color((string) ($props['color'] ?? $defaults['color']), (string) $defaults['color']),
                 'fontSize' => max(8, min(120, (int) ($props['fontSize'] ?? $defaults['fontSize']))),
+                'fontWeight' => $fontWeight,
+                'lineHeight' => max(0.8, min(3.0, (float) ($props['lineHeight'] ?? $defaults['lineHeight']))),
+                'align' => $align,
+                'verticalAlign' => $verticalAlign,
+                'background' => self::color((string) ($props['background'] ?? $defaults['background']), (string) $defaults['background']),
+                'padding' => max(0, min(120, (int) ($props['padding'] ?? $defaults['padding']))),
+                'radius' => max(0, min(80, (int) ($props['radius'] ?? $defaults['radius']))),
             ];
         }
 
@@ -342,6 +383,8 @@ final class NodeSchema
                 'paddingY' => max(0, min(80, (int) ($props['paddingY'] ?? $defaults['paddingY']))),
                 'fontSize' => max(8, min(80, (int) ($props['fontSize'] ?? $defaults['fontSize']))),
                 'fontWeight' => $fontWeight,
+                'borderWidth' => max(0, min(20, (int) ($props['borderWidth'] ?? $defaults['borderWidth']))),
+                'borderColor' => self::color((string) ($props['borderColor'] ?? $defaults['borderColor']), (string) $defaults['borderColor']),
             ];
         }
 

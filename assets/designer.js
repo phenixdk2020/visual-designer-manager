@@ -62,11 +62,11 @@
             navigation: {x: 0, y: 0, w: 12, h: 8}
         }[type];
         const props = {
-            section: {background: '#ffffff', padding: 0, autoHeight: true, minHeightRows: 36},
-            container: {background: 'transparent', padding: 16, autoHeight: true, minHeightRows: 24},
-            text: {content: '<p>Tekst</p>', color: '#222222', fontSize: 18},
+            section: {background: '#ffffff', padding: 0, radius: 0, borderWidth: 0, borderColor: '#d0d0d0', autoHeight: true, minHeightRows: 36},
+            container: {background: 'transparent', padding: 16, radius: 0, borderWidth: 0, borderColor: '#d0d0d0', autoHeight: true, minHeightRows: 24},
+            text: {content: '<p>Tekst</p>', color: '#222222', fontSize: 18, fontWeight: 400, lineHeight: 1.5, align: 'left', verticalAlign: 'top', background: 'transparent', padding: 0, radius: 0},
             image: {attachmentId: 0, alt: '', objectFit: 'cover'},
-            button: {label: 'Knap', url: '#', target: '_self', align: 'left', background: '#2f4858', color: '#ffffff', radius: 4, paddingX: 18, paddingY: 10, fontSize: 16, fontWeight: 600},
+            button: {label: 'Knap', url: '#', target: '_self', align: 'left', background: '#2f4858', color: '#ffffff', radius: 4, paddingX: 18, paddingY: 10, fontSize: 16, fontWeight: 600, borderWidth: 0, borderColor: '#2f4858'},
             spacer: {},
             divider: {color: '#d0d0d0', thickness: 1},
             events: {count: 6, showPast: false, columns: 3, gap: 20, padding: 18, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showImage: true, showSummary: true, showFacts: true},
@@ -997,12 +997,22 @@
             }))));
             inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? '#ffffff' : node.props.background, value => commitMutation(() => { node.props.background = value; }))));
             inspector.append(field('Padding', numberInput(node.props.padding || 0, 0, 120, value => commitMutation(() => { node.props.padding = value; }))));
+            inspector.append(field('Radius', numberInput(node.props.radius || 0, 0, 80, value => commitMutation(() => { node.props.radius = value; }))));
+            inspector.append(field('Kantbredde', numberInput(node.props.borderWidth || 0, 0, 20, value => commitMutation(() => { node.props.borderWidth = value; }))));
+            inspector.append(field('Kantfarve', colorControl(node.props.borderColor || '#d0d0d0', value => commitMutation(() => { node.props.borderColor = value; }))));
         }
 
         if (node.type === 'text') {
             inspector.append(field('Tekst', richTextControl(node)));
             inspector.append(field('Tekstfarve', colorControl(node.props.color, value => commitMutation(() => { node.props.color = value; }))));
             inspector.append(field('Skriftstørrelse', numberInput(node.props.fontSize || 18, 8, 120, value => commitMutation(() => { node.props.fontSize = value; }))));
+            inspector.append(field('Skriftvægt', selectInput([['400','Normal'],['500','Medium'],['600','Semibold'],['700','Fed']], String(node.props.fontWeight || 400), value => commitMutation(() => { node.props.fontWeight = Number.parseInt(value, 10); }))));
+            inspector.append(field('Linjehøjde ×100', numberInput(Math.round((node.props.lineHeight || 1.5) * 100), 80, 300, value => commitMutation(() => { node.props.lineHeight = value / 100; }))));
+            inspector.append(field('Justering', selectInput([['left','Venstre'],['center','Centreret'],['right','Højre']], node.props.align || 'left', value => commitMutation(() => { node.props.align = value; }))));
+            inspector.append(field('Lodret placering', selectInput([['top','Top'],['center','Centreret'],['bottom','Bund']], node.props.verticalAlign || 'top', value => commitMutation(() => { node.props.verticalAlign = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? '#ffffff' : (node.props.background || '#ffffff'), value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Padding', numberInput(node.props.padding || 0, 0, 120, value => commitMutation(() => { node.props.padding = value; }))));
+            inspector.append(field('Radius', numberInput(node.props.radius || 0, 0, 80, value => commitMutation(() => { node.props.radius = value; }))));
         }
 
         if (node.type === 'image') {
@@ -1054,6 +1064,8 @@
             inspector.append(field('Padding vandret', numberInput(node.props.paddingX || 18, 0, 120, value => commitMutation(() => { node.props.paddingX = value; }))));
             inspector.append(field('Padding lodret', numberInput(node.props.paddingY || 10, 0, 80, value => commitMutation(() => { node.props.paddingY = value; }))));
             inspector.append(field('Radius', numberInput(node.props.radius || 0, 0, 80, value => commitMutation(() => { node.props.radius = value; }))));
+            inspector.append(field('Kantbredde', numberInput(node.props.borderWidth || 0, 0, 20, value => commitMutation(() => { node.props.borderWidth = value; }))));
+            inspector.append(field('Kantfarve', colorControl(node.props.borderColor || node.props.background || '#2f4858', value => commitMutation(() => { node.props.borderColor = value; }))));
         }
 
         if (node.type === 'events') {

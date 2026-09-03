@@ -127,9 +127,24 @@ final class Renderer
         if ($type === NodeSchema::SECTION || $type === NodeSchema::CONTAINER) {
             $parts[] = '--vdm-background:' . (string) ($props['background'] ?? 'transparent');
             $parts[] = '--vdm-padding:' . (int) ($props['padding'] ?? 0) . 'px';
+            $parts[] = '--vdm-radius:' . (int) ($props['radius'] ?? 0) . 'px';
+            $parts[] = '--vdm-border-width:' . (int) ($props['borderWidth'] ?? 0) . 'px';
+            $parts[] = '--vdm-border-color:' . (string) ($props['borderColor'] ?? '#d0d0d0');
         } elseif ($type === NodeSchema::TEXT) {
+            $vertical = match ((string) ($props['verticalAlign'] ?? 'top')) {
+                'center' => 'center',
+                'bottom' => 'flex-end',
+                default => 'flex-start',
+            };
             $parts[] = '--vdm-color:' . (string) ($props['color'] ?? '#222222');
             $parts[] = '--vdm-font-size:' . (int) ($props['fontSize'] ?? 18) . 'px';
+            $parts[] = '--vdm-text-font-weight:' . (int) ($props['fontWeight'] ?? 400);
+            $parts[] = '--vdm-text-line-height:' . (float) ($props['lineHeight'] ?? 1.5);
+            $parts[] = '--vdm-text-align:' . (string) ($props['align'] ?? 'left');
+            $parts[] = '--vdm-text-vertical-align:' . $vertical;
+            $parts[] = '--vdm-text-background:' . (string) ($props['background'] ?? 'transparent');
+            $parts[] = '--vdm-text-padding:' . (int) ($props['padding'] ?? 0) . 'px';
+            $parts[] = '--vdm-text-radius:' . (int) ($props['radius'] ?? 0) . 'px';
         } elseif ($type === NodeSchema::IMAGE) {
             $parts[] = '--vdm-object-fit:' . (string) ($props['objectFit'] ?? 'cover');
         } elseif ($type === NodeSchema::BUTTON) {
@@ -146,6 +161,8 @@ final class Renderer
             $parts[] = '--vdm-button-padding-y:' . (int) ($props['paddingY'] ?? 10) . 'px';
             $parts[] = '--vdm-button-font-size:' . (int) ($props['fontSize'] ?? 16) . 'px';
             $parts[] = '--vdm-button-font-weight:' . (int) ($props['fontWeight'] ?? 600);
+            $parts[] = '--vdm-button-border-width:' . (int) ($props['borderWidth'] ?? 0) . 'px';
+            $parts[] = '--vdm-button-border-color:' . (string) ($props['borderColor'] ?? '#2f4858');
             $parts[] = '--vdm-button-justify:' . $justify;
             $parts[] = '--vdm-button-width:' . ($align === 'stretch' ? '100%' : 'auto');
         } elseif (in_array($type, [NodeSchema::CONTACT_FORM, NodeSchema::MEMBERSHIP_FORM], true)) {
