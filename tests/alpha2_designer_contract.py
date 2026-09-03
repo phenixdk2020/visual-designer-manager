@@ -35,7 +35,7 @@ assert 'Breakpoint::ordered()' in renderer
 assert 'wp_kses_post' in renderer
 
 rest = (ROOT / 'src/Http/RestController.php').read_text(encoding='utf-8')
-assert "'/layouts/(?P<id>\\d+)'" in rest
+assert "'/layouts/(?P<id>" in rest and "getLayout" in rest and "saveLayout" in rest
 assert "'/render'" in rest
 
 js = (ROOT / 'assets/designer.js').read_text(encoding='utf-8')
