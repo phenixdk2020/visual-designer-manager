@@ -1,0 +1,46 @@
+name: Apply VDM 2 alpha.6 Events
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_alpha6_events.py'
+      - '.github/workflows/apply-alpha6-events.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip alpha6 apply]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic Events Designer migration
+        run: python3 .github/scripts/apply_alpha6_events.py
+
+      - name: Validate JavaScript and PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/designer.js
+          php -l src/Admin/DesignerController.php >/dev/null
+          php -l src/Admin/TemplateDesignerController.php >/dev/null
+
+      - name: Commit migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'No changes required.'
+            exit 0
+          fi
+          git config user.name 'phenixdk2020'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add assets/designer.js src/Admin/DesignerController.php src/Admin/TemplateDesignerController.php
+          git commit -m 'Apply VDM 2 alpha.6 Events Designer [skip alpha6 apply]'
+          git push origin HEAD:main
