@@ -34,7 +34,7 @@ final class VehicleFrontendController
             return $template;
         }
 
-        wp_enqueue_style('vdm-frontend');
+        FrontendController::enqueueAssets();
         return $shell;
     }
 
@@ -53,7 +53,7 @@ final class VehicleFrontendController
             return $content;
         }
 
-        wp_enqueue_style('vdm-frontend');
+        FrontendController::enqueueAssets();
         return VehicleRenderer::renderDetail($postId);
     }
 }
