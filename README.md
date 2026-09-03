@@ -4,7 +4,7 @@ Visual Designer Manager is a model-driven visual WordPress designer.
 
 ## Current version
 
-`2.0.0-beta.3`
+`2.0.0-rc.1`
 
 ## Version 2 principles
 
@@ -16,8 +16,8 @@ Visual Designer Manager is a model-driven visual WordPress designer.
 - Runtime constants: `VDM_*`.
 - Admin slugs and actions use `vdm-*` / `vdm_*`.
 - REST namespace: `visual-designer-manager/v2`.
-- No compatibility aliases from earlier product generations.
-- Site transfer uses an explicit validated portable package format.
+- No runtime compatibility aliases from earlier product generations.
+- Site transfer uses explicit validated portable package formats and an isolated migration boundary.
 - Destructive data changes are never performed on plugin deactivation.
 
 ## Architecture
@@ -45,9 +45,9 @@ docs/
 .github/workflows/
 ```
 
-## Current Designer foundation
+## RC.1 Designer foundation
 
-Beta.3 includes:
+RC.1 includes:
 
 - V2-only page layout storage and version history.
 - Section, Container, Text, Image, Button, Spacer and Divider node contracts.
@@ -70,6 +70,8 @@ Beta.3 includes:
 - V2-native Events, Vehicles and Gallery detail rendering.
 - Server-validated Contact and Membership form submissions via WordPress mail.
 - Native V2 portable export/import with preflight, SHA-256 package validation and ID remapping.
+- Controlled schema `1.0` to native schema `2.0` package migration during preflight.
+- Migrated Text, Container and Button presentation properties retained by the normal V2 schema, Designer and renderer.
 
 The V2 layout document uses schema version `2` and an 8 px row grid.
 
@@ -87,7 +89,15 @@ The page Designer contains two form presets: `Kontaktformular` and `Bliv medlem`
 
 Import is a two-step operation: upload/preflight first, then explicit confirmation. Preflight rejects unsafe ZIP paths, duplicates, symlinks, unlisted files, size mismatches and SHA-256 mismatches. The staged ZIP is tied to the current administrator and its SHA-256 plus complete package are validated again immediately before import. Media, post, page, menu and menu-item source IDs are remapped to target IDs. Repeated native V2 imports can reuse records marked as originating from the same source.
 
-Beta.3 intentionally accepts native schema `2.0` only. Controlled migration of older portable schema `1.0` packages is an RC task.
+RC.1 additionally accepts validated schema `1.0` site packages through an isolated conversion step. The original package is fully checked with its own manifest/content-digest rules, converted into a temporary native schema `2.0` package, and that native package is then validated again. The actual database import still runs only through the canonical V2 importer.
+
+The conversion maps the previous 120-unit horizontal geometry to V2's 12-column grid while preserving the 8 px vertical grid. Native Event, Vehicle and Gallery list/detail components replace previous generated detail-layout constructs. Unsupported or unavailable source media are reported as migration warnings rather than fetched implicitly from arbitrary remote URLs.
+
+## RC.1 acceptance status
+
+The automated RC.1 contract is complete and covers the entire alpha.1 → beta.3 regression chain plus schema `1.0` migration validation and migrated visual-property retention.
+
+A production `2.0.0` release still requires environment acceptance on an actual WordPress target after importing the intended site package: Designer → Preview → Live parity, Header/Footer, navigation, forms, Events, Vehicles, Gallery, responsive breakpoints, images, Siteindstillinger and site-shell routing.
 
 ## Development sequence
 
@@ -102,8 +112,8 @@ Beta.3 intentionally accepts native schema `2.0` only. Controlled migration of o
 9. `2.0.0-beta.1` — forms. **Done.**
 10. `2.0.0-beta.2` — navigation and site settings. **Done.**
 11. `2.0.0-beta.3` — portable export/import and package validation. **Done.**
-12. `2.0.0-rc.1` — controlled schema 1.0 migration, full site import and Editor/Preview/Live acceptance QA. **Next.**
-13. `2.0.0` — production release.
+12. `2.0.0-rc.1` — controlled schema 1.0 migration and automated migration/parity QA. **Code complete; environment acceptance pending.**
+13. `2.0.0` — production release after successful WordPress acceptance QA.
 
 ## QA rule
 
