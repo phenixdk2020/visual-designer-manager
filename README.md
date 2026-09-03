@@ -4,7 +4,7 @@ Visual Designer Manager is a model-driven visual WordPress designer.
 
 ## Current version
 
-`2.0.0-alpha.1`
+`2.0.0-alpha.2`
 
 ## Version 2 principles
 
@@ -27,8 +27,10 @@ visual-designer-manager.php
 src/
   Admin/
   Core/
+  Frontend/
   Http/
   Model/
+  Storage/
   Support/
 assets/
 templates/
@@ -37,24 +39,24 @@ docs/
 .github/workflows/
 ```
 
-The folder structure grows only when a subsystem receives a canonical V2 contract.
+## Current Designer foundation
 
-## Canonical responsive model
+Alpha.2 includes:
 
-The V2 layout document starts with schema version `2` and four breakpoints:
+- V2-only page layout storage and version counter.
+- Section, Container, Text, Image, Button, Spacer and Divider node contracts.
+- Parent and cycle validation.
+- One PHP renderer for Designer preview and frontend output.
+- Desktop/Laptop/Tablet/Mobile geometry.
+- Palette, canvas, selection, Inspector and save/reload.
 
-- Desktop: 1440 px reference viewport
-- Laptop: 1180 px
-- Tablet: 980 px
-- Mobile: 782 px
-
-Grid row size remains 8 px so existing visual behavior can be reproduced when content is imported into the new data format.
+The V2 layout document uses schema version `2` and an 8 px row grid.
 
 ## Development sequence
 
-1. `2.0.0-alpha.1` — bootstrap, identity gate and canonical model foundation.
-2. `2.0.0-alpha.2` — Designer workspace, node model and renderer contract.
-3. `2.0.0-alpha.3` — Header/Footer and responsive rendering.
+1. `2.0.0-alpha.1` — bootstrap, identity gate and canonical model foundation. **Done.**
+2. `2.0.0-alpha.2` — Designer workspace, node model and renderer contract. **Current.**
+3. `2.0.0-alpha.3` — Header/Footer and responsive site shell.
 4. `2.0.0-alpha.4` — Events, Vehicles and Gallery modules.
 5. `2.0.0-beta.1` — forms, navigation, theme colors and site settings.
 6. `2.0.0-beta.2` — portable export/import and package validation.

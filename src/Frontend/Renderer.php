@@ -1,0 +1,138 @@
+<?php
+
+declare(strict_types=1);
+
+namespace VisualDesignerManager\Frontend;
+
+use VisualDesignerManager\Model\Breakpoint;
+use VisualDesignerManager\Model\LayoutDocument;
+use VisualDesignerManager\Model\NodeSchema;
+
+final class Renderer
+{
+    /** @param array<string,mixed> $document */
+    public static function render(array $document): string
+    {
+        $document = LayoutDocument::normalize($document);
+        $nodes = $document['nodes'];
+        if ($nodes === []) {
+            return '';
+        }
+
+        $children = [];
+        foreach ($nodes as $node) {
+            $key = $node['parentId'] ?? '__root__';
+            $children[$key][] = $node;
+        }
+
+        ob_start();
+        echo '<div class="vdm-layout" data-vdm-layout-schema="2">';
+        foreach ($children['__root__'] ?? [] as $node) {
+            echo self::node($node, $children); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        }
+        echo '</div>';
+        return (string) ob_get_clean();
+    }
+
+    /** @param array<string,mixed> $node
+     *  @param array<string,list<array<string,mixed>>> $children
+     */
+    private static function node(array $node, array $children): string
+    {
+        $type = (string) $node['type'];
+        $id = (string) $node['id'];
+        $classes = 'vdm-node vdm-node--' . sanitize_html_class($type);
+        $style = self::geometryStyle($node) . self::propertyStyle($node);
+
+        ob_start();
+        echo '<div class="' . esc_attr($classes) . '" data-vdm-node-id="' . esc_attr($id) . '" data-vdm-node-type="' . esc_attr($type) . '" style="' . esc_attr($style) . '">';
+
+        if ($type === NodeSchema::SECTION || $type === NodeSchema::CONTAINER) {
+            echo '<div class="vdm-node-surface">';
+            foreach ($children[$id] ?? [] as $child) {
+                echo self::node($child, $children); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            }
+            echo '</div>';
+        } elseif ($type === NodeSchema::TEXT) {
+            echo '<div class="vdm-text">' . wp_kses_post((string) ($node['props']['content'] ?? '')) . '</div>';
+        } elseif ($type === NodeSchema::IMAGE) {
+            $attachmentId = absint($node['props']['attachmentId'] ?? 0);
+            $src = $attachmentId > 0 ? wp_get_attachment_image_url($attachmentId, 'large') : false;
+            if (is_string($src) && $src !== '') {
+                echo '<img class="vdm-image" src="' . esc_url($src) . '" alt="' . esc_attr((string) ($node['props']['alt'] ?? '')) . '">';
+            } else {
+                echo '<div class="vdm-image-placeholder">Billede</div>';
+            }
+        } elseif ($type === NodeSchema::BUTTON) {
+            echo '<a class="vdm-button" href="' . esc_url((string) ($node['props']['url'] ?? '#')) . '">' . esc_html((string) ($node['props']['label'] ?? 'Knap')) . '</a>';
+        } elseif ($type === NodeSchema::DIVIDER) {
+            echo '<hr class="vdm-divider">';
+        }
+
+        echo '</div>';
+        return (string) ob_get_clean();
+    }
+
+    /** @param array<string,mixed> $node */
+    private static function geometryStyle(array $node): string
+    {
+        $responsive = is_array($node['responsive'] ?? null) ? $node['responsive'] : [];
+        $resolved = [];
+        $last = ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4];
+
+        foreach (Breakpoint::ordered() as $breakpoint) {
+            if (isset($responsive[$breakpoint]) && is_array($responsive[$breakpoint])) {
+                $last = NodeSchema::normalizeGeometry($responsive[$breakpoint]);
+            }
+            $resolved[$breakpoint] = $last;
+        }
+
+        $prefixes = [
+            Breakpoint::DESKTOP => 'd',
+            Breakpoint::LAPTOP => 'l',
+            Breakpoint::TABLET => 't',
+            Breakpoint::MOBILE => 'm',
+        ];
+
+        $parts = [];
+        foreach ($prefixes as $breakpoint => $prefix) {
+            $geometry = $resolved[$breakpoint];
+            foreach (['x', 'y', 'w', 'h'] as $key) {
+                $parts[] = '--vdm-' . $prefix . '-' . $key . ':' . (int) $geometry[$key];
+            }
+        }
+
+        return implode(';', $parts) . ';';
+    }
+
+    /** @param array<string,mixed> $node */
+    private static function propertyStyle(array $node): string
+    {
+        $type = (string) $node['type'];
+        $props = is_array($node['props'] ?? null) ? $node['props'] : [];
+        $parts = [];
+
+        if ($type === NodeSchema::SECTION || $type === NodeSchema::CONTAINER) {
+            $parts[] = '--vdm-background:' . (string) ($props['background'] ?? 'transparent');
+            $parts[] = '--vdm-padding:' . (int) ($props['padding'] ?? 0) . 'px';
+        } elseif ($type === NodeSchema::TEXT) {
+            $parts[] = '--vdm-color:' . (string) ($props['color'] ?? '#222222');
+            $parts[] = '--vdm-font-size:' . (int) ($props['fontSize'] ?? 18) . 'px';
+        } elseif ($type === NodeSchema::IMAGE) {
+            $parts[] = '--vdm-object-fit:' . (string) ($props['objectFit'] ?? 'cover');
+        } elseif ($type === NodeSchema::BUTTON) {
+            $parts[] = '--vdm-button-background:' . (string) ($props['background'] ?? '#2f4858');
+            $parts[] = '--vdm-button-color:' . (string) ($props['color'] ?? '#ffffff');
+            $parts[] = '--vdm-button-radius:' . (int) ($props['radius'] ?? 4) . 'px';
+        } elseif ($type === NodeSchema::DIVIDER) {
+            $parts[] = '--vdm-divider-color:' . (string) ($props['color'] ?? '#d0d0d0');
+            $parts[] = '--vdm-divider-thickness:' . (int) ($props['thickness'] ?? 1) . 'px';
+        }
+
+        return $parts === [] ? '' : implode(';', $parts) . ';';
+    }
+
+    private function __construct()
+    {
+    }
+}

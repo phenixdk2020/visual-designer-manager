@@ -36,10 +36,13 @@ final class AdminController
             wp_die(esc_html__('Du har ikke adgang til Visual Designer Manager.', 'visual-designer-manager'));
         }
 
+        $designerUrl = admin_url('admin.php?page=' . DesignerController::MENU_SLUG);
+
         echo '<div class="wrap">';
         echo '<h1>Visual Designer Manager</h1>';
         echo '<p><strong>Version ' . esc_html(VDM_VERSION) . '</strong></p>';
-        echo '<p>Version 2-kernen er aktiv. Designer, moduler, siteindstillinger og portable data bygges oven på denne VDM-kontrakt.</p>';
+        echo '<p>V2-kernen bruger sin egen layoutmodel, renderer, lagring og API-kontrakt.</p>';
+        echo '<p><a class="button button-primary" href="' . esc_url($designerUrl) . '">Åbn Designer</a></p>';
         echo '</div>';
     }
 }
