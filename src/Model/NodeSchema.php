@@ -14,6 +14,7 @@ final class NodeSchema
     public const SPACER = 'spacer';
     public const DIVIDER = 'divider';
     public const EVENTS = 'events';
+    public const VEHICLES = 'vehicles';
 
     /** @return list<string> */
     public static function types(): array
@@ -27,6 +28,7 @@ final class NodeSchema
             self::SPACER,
             self::DIVIDER,
             self::EVENTS,
+            self::VEHICLES,
         ];
     }
 
@@ -123,6 +125,7 @@ final class NodeSchema
             self::SPACER => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4],
             self::DIVIDER => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 2],
             self::EVENTS => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60],
+            self::VEHICLES => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60],
             default => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4],
         };
     }
@@ -161,6 +164,20 @@ final class NodeSchema
             self::EVENTS => [
                 'count' => 6,
                 'showPast' => false,
+                'columns' => 3,
+                'gap' => 20,
+                'padding' => 18,
+                'radius' => 6,
+                'cardBackground' => '#ffffff',
+                'textColor' => '#222222',
+                'headingColor' => '#222222',
+                'accentColor' => '#2f4858',
+                'showImage' => true,
+                'showSummary' => true,
+                'showFacts' => true,
+            ],
+            self::VEHICLES => [
+                'count' => 12,
                 'columns' => 3,
                 'gap' => 20,
                 'padding' => 18,
@@ -249,6 +266,23 @@ final class NodeSchema
             return [
                 'count' => max(1, min(24, (int) ($props['count'] ?? $defaults['count']))),
                 'showPast' => !empty($props['showPast']),
+                'columns' => max(1, min(4, (int) ($props['columns'] ?? $defaults['columns']))),
+                'gap' => max(0, min(80, (int) ($props['gap'] ?? $defaults['gap']))),
+                'padding' => max(0, min(80, (int) ($props['padding'] ?? $defaults['padding']))),
+                'radius' => max(0, min(60, (int) ($props['radius'] ?? $defaults['radius']))),
+                'cardBackground' => self::color((string) ($props['cardBackground'] ?? $defaults['cardBackground']), (string) $defaults['cardBackground']),
+                'textColor' => self::color((string) ($props['textColor'] ?? $defaults['textColor']), (string) $defaults['textColor']),
+                'headingColor' => self::color((string) ($props['headingColor'] ?? $defaults['headingColor']), (string) $defaults['headingColor']),
+                'accentColor' => self::color((string) ($props['accentColor'] ?? $defaults['accentColor']), (string) $defaults['accentColor']),
+                'showImage' => !array_key_exists('showImage', $props) || !empty($props['showImage']),
+                'showSummary' => !array_key_exists('showSummary', $props) || !empty($props['showSummary']),
+                'showFacts' => !array_key_exists('showFacts', $props) || !empty($props['showFacts']),
+            ];
+        }
+
+        if ($type === self::VEHICLES) {
+            return [
+                'count' => max(1, min(50, (int) ($props['count'] ?? $defaults['count']))),
                 'columns' => max(1, min(4, (int) ($props['columns'] ?? $defaults['columns']))),
                 'gap' => max(0, min(80, (int) ($props['gap'] ?? $defaults['gap']))),
                 'padding' => max(0, min(80, (int) ($props['padding'] ?? $defaults['padding']))),
