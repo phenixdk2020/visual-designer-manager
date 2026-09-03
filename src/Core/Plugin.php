@@ -9,8 +9,10 @@ use VisualDesignerManager\Admin\DesignerController;
 use VisualDesignerManager\Admin\EventController;
 use VisualDesignerManager\Admin\SiteDesignController;
 use VisualDesignerManager\Admin\TemplateDesignerController;
+use VisualDesignerManager\Admin\VehicleController;
 use VisualDesignerManager\Frontend\EventFrontendController;
 use VisualDesignerManager\Frontend\FrontendController;
+use VisualDesignerManager\Frontend\VehicleFrontendController;
 use VisualDesignerManager\Http\RestController;
 
 final class Plugin
@@ -33,8 +35,10 @@ final class Plugin
         TemplateDesignerController::register();
         SiteDesignController::register();
         EventController::register();
+        VehicleController::register();
         FrontendController::register();
         EventFrontendController::register();
+        VehicleFrontendController::register();
         RestController::register();
     }
 
@@ -43,6 +47,7 @@ final class Plugin
         update_option('vdm_schema_version', 2, true);
         update_option('vdm_plugin_version', VDM_VERSION, true);
         EventController::postType();
+        VehicleController::postType();
         flush_rewrite_rules(false);
     }
 
