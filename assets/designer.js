@@ -8,7 +8,8 @@
     const saveStatus = document.getElementById('vdm-save-status');
     const undoButton = document.getElementById('vdm-undo');
     const redoButton = document.getElementById('vdm-redo');
-    if (!canvas || !inspector || !saveButton || !config.pageId) return;
+    const hasDesignerTarget = Number.parseInt(config.pageId || '0', 10) > 0 || Boolean(config.templateSlot) || Boolean(config.ready);
+    if (!canvas || !inspector || !saveButton || !hasDesignerTarget) return;
 
     const order = ['desktop', 'laptop', 'tablet', 'mobile'];
     const prefixes = {desktop: 'd', laptop: 'l', tablet: 't', mobile: 'm'};
@@ -263,7 +264,8 @@
 
     async function renderPreview() {
         try {
-            const response = await fetch(config.restBase + '/render', {
+            const renderUrl = config.renderUrl || (config.restBase + '/render');
+            const response = await fetch(renderUrl, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'X-WP-Nonce': config.nonce},
                 body: JSON.stringify({document: documentState})
@@ -1142,7 +1144,8 @@
         saveStatus.textContent = 'Gemmer…';
         try {
             applyAutoHeight(breakpoint);
-            const response = await fetch(config.restBase + '/layouts/' + config.pageId, {
+            const saveUrl = config.saveUrl || (config.restBase + '/layouts/' + config.pageId);
+            const response = await fetch(saveUrl, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json', 'X-WP-Nonce': config.nonce},
                 body: JSON.stringify({document: documentState})
