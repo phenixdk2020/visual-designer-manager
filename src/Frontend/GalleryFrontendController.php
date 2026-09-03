@@ -34,7 +34,7 @@ final class GalleryFrontendController
             return $template;
         }
 
-        wp_enqueue_style('vdm-frontend');
+        FrontendController::enqueueAssets();
         return $shell;
     }
 
@@ -53,7 +53,7 @@ final class GalleryFrontendController
             return $content;
         }
 
-        wp_enqueue_style('vdm-frontend');
+        FrontendController::enqueueAssets();
         return GalleryRenderer::renderDetail($postId);
     }
 }
