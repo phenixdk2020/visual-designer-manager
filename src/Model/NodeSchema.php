@@ -128,8 +128,18 @@ final class NodeSchema
     private static function defaultProps(string $type): array
     {
         return match ($type) {
-            self::SECTION => ['background' => '#ffffff', 'padding' => 0],
-            self::CONTAINER => ['background' => 'transparent', 'padding' => 16],
+            self::SECTION => [
+                'background' => '#ffffff',
+                'padding' => 0,
+                'autoHeight' => true,
+                'minHeightRows' => 36,
+            ],
+            self::CONTAINER => [
+                'background' => 'transparent',
+                'padding' => 16,
+                'autoHeight' => true,
+                'minHeightRows' => 24,
+            ],
             self::TEXT => ['content' => '<p>Tekst</p>', 'color' => '#222222', 'fontSize' => 18],
             self::IMAGE => ['attachmentId' => 0, 'alt' => '', 'objectFit' => 'cover'],
             self::BUTTON => [
@@ -155,6 +165,8 @@ final class NodeSchema
             return [
                 'background' => self::color((string) ($props['background'] ?? $defaults['background']), (string) $defaults['background']),
                 'padding' => max(0, min(120, (int) ($props['padding'] ?? $defaults['padding']))),
+                'autoHeight' => !array_key_exists('autoHeight', $props) || (bool) $props['autoHeight'],
+                'minHeightRows' => max(1, min(2000, (int) ($props['minHeightRows'] ?? $defaults['minHeightRows']))),
             ];
         }
 
