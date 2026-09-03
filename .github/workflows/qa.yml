@@ -1,0 +1,32 @@
+name: Visual Designer Manager 2 QA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -type f -name '*.php' -print0 | while IFS= read -r -d '' file; do
+            php -l "$file" >/dev/null
+          done
+          echo 'PHP syntax: PASS'
+
+      - name: V2 identity gate
+        run: python3 tests/identity_gate.py
+
+      - name: V2 bootstrap contract
+        run: python3 tests/v2_contract.py
