@@ -39,9 +39,10 @@ final class DesignerController
             return;
         }
 
+        wp_enqueue_media();
         wp_enqueue_style('vdm-frontend', VDM_URL . 'assets/frontend.css', [], VDM_VERSION);
         wp_enqueue_style('vdm-designer', VDM_URL . 'assets/designer.css', ['vdm-frontend'], VDM_VERSION);
-        wp_enqueue_script('vdm-designer', VDM_URL . 'assets/designer.js', [], VDM_VERSION, true);
+        wp_enqueue_script('vdm-designer', VDM_URL . 'assets/designer.js', ['media-editor'], VDM_VERSION, true);
 
         $postId = self::requestedPageId();
         wp_localize_script('vdm-designer', 'VDMDesignerConfig', [
@@ -50,6 +51,7 @@ final class DesignerController
             'nonce' => wp_create_nonce('wp_rest'),
             'document' => $postId > 0 ? LayoutRepository::get($postId) : null,
             'version' => $postId > 0 ? LayoutRepository::version($postId) : 0,
+            'themeColors' => self::themeColors(),
         ]);
     }
 
@@ -112,6 +114,59 @@ final class DesignerController
         echo '<main class="vdm-stage"><div class="vdm-stage-scroll"><div id="vdm-canvas" data-vdm-breakpoint="desktop" aria-label="Designer canvas"></div></div></main>';
         echo '<aside class="vdm-panel vdm-inspector"><h2>Indstillinger</h2><div id="vdm-inspector"><p>Vælg et element.</p></div></aside>';
         echo '</div></div>';
+    }
+
+    /** @return list<string> */
+    private static function themeColors(): array
+    {
+        $colors = [];
+
+        if (function_exists('wp_get_global_settings')) {
+            $settings = wp_get_global_settings();
+            self::collectColors($settings['color']['palette'] ?? [], $colors);
+        }
+
+        foreach ([
+            get_theme_mod('background_color'),
+            get_theme_mod('header_textcolor'),
+            get_theme_mod('accent_color'),
+        ] as $value) {
+            if (!is_string($value) || $value === '') {
+                continue;
+            }
+            if ($value[0] !== '#') {
+                $value = '#' . $value;
+            }
+            $color = sanitize_hex_color($value);
+            if (is_string($color)) {
+                $colors[] = strtolower($color);
+            }
+        }
+
+        return array_values(array_unique($colors));
+    }
+
+    /** @param mixed $value
+     *  @param list<string> $colors
+     */
+    private static function collectColors($value, array &$colors): void
+    {
+        if (!is_array($value)) {
+            return;
+        }
+
+        if (isset($value['color']) && is_string($value['color'])) {
+            $color = sanitize_hex_color($value['color']);
+            if (is_string($color)) {
+                $colors[] = strtolower($color);
+            }
+        }
+
+        foreach ($value as $child) {
+            if (is_array($child)) {
+                self::collectColors($child, $colors);
+            }
+        }
     }
 
     private static function requestedPageId(): int
