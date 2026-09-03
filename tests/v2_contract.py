@@ -9,7 +9,12 @@ layout = (ROOT / 'src/Model/LayoutDocument.php').read_text(encoding='utf-8')
 breakpoints = (ROOT / 'src/Model/Breakpoint.php').read_text(encoding='utf-8')
 
 assert 'Plugin Name: Visual Designer Manager' in main
-assert re.search(r'Version:\s*2\.0\.0-alpha\.2', main)
+version_match = re.search(r'Version:\s*2\.0\.0(?:-(alpha|beta|rc)\.(\d+))?', main)
+assert version_match, 'V2 runtime version missing'
+stage = version_match.group(1)
+number = int(version_match.group(2) or 0)
+if stage == 'alpha':
+    assert number >= 2, 'bootstrap contract requires alpha.2 or newer'
 for constant in ('VDM_VERSION', 'VDM_FILE', 'VDM_DIR', 'VDM_URL'):
     assert constant in main, constant
 assert "public const MENU_SLUG = 'vdm-manager';" in admin
