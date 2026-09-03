@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.0.0-beta.1
+
+- Added V2-native `Kontaktformular` and `Bliv medlem` page Designer nodes.
+- Both presets use one canonical `FormRenderer`, so Designer preview and frontend share the same field, textarea, consent and submit-button markup.
+- Added Inspector controls for columns, spacing, padding, radius, form/field/text/label/border/button colors, submit label, success message and optional fields.
+- Added configurable phone, subject/address, message rows and consent text/requirement.
+- Added a secure WordPress `admin-post.php` submission handler for logged-in and anonymous visitors.
+- Form submissions are validated against the stored V2 page and exact form node ID/type before mail is sent.
+- Recipient addresses are never accepted from browser form data; VDM uses `vdm_contact_email` when configured and otherwise the WordPress administration e-mail address.
+- Added nonce verification, a honeypot field, field sanitization, safe redirect validation and 303 redirects after submission.
+- Form submissions are delivered through `wp_mail()` and are not copied into a separate VDM submission database.
+- Added canonical responsive form CSS and blocked actual submission inside the Designer canvas.
+- Forms are intentionally excluded from the Header/Footer palette.
+- Hardened Header/Footer Designer runtime endpoint handling and added a permanent runtime regression contract.
+- Expanded QA with the beta.1 Forms contract.
+
 ## 2.0.0-alpha.8
 
 - Added the V2-native `vdm_gallery` album content type with title, editor, featured cover and explicit image ordering.
