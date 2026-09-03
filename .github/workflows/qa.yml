@@ -39,3 +39,6 @@ jobs:
 
       - name: Alpha 3 interaction contract
         run: python3 tests/alpha3_interaction_contract.py
+
+      - name: Alpha 4 editor controls contract
+        run: python3 tests/alpha4_editor_controls_contract.py
