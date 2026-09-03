@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0-alpha.5
+
+- Added independent V2 Header and Footer layout documents with their own version/history storage.
+- Added a Header / Footer Designer using the same canonical node model, renderer, breakpoints, drag/resize, media controls and color picker as page layouts.
+- Added V2 global Site Design storage for content width, side padding, background, text, heading, links, base font size and font family.
+- Added an explicit `Brug VDM som sideskal` switch; no destructive theme changes are performed automatically.
+- Added a canonical VDM page shell with `wp_head()`, `wp_body_open()` and `wp_footer()` integration.
+- Added site-shell frontend routing for V2 pages while retaining the normal theme path when the shell is disabled.
+- Added global site CSS variables shared by Header, page content and Footer.
+- Expanded the V2 REST layout endpoint to support `global-header` and `global-footer` documents without compatibility aliases.
+- Expanded QA with the alpha.5 site-shell contract.
+
 ## 2.0.0-alpha.4
 
 - Added a compact VDM color popup that opens only when a color control is clicked.
