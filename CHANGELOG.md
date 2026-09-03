@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.0-alpha.6
+
+- Added the V2-native `vdm_event` content type with title, editor and featured image support.
+- Added canonical Event fields for date, start/end time, location, address, contact and summary.
+- Added an Events Designer node with count, past-event visibility, columns, spacing, card padding, radius and display toggles.
+- Added theme-aware card, text, heading and accent color controls using the shared VDM color popup.
+- Added one canonical Event renderer used by Designer preview and frontend page layouts.
+- Added Event cards with featured image, fact ribbon, summary and detail links.
+- Added detail facts for Dato, Tid, Sted, Adresse and Kontakt.
+- Added an Event detail renderer and optional VDM site-shell route using the same Header/Footer/Site Design stack as V2 pages.
+- Added responsive Event card CSS for desktop, tablet and mobile.
+- Added rewrite-rule refresh on plugin activation/deactivation for the V2 Event content type.
+- Expanded QA with the alpha.6 Events contract.
+
 ## 2.0.0-alpha.5
 
 - Added independent V2 Header and Footer layout documents with their own version/history storage.
