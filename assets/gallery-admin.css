@@ -1,0 +1,5 @@
+.vdm-gallery-image-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-top:12px}
+.vdm-gallery-admin-image{display:flex;flex-direction:column;gap:6px;padding:8px;background:#fff;border:1px solid #dcdcde;cursor:grab;box-sizing:border-box}
+.vdm-gallery-admin-image.is-dragging{opacity:.5;cursor:grabbing}
+.vdm-gallery-admin-image img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:#f0f0f1}
+.vdm-gallery-admin-image .button-link-delete{align-self:flex-start}
