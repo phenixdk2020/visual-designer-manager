@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.0.0-rc.1
+
+- Added an isolated schema `1.0` site-package migrator without introducing runtime compatibility storage or aliases into V2.
+- Added strict schema `1.0` package validation for safe paths, case-insensitive duplicates, symbolic links, unlisted files, size limits, per-file SHA-256 and the original deterministic package content digest.
+- Added a convert-then-import architecture: a validated schema `1.0` upload is converted to a temporary native schema `2.0` package, that native package is fully validated again, and the existing canonical V2 importer performs the actual WordPress changes.
+- Added preflight migration metadata and warnings while preserving the rule that preflight itself does not mutate WordPress content.
+- Added 120-unit to 12-column responsive geometry conversion while preserving the 8 px vertical row grid.
+- Added conversion for previous-generation Section, Container, Text, Image, Button, Spacer, Divider, Contact Form, Membership Form and Navigation nodes.
+- Added visible fallback conversion for table, data-list, icon and badge content into canonical V2 Text nodes.
+- Added conversion of previous event, vehicle and gallery records into V2-native content types plus list-node injection on their corresponding pages.
+- Previous generated Event, Vehicle and Gallery detail-layout pages are omitted during migration because V2 uses native detail renderers; the migration reports this in preflight warnings.
+- Added media conversion using only originals present in the validated package; remote media URLs that have no packaged original are not downloaded implicitly.
+- Extended the general V2 Section/Container contract with radius, border width and border color.
+- Extended the general V2 Text contract with font weight, line height, horizontal alignment, vertical alignment, background, padding and radius.
+- Extended the general V2 Button contract with border width and border color.
+- Added matching Designer Inspector controls and canonical renderer/CSS variables for those presentation properties so migrated values remain editable and render identically through the normal V2 pipeline.
+- Added the permanent RC.1 schema migration/parity contract on top of the full alpha.1 through beta.3 regression chain.
+- Automated RC.1 code QA is complete; production release remains gated on importing the intended package into an actual WordPress target and completing Designer → Preview → Live acceptance QA.
+
 ## 2.0.0-beta.3
 
 - Added the native V2 portable package format with schema `2.0` and explicit required payload paths.
