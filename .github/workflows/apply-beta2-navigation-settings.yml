@@ -1,0 +1,47 @@
+name: Apply VDM 2 beta.2 Navigation Settings
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_beta2_navigation_settings.py'
+      - '.github/workflows/apply-beta2-navigation-settings.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip beta2 apply]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic beta.2 migration
+        run: python3 .github/scripts/apply_beta2_navigation_settings.py
+
+      - name: Validate JavaScript and PHP
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/designer.js
+          node --check assets/frontend.js
+          node --check assets/site-settings.js
+          find src -type f -name '*.php' -print0 | while IFS= read -r -d '' file; do php -l "$file" >/dev/null; done
+
+      - name: Commit beta.2 migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'No changes required.'
+            exit 0
+          fi
+          git config user.name 'phenixdk2020'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add src/Model/NodeSchema.php src/Frontend/Renderer.php src/Admin/DesignerController.php src/Admin/TemplateDesignerController.php src/Core/Plugin.php src/Admin/AdminController.php assets/designer.js assets/frontend.css visual-designer-manager.php
+          git commit -m 'Apply VDM 2 beta.2 Navigation and Site Settings [skip beta2 apply]'
+          git push origin HEAD:main
