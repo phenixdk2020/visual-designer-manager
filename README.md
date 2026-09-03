@@ -4,7 +4,7 @@ Visual Designer Manager is a model-driven visual WordPress designer.
 
 ## Current version
 
-`2.0.0-alpha.4`
+`2.0.0-alpha.5`
 
 ## Version 2 principles
 
@@ -41,7 +41,7 @@ docs/
 
 ## Current Designer foundation
 
-Alpha.4 includes:
+Alpha.5 includes:
 
 - V2-only page layout storage and version counter.
 - Section, Container, Text, Image, Button, Spacer and Divider node contracts.
@@ -57,16 +57,23 @@ Alpha.4 includes:
 - WordPress Media Library image selection.
 - Extended Button controls.
 - Compact theme-aware VDM color popup with recent colors.
+- Independent Header and Footer V2 documents with the same Designer toolchain.
+- Global Site Design tokens.
+- Optional complete VDM site shell with canonical Header → Page → Footer rendering.
 
 The V2 layout document uses schema version `2` and an 8 px row grid.
+
+## Site shell
+
+`Site Design` contains an explicit `Brug VDM som sideskal` switch. When disabled, WordPress continues to use the active theme template and VDM only replaces page content that has a V2 layout. When enabled for a V2 page, VDM renders its own shell using `wp_head()`, `wp_body_open()` and `wp_footer()` plus the V2 Header and Footer documents.
 
 ## Development sequence
 
 1. `2.0.0-alpha.1` — bootstrap, identity gate and canonical model foundation. **Done.**
 2. `2.0.0-alpha.2` — Designer workspace, node model and renderer contract. **Done.**
 3. `2.0.0-alpha.3` — drag/resize, grid snap, auto-height and Undo/Redo. **Done.**
-4. `2.0.0-alpha.4` — text editing, Media Library, button controls and shared theme-aware color picker. **Current.**
-5. `2.0.0-alpha.5` — Header/Footer and global site design.
+4. `2.0.0-alpha.4` — text editing, Media Library, button controls and shared theme-aware color picker. **Done.**
+5. `2.0.0-alpha.5` — Header/Footer and global site design. **Current.**
 6. `2.0.0-alpha.6` — Events.
 7. `2.0.0-alpha.7` — Vehicles.
 8. `2.0.0-alpha.8` — Gallery.
