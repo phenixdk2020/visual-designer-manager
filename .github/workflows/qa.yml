@@ -42,3 +42,6 @@ jobs:
 
       - name: Alpha 4 editor controls contract
         run: python3 tests/alpha4_editor_controls_contract.py
+
+      - name: Alpha 5 site shell contract
+        run: python3 tests/alpha5_site_shell_contract.py
