@@ -69,6 +69,8 @@ final class Renderer
             echo '<a class="vdm-button" href="' . esc_url((string) ($node['props']['url'] ?? '#')) . '" target="' . esc_attr($target) . '"' . $rel . '>' . esc_html((string) ($node['props']['label'] ?? 'Knap')) . '</a>';
         } elseif ($type === NodeSchema::EVENTS) {
             echo EventRenderer::renderList(is_array($node['props'] ?? null) ? $node['props'] : []); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        } elseif ($type === NodeSchema::VEHICLES) {
+            echo VehicleRenderer::renderList(is_array($node['props'] ?? null) ? $node['props'] : []); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         } elseif ($type === NodeSchema::DIVIDER) {
             echo '<hr class="vdm-divider">';
         }
