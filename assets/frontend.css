@@ -1,3 +1,9 @@
+.vdm-site-shell-active{margin:0;background:var(--vdm-site-background,#fff);color:var(--vdm-site-text,#222);font-size:var(--vdm-site-font-size,16px);font-family:var(--vdm-site-font,inherit)}
+.vdm-site-shell{min-height:100vh;background:var(--vdm-site-background,#fff);color:var(--vdm-site-text,#222);font-size:var(--vdm-site-font-size,16px);font-family:var(--vdm-site-font,inherit)}
+.vdm-site-region{width:min(100%,var(--vdm-site-max-width,1440px));margin-inline:auto;padding-inline:var(--vdm-site-padding,24px);box-sizing:border-box}
+.vdm-site-main{min-height:1px}
+.vdm-site-shell h1,.vdm-site-shell h2,.vdm-site-shell h3,.vdm-site-shell h4,.vdm-site-shell h5,.vdm-site-shell h6{color:var(--vdm-site-heading,#222)}
+.vdm-site-shell a:not(.vdm-button){color:var(--vdm-site-link,#2271b1)}
 .vdm-layout,
 .vdm-node-surface{
     display:grid;
@@ -43,5 +49,6 @@
     .vdm-node{--vdm-x:var(--vdm-t-x);--vdm-y:var(--vdm-t-y);--vdm-w:var(--vdm-t-w);--vdm-h:var(--vdm-t-h)}
 }
 @media (max-width:782px){
+    .vdm-site-region{padding-inline:min(var(--vdm-site-padding,24px),16px)}
     .vdm-node{--vdm-x:var(--vdm-m-x);--vdm-y:var(--vdm-m-y);--vdm-w:var(--vdm-m-w);--vdm-h:var(--vdm-m-h)}
 }
