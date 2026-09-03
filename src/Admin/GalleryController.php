@@ -58,6 +58,7 @@ final class GalleryController
         }
 
         wp_enqueue_media();
+        wp_enqueue_style('vdm-gallery-admin', VDM_URL . 'assets/gallery-admin.css', [], VDM_VERSION);
         wp_enqueue_script('vdm-gallery-admin', VDM_URL . 'assets/gallery-admin.js', ['media-editor'], VDM_VERSION, true);
     }
 
