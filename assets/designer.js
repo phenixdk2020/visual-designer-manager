@@ -59,7 +59,7 @@
             container: {background: 'transparent', padding: 16, autoHeight: true, minHeightRows: 24},
             text: {content: '<p>Tekst</p>', color: '#222222', fontSize: 18},
             image: {attachmentId: 0, alt: '', objectFit: 'cover'},
-            button: {label: 'Knap', url: '#', background: '#2f4858', color: '#ffffff', radius: 4},
+            button: {label: 'Knap', url: '#', target: '_self', align: 'left', background: '#2f4858', color: '#ffffff', radius: 4, paddingX: 18, paddingY: 10, fontSize: 16, fontWeight: 600},
             spacer: {},
             divider: {color: '#d0d0d0', thickness: 1}
         }[type] || {};
@@ -164,14 +164,18 @@
         saveStatus.textContent = dirty ? 'Ikke gemt' : 'Gemt · version ' + (config.version || 0);
     }
 
-    function afterMutation(before, {render = true} = {}) {
+    function afterMutation(before, {render = true, inspectorRefresh = true} = {}) {
         applyAutoHeight(breakpoint);
         const after = serialize();
         if (after === before) return false;
         pushUndo(before);
         updateDirtyState();
         if (render) scheduleRender();
-        renderInspector();
+        if (inspectorRefresh) {
+            renderInspector();
+        } else {
+            updateHistoryButtons();
+        }
         return true;
     }
 
@@ -510,12 +514,322 @@
         return input;
     }
 
-    function colorInput(value, callback) {
-        const input = document.createElement('input');
-        input.type = 'color';
-        input.value = /^#[0-9a-f]{6}$/i.test(value || '') ? value : '#ffffff';
-        input.addEventListener('input', () => callback(input.value));
-        return input;
+    let activeColorPopover = null;
+
+    function normalizeHex(value, fallback = '#ffffff') {
+        const text = String(value || '').trim();
+        return /^#[0-9a-f]{6}$/i.test(text) ? text.toLowerCase() : fallback;
+    }
+
+    function hexToRgb(hex) {
+        const value = normalizeHex(hex).slice(1);
+        return {
+            r: Number.parseInt(value.slice(0, 2), 16),
+            g: Number.parseInt(value.slice(2, 4), 16),
+            b: Number.parseInt(value.slice(4, 6), 16)
+        };
+    }
+
+    function rgbToHex(r, g, b) {
+        const part = value => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0');
+        return '#' + part(r) + part(g) + part(b);
+    }
+
+    function rgbToHsv({r, g, b}) {
+        const rr = r / 255;
+        const gg = g / 255;
+        const bb = b / 255;
+        const max = Math.max(rr, gg, bb);
+        const min = Math.min(rr, gg, bb);
+        const delta = max - min;
+        let h = 0;
+        if (delta !== 0) {
+            if (max === rr) h = 60 * (((gg - bb) / delta) % 6);
+            else if (max === gg) h = 60 * (((bb - rr) / delta) + 2);
+            else h = 60 * (((rr - gg) / delta) + 4);
+        }
+        if (h < 0) h += 360;
+        return {h, s: max === 0 ? 0 : delta / max, v: max};
+    }
+
+    function hsvToHex(h, sValue, vValue) {
+        const c = vValue * sValue;
+        const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+        const m = vValue - c;
+        let rgb = [0, 0, 0];
+        if (h < 60) rgb = [c, x, 0];
+        else if (h < 120) rgb = [x, c, 0];
+        else if (h < 180) rgb = [0, c, x];
+        else if (h < 240) rgb = [0, x, c];
+        else if (h < 300) rgb = [x, 0, c];
+        else rgb = [c, 0, x];
+        return rgbToHex((rgb[0] + m) * 255, (rgb[1] + m) * 255, (rgb[2] + m) * 255);
+    }
+
+    function recentColors() {
+        try {
+            const value = JSON.parse(window.localStorage.getItem('vdm_recent_colors_v2') || '[]');
+            return Array.isArray(value) ? value.filter(color => /^#[0-9a-f]{6}$/i.test(color)).slice(0, 12) : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function rememberColor(color) {
+        try {
+            const value = normalizeHex(color);
+            const colors = [value, ...recentColors().filter(item => item !== value)].slice(0, 12);
+            window.localStorage.setItem('vdm_recent_colors_v2', JSON.stringify(colors));
+        } catch (error) {
+            // Browser storage may be unavailable; the picker still works.
+        }
+    }
+
+    function setColorControl(button, color) {
+        const value = normalizeHex(color);
+        button.dataset.color = value;
+        const swatch = button.querySelector('.vdm-color-trigger-swatch');
+        const text = button.querySelector('.vdm-color-trigger-value');
+        if (swatch) swatch.style.backgroundColor = value;
+        if (text) text.textContent = value.toUpperCase();
+    }
+
+    function closeColorPopover() {
+        if (!activeColorPopover) return;
+        const {element, outsideHandler, keyHandler} = activeColorPopover;
+        document.removeEventListener('pointerdown', outsideHandler, true);
+        document.removeEventListener('keydown', keyHandler, true);
+        element.remove();
+        activeColorPopover = null;
+    }
+
+    function colorSwatch(color, current, callback) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'vdm-color-swatch';
+        button.style.backgroundColor = color;
+        button.title = color.toUpperCase();
+        button.classList.toggle('is-active', normalizeHex(color) === normalizeHex(current));
+        button.addEventListener('click', () => callback(normalizeHex(color)));
+        return button;
+    }
+
+    function openColorPopover(trigger, initialValue, callback) {
+        closeColorPopover();
+
+        let current = normalizeHex(initialValue);
+        let hsv = rgbToHsv(hexToRgb(current));
+        let mode = 'picker';
+
+        const popover = document.createElement('div');
+        popover.className = 'vdm-color-popover';
+        popover.setAttribute('role', 'dialog');
+        popover.setAttribute('aria-label', 'Farvevælger');
+
+        const body = document.createElement('div');
+        body.className = 'vdm-color-popover-body';
+        popover.append(body);
+
+        const actions = document.createElement('div');
+        actions.className = 'vdm-color-popover-actions';
+        const cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.className = 'button';
+        cancel.textContent = 'Annuller';
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'button';
+        toggle.textContent = 'Tema';
+        const apply = document.createElement('button');
+        apply.type = 'button';
+        apply.className = 'button button-primary';
+        apply.textContent = 'Anvend';
+        actions.append(cancel, toggle, apply);
+        popover.append(actions);
+
+        function updateCurrent(value) {
+            current = normalizeHex(value, current);
+            hsv = rgbToHsv(hexToRgb(current));
+            renderBody();
+        }
+
+        function renderPicker() {
+            const plane = document.createElement('div');
+            plane.className = 'vdm-color-plane';
+            const cursor = document.createElement('span');
+            cursor.className = 'vdm-color-plane-cursor';
+            plane.append(cursor);
+
+            const hue = document.createElement('input');
+            hue.type = 'range';
+            hue.className = 'vdm-color-hue';
+            hue.min = '0';
+            hue.max = '359';
+            hue.setAttribute('aria-label', 'Farvetone');
+
+            const hexRow = document.createElement('div');
+            hexRow.className = 'vdm-color-hex-row';
+            const preview = document.createElement('span');
+            preview.className = 'vdm-color-current';
+            const hex = document.createElement('input');
+            hex.type = 'text';
+            hex.maxLength = 7;
+            hex.setAttribute('aria-label', 'HEX-farve');
+            hexRow.append(preview, hex);
+
+            const standards = document.createElement('div');
+            standards.className = 'vdm-color-swatches';
+            const swatches = [];
+            ['#000000', '#ffffff', '#6a6963', '#2271b1', '#2f4858', '#d63638', '#00a32a', '#f0b849'].forEach(color => {
+                const swatch = colorSwatch(color, current, value => {
+                    current = normalizeHex(value, current);
+                    hsv = rgbToHsv(hexToRgb(current));
+                    syncPicker();
+                });
+                swatches.push(swatch);
+                standards.append(swatch);
+            });
+
+            function syncPicker() {
+                plane.style.setProperty('--vdm-picker-hue', String(hsv.h));
+                cursor.style.left = (hsv.s * 100) + '%';
+                cursor.style.top = ((1 - hsv.v) * 100) + '%';
+                hue.value = String(Math.round(hsv.h));
+                preview.style.backgroundColor = current;
+                hex.value = current.toUpperCase();
+                swatches.forEach(swatch => {
+                    swatch.classList.toggle('is-active', normalizeHex(swatch.title) === current);
+                });
+            }
+
+            plane.addEventListener('pointerdown', event => {
+                const rect = plane.getBoundingClientRect();
+                const applyPoint = pointEvent => {
+                    const x = Math.max(0, Math.min(rect.width, pointEvent.clientX - rect.left));
+                    const y = Math.max(0, Math.min(rect.height, pointEvent.clientY - rect.top));
+                    hsv.s = rect.width > 0 ? x / rect.width : 0;
+                    hsv.v = rect.height > 0 ? 1 - (y / rect.height) : 0;
+                    current = hsvToHex(hsv.h, hsv.s, hsv.v);
+                    syncPicker();
+                };
+                applyPoint(event);
+                const move = moveEvent => applyPoint(moveEvent);
+                const end = () => {
+                    window.removeEventListener('pointermove', move);
+                    window.removeEventListener('pointerup', end);
+                };
+                window.addEventListener('pointermove', move);
+                window.addEventListener('pointerup', end, {once: true});
+                event.preventDefault();
+            });
+
+            hue.addEventListener('input', () => {
+                hsv.h = Number.parseInt(hue.value, 10) || 0;
+                current = hsvToHex(hsv.h, hsv.s, hsv.v);
+                syncPicker();
+            });
+
+            hex.addEventListener('change', () => {
+                if (/^#[0-9a-f]{6}$/i.test(hex.value.trim())) {
+                    current = normalizeHex(hex.value.trim(), current);
+                    hsv = rgbToHsv(hexToRgb(current));
+                    syncPicker();
+                } else {
+                    hex.value = current.toUpperCase();
+                }
+            });
+
+            body.append(plane, hue, hexRow, standards);
+            syncPicker();
+        }
+
+        function renderTheme() {
+            const themeTitle = document.createElement('strong');
+            themeTitle.textContent = 'Temafarver';
+            body.append(themeTitle);
+
+            const theme = document.createElement('div');
+            theme.className = 'vdm-color-swatches vdm-color-swatches--theme';
+            const colors = Array.isArray(config.themeColors) ? config.themeColors : [];
+            if (colors.length === 0) {
+                const empty = document.createElement('p');
+                empty.textContent = 'Temaet har ikke angivet en farvepalette.';
+                body.append(empty);
+            } else {
+                colors.forEach(color => theme.append(colorSwatch(color, current, updateCurrent)));
+                body.append(theme);
+            }
+
+            const recent = recentColors();
+            const recentTitle = document.createElement('strong');
+            recentTitle.textContent = 'Senest brugt';
+            body.append(recentTitle);
+            const recentGrid = document.createElement('div');
+            recentGrid.className = 'vdm-color-swatches';
+            if (recent.length === 0) {
+                const empty = document.createElement('span');
+                empty.className = 'vdm-color-empty';
+                empty.textContent = 'Ingen endnu';
+                recentGrid.append(empty);
+            } else {
+                recent.forEach(color => recentGrid.append(colorSwatch(color, current, updateCurrent)));
+            }
+            body.append(recentGrid);
+        }
+
+        function renderBody() {
+            body.innerHTML = '';
+            if (mode === 'theme') renderTheme();
+            else renderPicker();
+            toggle.textContent = mode === 'theme' ? 'Farvevælger' : 'Tema';
+        }
+
+        toggle.addEventListener('click', () => {
+            mode = mode === 'theme' ? 'picker' : 'theme';
+            renderBody();
+        });
+        cancel.addEventListener('click', closeColorPopover);
+        apply.addEventListener('click', () => {
+            const selected = current;
+            rememberColor(selected);
+            closeColorPopover();
+            callback(selected);
+        });
+
+        renderBody();
+        document.body.append(popover);
+        const rect = trigger.getBoundingClientRect();
+        const popoverRect = popover.getBoundingClientRect();
+        const left = Math.max(8, Math.min(window.innerWidth - popoverRect.width - 8, rect.left));
+        const top = Math.max(8, Math.min(window.innerHeight - popoverRect.height - 8, rect.bottom + 6));
+        popover.style.left = left + 'px';
+        popover.style.top = top + 'px';
+
+        const outsideHandler = event => {
+            if (!popover.contains(event.target) && event.target !== trigger) closeColorPopover();
+        };
+        const keyHandler = event => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeColorPopover();
+            }
+        };
+        activeColorPopover = {element: popover, outsideHandler, keyHandler};
+        window.setTimeout(() => document.addEventListener('pointerdown', outsideHandler, true), 0);
+        document.addEventListener('keydown', keyHandler, true);
+    }
+
+    function colorControl(value, callback) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'vdm-color-trigger';
+        button.innerHTML = '<span class="vdm-color-trigger-swatch"></span><span class="vdm-color-trigger-value"></span>';
+        setColorControl(button, value);
+        button.addEventListener('click', () => openColorPopover(button, button.dataset.color, color => {
+            setColorControl(button, color);
+            callback(color);
+        }));
+        return button;
     }
 
     function checkboxInput(checked, callback) {
@@ -524,6 +838,97 @@
         input.checked = Boolean(checked);
         input.addEventListener('change', () => callback(input.checked));
         return input;
+    }
+
+    function richTextControl(node) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'vdm-rich-text-control';
+
+        const toolbar = document.createElement('div');
+        toolbar.className = 'vdm-rich-text-toolbar';
+        const editor = document.createElement('div');
+        editor.className = 'vdm-rich-text-editor';
+        editor.contentEditable = 'true';
+        editor.innerHTML = node.props.content || '<p>Tekst</p>';
+
+        const actions = [
+            ['P', 'formatBlock', 'p'],
+            ['H2', 'formatBlock', 'h2'],
+            ['H3', 'formatBlock', 'h3'],
+            ['B', 'bold', null],
+            ['I', 'italic', null],
+        ];
+        actions.forEach(([label, command, argument]) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'button';
+            button.textContent = label;
+            button.addEventListener('mousedown', event => event.preventDefault());
+            button.addEventListener('click', () => {
+                editor.focus();
+                document.execCommand(command, false, argument);
+                commitMutation(() => { node.props.content = editor.innerHTML; }, {inspectorRefresh: false});
+            });
+            toolbar.append(button);
+        });
+
+        const link = document.createElement('button');
+        link.type = 'button';
+        link.className = 'button';
+        link.textContent = 'Link';
+        link.addEventListener('mousedown', event => event.preventDefault());
+        link.addEventListener('click', () => {
+            editor.focus();
+            const url = window.prompt('Linkadresse', 'https://');
+            if (!url) return;
+            document.execCommand('createLink', false, url);
+            commitMutation(() => { node.props.content = editor.innerHTML; }, {inspectorRefresh: false});
+        });
+        toolbar.append(link);
+
+        editor.addEventListener('input', () => {
+            commitMutation(() => { node.props.content = editor.innerHTML; }, {inspectorRefresh: false});
+        });
+
+        wrapper.append(toolbar, editor);
+        return wrapper;
+    }
+
+    function openMediaLibrary(node) {
+        if (!window.wp || !wp.media) {
+            window.alert('WordPress Mediebibliotek er ikke tilgængeligt.');
+            return;
+        }
+
+        const frame = wp.media({
+            title: 'Vælg billede',
+            button: {text: 'Brug billede'},
+            library: {type: 'image'},
+            multiple: false
+        });
+
+        frame.on('select', () => {
+            const attachment = frame.state().get('selection').first()?.toJSON();
+            if (!attachment?.id) return;
+            commitMutation(() => {
+                node.props.attachmentId = Number.parseInt(attachment.id, 10) || 0;
+                if (!node.props.alt && attachment.alt) node.props.alt = String(attachment.alt);
+            });
+        });
+        frame.open();
+    }
+
+    function selectInput(values, selectedValue, callback) {
+        const select = document.createElement('select');
+        values.forEach(([value, label]) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            option.selected = value === selectedValue;
+            select.append(option);
+        });
+        select.addEventListener('change', () => callback(select.value));
+        return select;
     }
 
     function updateInspectorGeometryValues(geometry) {
@@ -576,45 +981,69 @@
                 node.props.autoHeight = value;
                 if (value) node.props.minHeightRows = Math.max(1, geometry.h);
             }))));
-            inspector.append(field('Baggrund', colorInput(node.props.background === 'transparent' ? '#ffffff' : node.props.background, value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? '#ffffff' : node.props.background, value => commitMutation(() => { node.props.background = value; }))));
             inspector.append(field('Padding', numberInput(node.props.padding || 0, 0, 120, value => commitMutation(() => { node.props.padding = value; }))));
         }
 
         if (node.type === 'text') {
-            const textarea = document.createElement('textarea');
-            textarea.rows = 7;
-            textarea.value = node.props.content || '';
-            textarea.addEventListener('input', () => commitMutation(() => { node.props.content = textarea.value; }));
-            inspector.append(field('Indhold (HTML)', textarea));
-            inspector.append(field('Tekstfarve', colorInput(node.props.color, value => commitMutation(() => { node.props.color = value; }))));
+            inspector.append(field('Tekst', richTextControl(node)));
+            inspector.append(field('Tekstfarve', colorControl(node.props.color, value => commitMutation(() => { node.props.color = value; }))));
             inspector.append(field('Skriftstørrelse', numberInput(node.props.fontSize || 18, 8, 120, value => commitMutation(() => { node.props.fontSize = value; }))));
         }
 
         if (node.type === 'image') {
+            const mediaActions = document.createElement('div');
+            mediaActions.className = 'vdm-media-actions';
+            const choose = document.createElement('button');
+            choose.type = 'button';
+            choose.className = 'button button-primary';
+            choose.textContent = node.props.attachmentId ? 'Skift billede' : 'Vælg billede';
+            choose.addEventListener('click', () => openMediaLibrary(node));
+            const removeImage = document.createElement('button');
+            removeImage.type = 'button';
+            removeImage.className = 'button';
+            removeImage.textContent = 'Fjern';
+            removeImage.disabled = !node.props.attachmentId;
+            removeImage.addEventListener('click', () => commitMutation(() => { node.props.attachmentId = 0; }));
+            mediaActions.append(choose, removeImage);
+            inspector.append(field('Mediebibliotek', mediaActions));
             inspector.append(field('Medie-ID', numberInput(node.props.attachmentId || 0, 0, 999999999, value => commitMutation(() => { node.props.attachmentId = value; }))));
             inspector.append(field('Alt-tekst', textInput(node.props.alt || '', value => commitMutation(() => { node.props.alt = value; }))));
-            const select = document.createElement('select');
-            ['cover', 'contain'].forEach(value => {
-                const option = document.createElement('option');
-                option.value = value;
-                option.textContent = value;
-                option.selected = node.props.objectFit === value;
-                select.append(option);
-            });
-            select.addEventListener('change', () => commitMutation(() => { node.props.objectFit = select.value; }));
-            inspector.append(field('Billedtilpasning', select));
+            inspector.append(field('Billedtilpasning', selectInput([
+                ['cover', 'Beskær / fyld'],
+                ['contain', 'Vis hele billedet']
+            ], node.props.objectFit || 'cover', value => commitMutation(() => { node.props.objectFit = value; }))));
         }
 
         if (node.type === 'button') {
             inspector.append(field('Tekst', textInput(node.props.label || '', value => commitMutation(() => { node.props.label = value; }))));
             inspector.append(field('Link', textInput(node.props.url || '#', value => commitMutation(() => { node.props.url = value; }))));
-            inspector.append(field('Baggrund', colorInput(node.props.background, value => commitMutation(() => { node.props.background = value; }))));
-            inspector.append(field('Tekstfarve', colorInput(node.props.color, value => commitMutation(() => { node.props.color = value; }))));
+            inspector.append(field('Åbn link', selectInput([
+                ['_self', 'Samme vindue'],
+                ['_blank', 'Nyt vindue']
+            ], node.props.target || '_self', value => commitMutation(() => { node.props.target = value; }))));
+            inspector.append(field('Placering', selectInput([
+                ['left', 'Venstre'],
+                ['center', 'Centreret'],
+                ['right', 'Højre'],
+                ['stretch', 'Fyld bredden']
+            ], node.props.align || 'left', value => commitMutation(() => { node.props.align = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background, value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Tekstfarve', colorControl(node.props.color, value => commitMutation(() => { node.props.color = value; }))));
+            inspector.append(field('Skriftstørrelse', numberInput(node.props.fontSize || 16, 8, 80, value => commitMutation(() => { node.props.fontSize = value; }))));
+            inspector.append(field('Skriftvægt', selectInput([
+                ['400', 'Normal'],
+                ['500', 'Medium'],
+                ['600', 'Semibold'],
+                ['700', 'Fed']
+            ], String(node.props.fontWeight || 600), value => commitMutation(() => { node.props.fontWeight = Number.parseInt(value, 10); }))));
+            inspector.append(field('Padding vandret', numberInput(node.props.paddingX || 18, 0, 120, value => commitMutation(() => { node.props.paddingX = value; }))));
+            inspector.append(field('Padding lodret', numberInput(node.props.paddingY || 10, 0, 80, value => commitMutation(() => { node.props.paddingY = value; }))));
             inspector.append(field('Radius', numberInput(node.props.radius || 0, 0, 80, value => commitMutation(() => { node.props.radius = value; }))));
         }
 
         if (node.type === 'divider') {
-            inspector.append(field('Farve', colorInput(node.props.color, value => commitMutation(() => { node.props.color = value; }))));
+            inspector.append(field('Farve', colorControl(node.props.color, value => commitMutation(() => { node.props.color = value; }))));
             inspector.append(field('Tykkelse', numberInput(node.props.thickness || 1, 1, 20, value => commitMutation(() => { node.props.thickness = value; }))));
         }
 
