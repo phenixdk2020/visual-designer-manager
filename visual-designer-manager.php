@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/visual-designer-manager
  * Update URI: https://github.com/phenixdk2020/visual-designer-manager
  * Description: Model-driven visual WordPress designer with responsive layouts, reusable modules, site settings, export/import and release QA.
- * Version: 2.0.0-alpha.2
+ * Version: 2.0.0-alpha.3
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('VDM_VERSION', '2.0.0-alpha.2');
+define('VDM_VERSION', '2.0.0-alpha.3');
 define('VDM_FILE', __FILE__);
 define('VDM_DIR', plugin_dir_path(__FILE__));
 define('VDM_URL', plugin_dir_url(__FILE__));
