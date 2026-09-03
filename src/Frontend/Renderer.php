@@ -67,6 +67,8 @@ final class Renderer
             $target = (string) ($node['props']['target'] ?? '_self');
             $rel = $target === '_blank' ? ' rel="noopener noreferrer"' : '';
             echo '<a class="vdm-button" href="' . esc_url((string) ($node['props']['url'] ?? '#')) . '" target="' . esc_attr($target) . '"' . $rel . '>' . esc_html((string) ($node['props']['label'] ?? 'Knap')) . '</a>';
+        } elseif ($type === NodeSchema::EVENTS) {
+            echo EventRenderer::renderList(is_array($node['props'] ?? null) ? $node['props'] : []); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         } elseif ($type === NodeSchema::DIVIDER) {
             echo '<hr class="vdm-divider">';
         }
