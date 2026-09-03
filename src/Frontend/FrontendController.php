@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace VisualDesignerManager\Frontend;
 
 use VisualDesignerManager\Storage\LayoutRepository;
+use VisualDesignerManager\Storage\SiteDesignRepository;
 
 final class FrontendController
 {
@@ -15,6 +16,7 @@ final class FrontendController
     public static function register(): void
     {
         add_action('wp_enqueue_scripts', [self::class, 'registerAssets']);
+        add_filter('template_include', [self::class, 'templateInclude'], 99);
         add_filter('the_content', [self::class, 'renderPage'], 20);
     }
 
@@ -28,9 +30,38 @@ final class FrontendController
         );
     }
 
+    public static function templateInclude(string $template): string
+    {
+        if (is_admin() || !is_singular('page')) {
+            return $template;
+        }
+
+        $design = SiteDesignRepository::get();
+        if (empty($design['shellEnabled'])) {
+            return $template;
+        }
+
+        $postId = get_queried_object_id();
+        if ($postId <= 0 || (LayoutRepository::get($postId)['nodes'] ?? []) === []) {
+            return $template;
+        }
+
+        $shell = VDM_DIR . 'templates/page-shell.php';
+        if (!is_file($shell)) {
+            return $template;
+        }
+
+        wp_enqueue_style('vdm-frontend');
+        return $shell;
+    }
+
     public static function renderPage(string $content): string
     {
         if (is_admin() || !is_singular('page') || !in_the_loop() || !is_main_query()) {
+            return $content;
+        }
+
+        if (!empty(SiteDesignRepository::get()['shellEnabled'])) {
             return $content;
         }
 
