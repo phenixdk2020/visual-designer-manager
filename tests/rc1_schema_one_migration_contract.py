@@ -9,6 +9,10 @@ migrator = (ROOT / 'src' / 'Transfer' / 'SchemaOneMigrator.php').read_text(encod
 controller = (ROOT / 'src' / 'Admin' / 'TransferController.php').read_text(encoding='utf-8')
 package = (ROOT / 'src' / 'Transfer' / 'PortablePackage.php').read_text(encoding='utf-8')
 importer = (ROOT / 'src' / 'Transfer' / 'PortableImporter.php').read_text(encoding='utf-8')
+schema = (ROOT / 'src' / 'Model' / 'NodeSchema.php').read_text(encoding='utf-8')
+renderer = (ROOT / 'src' / 'Frontend' / 'Renderer.php').read_text(encoding='utf-8')
+designer = (ROOT / 'assets' / 'designer.js').read_text(encoding='utf-8')
+css = (ROOT / 'assets' / 'frontend.css').read_text(encoding='utf-8')
 
 version_match = re.search(r'Version:\s*2\.0\.0(?:-(alpha|beta|rc)\.(\d+))?', plugin)
 version_ok = False
@@ -87,6 +91,64 @@ checks = {
     )),
     'migration warnings visible': 'Migrationsbemærkninger' in controller and '$migrationWarnings' in controller,
     'native validator stays schema two': "public const SCHEMA_VERSION = '2.0';" in package,
+    'text migration preserves presentation': all(token in migrator for token in (
+        "'fontWeight' => self::fontWeight($props['fontWeight'] ?? 400)",
+        "'lineHeight' => max(0.8, min(3.0",
+        "'align' => in_array((string) ($props['align']",
+        "'verticalAlign' => in_array((string) ($props['verticalAlign']",
+        "'background' => !empty($props['backgroundTransparent']) ? 'transparent'",
+        "'padding' => max(0, min(120",
+        "'radius' => max(0, min(80",
+    )),
+    'text schema retains migrated presentation': all(token in schema for token in (
+        "'fontWeight' => 400",
+        "'lineHeight' => 1.5",
+        "'align' => 'left'",
+        "'verticalAlign' => 'top'",
+        "'background' => 'transparent'",
+        "'fontWeight' => $fontWeight",
+        "'lineHeight' => max(0.8, min(3.0",
+    )),
+    'text canonical renderer uses presentation': all(token in renderer for token in (
+        '--vdm-text-font-weight:',
+        '--vdm-text-line-height:',
+        '--vdm-text-align:',
+        '--vdm-text-vertical-align:',
+        '--vdm-text-background:',
+        '--vdm-text-padding:',
+        '--vdm-text-radius:',
+    )),
+    'text canonical css uses presentation': all(token in css for token in (
+        'font-weight:var(--vdm-text-font-weight,400)',
+        'line-height:var(--vdm-text-line-height,1.5)',
+        'text-align:var(--vdm-text-align,left)',
+        'align-items:var(--vdm-text-vertical-align,flex-start)',
+        'background:var(--vdm-text-background,transparent)',
+    )),
+    'text inspector exposes presentation': all(token in designer for token in (
+        "field('Skriftvægt'",
+        "field('Linjehøjde ×100'",
+        "field('Justering'",
+        "field('Lodret placering'",
+    )),
+    'container migration preserves border and radius': all(token in migrator for token in (
+        "'borderWidth' => max(0, min(20",
+        "'borderColor' => self::color",
+    )) and all(token in schema for token in (
+        "'borderWidth' => 0",
+        "'borderColor' => '#d0d0d0'",
+    )) and all(token in renderer for token in (
+        '--vdm-border-width:',
+        '--vdm-border-color:',
+        '--vdm-radius:',
+    )) and 'border:var(--vdm-border-width,0) solid var(--vdm-border-color,#d0d0d0)' in css,
+    'button migration preserves border': all(token in migrator for token in (
+        "'borderWidth' => max(0, min(20",
+        "'borderColor' => self::color((string) ($props['borderColor']",
+    )) and all(token in renderer for token in (
+        '--vdm-button-border-width:',
+        '--vdm-button-border-color:',
+    )) and 'border:var(--vdm-button-border-width,0) solid var(--vdm-button-border-color,#2f4858)' in css,
 }
 
 failed = [name for name, ok in checks.items() if not ok]
