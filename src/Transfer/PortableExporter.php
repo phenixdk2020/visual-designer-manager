@@ -68,6 +68,12 @@ final class PortableExporter
 
         ksort($mediaIds, SORT_NUMERIC);
         $media = self::mediaRecords(array_keys($mediaIds));
+        $mediaPayload = [];
+        foreach (array_values($media) as $record) {
+            $publicRecord = $record;
+            unset($publicRecord['_filePath']);
+            $mediaPayload[] = $publicRecord;
+        }
 
         $site = [
             'source' => [
@@ -104,7 +110,7 @@ final class PortableExporter
             'templates/header.json' => PortablePackage::json(['document' => $header]),
             'templates/footer.json' => PortablePackage::json(['document' => $footer]),
             'settings/site-design.json' => PortablePackage::json(['settings' => SiteDesignRepository::get()]),
-            'media/index.json' => PortablePackage::json(['items' => array_values($media)]),
+            'media/index.json' => PortablePackage::json(['items' => $mediaPayload]),
         ];
 
         $zip = new \ZipArchive();

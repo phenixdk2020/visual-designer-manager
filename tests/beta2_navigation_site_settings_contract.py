@@ -36,7 +36,7 @@ if version_match:
         version_ok = number >= 2
 
 checks = {
-    'runtime version beta.2 or newer': version_ok and "define('VDM_VERSION', '2.0.0-beta.2');" in plugin,
+    'runtime version beta.2 or newer': version_ok,
     'navigation node schema': all(token in schema for token in (
         "public const NAVIGATION = 'navigation';",
         "self::NAVIGATION => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 8]",

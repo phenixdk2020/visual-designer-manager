@@ -12,6 +12,7 @@ use VisualDesignerManager\Admin\NavigationController;
 use VisualDesignerManager\Admin\SiteDesignController;
 use VisualDesignerManager\Admin\SiteSettingsController;
 use VisualDesignerManager\Admin\TemplateDesignerController;
+use VisualDesignerManager\Admin\TransferController;
 use VisualDesignerManager\Admin\VehicleController;
 use VisualDesignerManager\Frontend\EventFrontendController;
 use VisualDesignerManager\Frontend\FrontendController;
@@ -41,6 +42,7 @@ final class Plugin
         SiteDesignController::register();
         SiteSettingsController::register();
         NavigationController::register();
+        TransferController::register();
         EventController::register();
         VehicleController::register();
         GalleryController::register();

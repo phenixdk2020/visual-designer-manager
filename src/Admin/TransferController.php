@@ -292,7 +292,7 @@ final class TransferController
     }
 
     /** @param array<string,string> $args */
-    private static function redirect(array $args): never
+    private static function redirect(array $args): void
     {
         $url = add_query_arg(array_merge(['page' => self::MENU_SLUG], $args), admin_url('admin.php'));
         wp_safe_redirect($url, 303);

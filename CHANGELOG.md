@@ -1,5 +1,33 @@
 # Changelog
 
+## 2.0.0-beta.3
+
+- Added the native V2 portable package format with schema `2.0` and explicit required payload paths.
+- Added package validation for safe ZIP paths, case-insensitive duplicate paths, symbolic links, unlisted entries and bounded uncompressed sizes.
+- Added per-file SHA-256 and size verification plus a deterministic whole-package content digest.
+- Added complete V2 export for pages/layouts, Header/Footer, Site Design, Siteindstillinger, Events, Vehicles, Gallery albums, WordPress menus and referenced original media.
+- Removed exporter-only local filesystem paths from the public media index.
+- Added media import with extraction-time SHA-256 validation, WordPress sideloading and SHA-based reuse of previously imported media.
+- Added source-to-target remapping for pages, content records, featured images, Gallery image lists, Navigation menu IDs and Designer image attachment IDs.
+- Added WordPress menu and menu-item import with post-object and parent-item remapping.
+- Added remapping of internal content URLs, image class IDs, Button URLs, site identity logo/icon IDs, reading settings and front/posts page IDs.
+- Added a two-step administrator workflow: upload/preflight followed by explicit import confirmation.
+- Preflight state is tied to the current administrator and a staged-file SHA-256; the package is fully revalidated immediately before import.
+- Added guarded cleanup of newly created objects when import fails.
+- Beta.3 intentionally accepts native schema `2.0`; controlled schema `1.0` migration is deferred to RC.
+- Expanded the permanent QA chain with the beta.3 portable transfer contract.
+
+## 2.0.0-beta.2
+
+- Added a V2 Navigation Designer node backed by canonical WordPress menus.
+- Added Navigation to both Page Designer and Header/Footer Designer with menu, orientation, alignment, spacing, typography, color and mobile-toggle controls.
+- Added a shared frontend runtime for responsive mobile navigation across pages and V2 detail templates.
+- Added a VDM Navigation administration page linking to the canonical WordPress menu editor.
+- Added Siteindstillinger for WordPress site title, tagline and site icon plus VDM organization, contact and logo values.
+- Added WordPress Media Library selection for VDM logo and site icon with image validation.
+- Kept the VDM logo independent of theme-specific custom-logo storage.
+- Expanded the permanent QA chain with the beta.2 Navigation and Site Settings contract.
+
 ## 2.0.0-beta.1
 
 - Added V2-native `Kontaktformular` and `Bliv medlem` page Designer nodes.

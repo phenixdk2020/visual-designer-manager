@@ -504,7 +504,9 @@ final class PortableImporter
         $map = [];
         foreach ($records as $record) {
             $sourceId = (int) $record['sourceId'];
-            $path = sanitize_title_with_dashes((string) ($record['path'] ?? ''));
+            $rawPath = trim((string) ($record['path'] ?? ''), '/');
+            $pathParts = $rawPath === '' ? [] : array_values(array_filter(array_map('sanitize_title', explode('/', $rawPath)), static fn(string $part): bool => $part !== ''));
+            $path = implode('/', $pathParts);
             $existing = self::findPostBySource('page', $sourceKey, $sourceId);
             if ($existing <= 0 && $path !== '') {
                 $page = get_page_by_path($path, OBJECT, 'page');

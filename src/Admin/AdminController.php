@@ -41,6 +41,7 @@ final class AdminController
         $siteDesignUrl = admin_url('admin.php?page=' . SiteDesignController::MENU_SLUG);
         $siteSettingsUrl = admin_url('admin.php?page=' . SiteSettingsController::MENU_SLUG);
         $navigationUrl = admin_url('admin.php?page=' . NavigationController::MENU_SLUG);
+        $transferUrl = admin_url('admin.php?page=' . TransferController::MENU_SLUG);
 
         echo '<div class="wrap">';
         echo '<h1>Visual Designer Manager</h1>';
@@ -52,6 +53,7 @@ final class AdminController
             echo '<a class="button" href="' . esc_url($siteDesignUrl) . '">Site Design</a> ';
             if (current_user_can('manage_options')) {
                 echo '<a class="button" href="' . esc_url($siteSettingsUrl) . '">Siteindstillinger</a> ';
+                echo '<a class="button" href="' . esc_url($transferUrl) . '">Eksport / import</a> ';
             }
             echo '<a class="button" href="' . esc_url($navigationUrl) . '">Navigation</a>';
         }
