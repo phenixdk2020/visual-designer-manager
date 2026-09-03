@@ -108,6 +108,7 @@ final class DesignerController
             'button' => 'Knap',
             'spacer' => 'Mellemrum',
             'divider' => 'Skillelinje',
+            'events' => 'Events',
         ] as $type => $label) {
             echo '<button type="button" class="button vdm-palette-item" data-node-type="' . esc_attr($type) . '">' . esc_html($label) . '</button>';
         }
