@@ -6,8 +6,10 @@ namespace VisualDesignerManager\Core;
 
 use VisualDesignerManager\Admin\AdminController;
 use VisualDesignerManager\Admin\DesignerController;
+use VisualDesignerManager\Admin\EventController;
 use VisualDesignerManager\Admin\SiteDesignController;
 use VisualDesignerManager\Admin\TemplateDesignerController;
+use VisualDesignerManager\Frontend\EventFrontendController;
 use VisualDesignerManager\Frontend\FrontendController;
 use VisualDesignerManager\Http\RestController;
 
@@ -30,7 +32,9 @@ final class Plugin
         DesignerController::register();
         TemplateDesignerController::register();
         SiteDesignController::register();
+        EventController::register();
         FrontendController::register();
+        EventFrontendController::register();
         RestController::register();
     }
 
@@ -38,10 +42,12 @@ final class Plugin
     {
         update_option('vdm_schema_version', 2, true);
         update_option('vdm_plugin_version', VDM_VERSION, true);
+        EventController::postType();
+        flush_rewrite_rules(false);
     }
 
     public static function deactivate(): void
     {
-        // No destructive work on deactivation.
+        flush_rewrite_rules(false);
     }
 }
