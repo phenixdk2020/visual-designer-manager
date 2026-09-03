@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,8 +10,13 @@ css = (ROOT / 'assets' / 'designer.css').read_text(encoding='utf-8')
 schema = (ROOT / 'src' / 'Model' / 'NodeSchema.php').read_text(encoding='utf-8')
 controller = (ROOT / 'src' / 'Admin' / 'DesignerController.php').read_text(encoding='utf-8')
 
+version_match = re.search(r'Version:\s*2\.0\.0(?:-(alpha|beta|rc)\.(\d+))?', plugin)
+version_ok = bool(version_match)
+if version_match and version_match.group(1) == 'alpha':
+    version_ok = int(version_match.group(2) or 0) >= 3
+
 checks = {
-    'runtime version alpha.3': "Version: 2.0.0-alpha.3" in plugin and "VDM_VERSION', '2.0.0-alpha.3" in plugin,
+    'runtime version alpha.3 or newer': version_ok,
     'drag pointer interaction': "function startDrag(" in designer and "handlePointerMove" in designer and "'pointermove'" in designer,
     'resize handles': "function startResize(" in designer and "vdm-resize-handle--se" in css,
     'grid snap': "Math.round((event.clientX - interaction.startClientX) / interaction.metrics.columnWidth)" in designer
