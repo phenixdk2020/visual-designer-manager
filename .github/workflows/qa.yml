@@ -83,5 +83,8 @@ jobs:
       - name: RC.2 functional and visual parity contract
         run: python3 tests/rc2_parity_contract.py
 
+      - name: RC.3 GitHub updater contract
+        run: python3 tests/rc3_github_updater_contract.py
+
       - name: Install package contract
         run: python3 tests/package_contract.py
