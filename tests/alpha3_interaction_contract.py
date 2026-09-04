@@ -15,6 +15,8 @@ version_ok = bool(version_match)
 if version_match and version_match.group(1) == 'alpha':
     version_ok = int(version_match.group(2) or 0) >= 3
 
+compact_schema = re.sub(r'\s+', '', schema)
+
 checks = {
     'runtime version alpha.3 or newer': version_ok,
     'drag pointer interaction': "function startDrag(" in designer and "handlePointerMove" in designer and "'pointermove'" in designer,
@@ -25,8 +27,8 @@ checks = {
         and "id=\"vdm-undo\"" in controller and "id=\"vdm-redo\"" in controller,
     'keyboard shortcuts': "event.key.toLowerCase() === 'z'" in designer and "ArrowLeft" in designer and "Ctrl+S" in controller,
     'auto height runtime': "function applyAutoHeight(" in designer and "minHeightRows" in designer and "autoHeight" in designer,
-    'auto height schema': "'autoHeight' => true" in schema and "'minHeightRows' => 36" in schema
-        and "array_key_exists('autoHeight', $props)" in schema,
+    'auto height schema': "'autoHeight'=>true" in compact_schema and "'minHeightRows'=>36" in compact_schema
+        and "array_key_exists('autoHeight',$props)" in compact_schema,
     'bounded history': "HISTORY_LIMIT = 80" in designer,
 }
 
