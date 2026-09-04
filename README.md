@@ -4,7 +4,7 @@ Visual Designer Manager is a model-driven visual WordPress designer.
 
 ## Current version
 
-`2.0.0-rc.3`
+`2.0.0-rc.4`
 
 ## Version 2 principles
 
@@ -120,9 +120,11 @@ The migration boundary can accept validated schema `1.0` site packages through a
 
 RC.2 preserves reusable field definitions and values, maps previous module-list styling into native V2 list nodes, and preserves previous 120-step horizontal placement through VDM2-native fine geometry while retaining the 12-column editor model.
 
-## RC.3 acceptance status
+RC.4 hardens schema 1.0 preflight for image nodes that contain an uploads URL but no media ID. VDM first retries the same uploads path on the package source site and may then use the original URL through WordPress' safe HTTP client. A recovered file is size/type checked, SHA-256 hashed and embedded into the temporary native V2 package before the canonical importer runs. Preflight reports both recovered and unresolved legacy images and still does not create WordPress media objects.
 
-RC.3 carries the RC.2 functional and visual parity work forward and adds the GitHub update channel. Production `2.0.0` remains blocked until environment acceptance confirms both V1 parity and the update workflow on the designated WordPress test target.
+## RC.4 acceptance status
+
+RC.4 carries the RC.2 parity work and RC.3 GitHub update channel forward, and adds controlled legacy-media recovery for the real schema 1.0 acceptance package. Production `2.0.0` remains blocked until environment acceptance confirms V1 parity, recovered media and the update workflow on the designated WordPress test target.
 
 Acceptance includes administration parity, Designer → Preview → Live parity, Header/Footer, Menu, Tema, forms, Events, Vehicles, Gallery, responsive breakpoints, images, Siteindstillinger, site-shell routing and a successful updater manifest/check path.
 
@@ -141,8 +143,9 @@ Acceptance includes administration parity, Designer → Preview → Live parity,
 11. `2.0.0-beta.3` — portable export/import and package validation. **Done.**
 12. `2.0.0-rc.1` — controlled schema 1.0 migration and automated migration/parity QA. **Technical candidate completed; environment parity failed.**
 13. `2.0.0-rc.2` — V1 functional/admin/visual parity, fine geometry and migration hardening. **Superseded by RC.3.**
-14. `2.0.0-rc.3` — RC.2 parity plus native GitHub updater, verified package publishing and update-page integration. **Candidate for environment acceptance.**
-15. `2.0.0` — production release after successful WordPress acceptance QA.
+14. `2.0.0-rc.3` — RC.2 parity plus native GitHub updater, verified package publishing and update-page integration. **Done; superseded by RC.4 acceptance.**
+15. `2.0.0-rc.4` — controlled recovery of URL-only legacy upload images during schema 1.0 preflight, with explicit recovery reporting. **Candidate for environment acceptance.**
+16. `2.0.0` — production release after successful WordPress acceptance QA.
 
 ## QA rule
 

@@ -226,7 +226,7 @@ final class TransferController
 
         echo '<hr><h2>Importér portable V2 ZIP</h2>';
         echo '<p>Import foregår altid i to trin. Først valideres pakken uden at ændre sitet. Derefter skal preflight-resultatet godkendes eksplicit.</p>';
-        echo '<div class="notice notice-info inline"><p><strong>RC.1:</strong> Native V2 schema <code>' . esc_html(PortablePackage::SCHEMA_VERSION) . '</code> importeres direkte. Validerede schema 1.0-sitepakker konverteres isoleret til native V2 under preflight og importeres derefter gennem samme V2-importer.</p></div>';
+        echo '<div class="notice notice-info inline"><p><strong>RC.4:</strong> Native V2 schema <code>' . esc_html(PortablePackage::SCHEMA_VERSION) . '</code> importeres direkte. Validerede schema 1.0-sitepakker konverteres isoleret til native V2. URL-baserede legacy-billeder uden media-ID forsøges genfundet sikkert fra uploadstien under preflight og pakkes lokalt før import.</p></div>';
         echo '<form method="post" enctype="multipart/form-data" action="' . esc_url(admin_url('admin-post.php')) . '">';
         echo '<input type="hidden" name="action" value="vdm_import_preflight">';
         wp_nonce_field('vdm_import_preflight');
@@ -267,6 +267,8 @@ final class TransferController
             self::row('Kildeschema', (string) ($migration['sourceSchemaVersion'] ?? '1.0'));
             self::row('Konverteret til', (string) ($manifest['schemaVersion'] ?? PortablePackage::SCHEMA_VERSION));
             self::row('Kilde-VDM', (string) ($migration['sourceManagerVersion'] ?? ''));
+            self::row('Genfundne legacy-billeder', (string) max(0, (int) ($migration['recoveredMedia'] ?? 0)));
+            self::row('Uafklarede legacy-billeder', (string) max(0, (int) ($migration['unresolvedMedia'] ?? 0)));
         }
         self::row('Content SHA-256', (string) ($manifest['contentSha256'] ?? ''));
         self::row('Indhold', self::summaryText($summary));

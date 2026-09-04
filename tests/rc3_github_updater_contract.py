@@ -16,8 +16,10 @@ def require(condition: bool, message: str) -> None:
     if not condition:
         failures.append(message)
 
-require('Version: 2.0.0-rc.3' in plugin, 'plugin header is not RC.3')
-require("define('VDM_VERSION', '2.0.0-rc.3');" in plugin, 'VDM_VERSION is not RC.3')
+version_match = re.search(r'Version:\s*2\.0\.0-rc\.(\d+)', plugin)
+runtime_match = re.search(r"define\('VDM_VERSION', '2\.0\.0-rc\.(\d+)'\);", plugin)
+require(bool(version_match and int(version_match.group(1)) >= 3), 'plugin header is older than RC.3')
+require(bool(runtime_match and int(runtime_match.group(1)) >= 3), 'VDM_VERSION is older than RC.3')
 require('use VisualDesignerManager\\Update\\GitHubUpdater;' in core, 'Plugin bootstrap does not import GitHubUpdater')
 require('GitHubUpdater::register();' in core, 'Plugin bootstrap does not register GitHubUpdater')
 
