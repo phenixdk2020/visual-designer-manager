@@ -20,8 +20,10 @@ workflow_rest = read('src/Http/PageWorkflowRestController.php')
 designer_js = read('assets/designer.js')
 workflow_js = read('assets/page-workflow.js')
 
-assert 'Version: 2.0.0-rc.5' in plugin
-assert "define('VDM_VERSION', '2.0.0-rc.5');" in plugin
+header_version = re.search(r'Version: 2\.0\.0-rc\.(\d+)', plugin)
+constant_version = re.search(r"define\('VDM_VERSION', '2\.0\.0-rc\.(\d+)'\);", plugin)
+assert header_version is not None and int(header_version.group(1)) >= 5
+assert constant_version is not None and int(constant_version.group(1)) >= 5
 
 assert 'PageWorkflowController::register();' in plugin_boot
 assert 'PageWorkflowRestController::register();' in plugin_boot

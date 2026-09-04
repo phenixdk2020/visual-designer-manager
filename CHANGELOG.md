@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.0-rc.6
+
+- Restored V1-style update checkpoint history on the native VDM2 update channel.
+- Added a complete portable VDM-data checkpoint after the existing verified program backup and before plugin replacement.
+- The VDM-data checkpoint includes pages/layouts, Header/Footer, Site Design, Site settings, reusable fields, Events, Vehicles, Gallery, menus and referenced media.
+- Revalidates the portable package after moving it into permanent checkpoint storage and records SHA-256 plus file size for both program and VDM-data files.
+- Stops the WordPress plugin update if the VDM-data checkpoint cannot be created or validated.
+- Keeps up to 12 complete checkpoint pairs and removes both files together when retention is exceeded.
+- Added an `Update-checkpoints` table with Fra, Til, Dato, Program, VDM-data and authenticated download actions.
+- Surfaces still-existing earlier V2 program-only backups as legacy checkpoint rows.
+- Keeps the RC.3 SHA-256 package verification, WordPress Plugins integration and GitHub build-status links.
+- Added permanent RC.6 regression coverage while retaining every earlier Alpha/Beta/RC gate.
+- RC.5 to RC.6 is the bootstrap transition: the RC.5 updater can only create its existing program backup before RC.6 is installed; later updates create both checkpoint files automatically.
+
 ## 2.0.0-rc.5
 
 - Restored the V1-style `Sider` workflow for creating a page with title, optional slug, parent and draft/published status and opening it directly in Visual Designer.
