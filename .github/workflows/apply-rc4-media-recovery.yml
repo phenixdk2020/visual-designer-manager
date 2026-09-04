@@ -42,6 +42,6 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add visual-designer-manager.php src/Transfer/SchemaOneMigrator.php src/Admin/TransferController.php tests/rc3_github_updater_contract.py .github/workflows/qa.yml README.md CHANGELOG.md
+          git add visual-designer-manager.php src/Transfer/SchemaOneMigrator.php src/Admin/TransferController.php tests/rc3_github_updater_contract.py README.md CHANGELOG.md
           git commit -m 'Integrate RC.4 legacy media recovery'
           git push origin HEAD:rc4-media-recovery-final
