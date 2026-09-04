@@ -1,0 +1,495 @@
+--- a/src/Model/NodeSchema.php
++++ b/src/Model/NodeSchema.php
+@@ -176,7 +176,7 @@
+                 'padding' => 0,
+                 'radius' => 0,
+             ],
+-            self::IMAGE => ['attachmentId' => 0, 'alt' => '', 'objectFit' => 'cover'],
++            self::IMAGE => ['attachmentId' => 0, 'alt' => '', 'objectFit' => 'cover', 'positionX' => 'center', 'positionY' => 'center'],
+             self::BUTTON => [
+                 'label' => 'Knap',
+                 'url' => '#',
+@@ -235,6 +235,8 @@
+                 'showSummary' => true,
+             ],
+             self::CONTACT_FORM => [
++                'heading' => 'Kontakt os',
++                'intro' => 'Har du spørgsmål, er du velkommen til at kontakte os.',
+                 'columns' => 2,
+                 'gap' => 16,
+                 'padding' => 20,
+@@ -257,6 +259,8 @@
+                 'consentText' => 'Jeg accepterer, at oplysningerne bruges til at besvare min henvendelse.',
+             ],
+             self::MEMBERSHIP_FORM => [
++                'heading' => 'Bliv medlem',
++                'intro' => 'Udfyld formularen, så kontakter vi dig om medlemskab.',
+                 'columns' => 2,
+                 'gap' => 16,
+                 'padding' => 20,
+@@ -348,10 +352,20 @@
+             if (!in_array($fit, ['cover', 'contain'], true)) {
+                 $fit = 'cover';
+             }
++            $positionX = (string) ($props['positionX'] ?? $defaults['positionX']);
++            if (!in_array($positionX, ['left', 'center', 'right'], true)) {
++                $positionX = 'center';
++            }
++            $positionY = (string) ($props['positionY'] ?? $defaults['positionY']);
++            if (!in_array($positionY, ['top', 'center', 'bottom'], true)) {
++                $positionY = 'center';
++            }
+             return [
+                 'attachmentId' => absint($props['attachmentId'] ?? 0),
+                 'alt' => sanitize_text_field((string) ($props['alt'] ?? '')),
+                 'objectFit' => $fit,
++                'positionX' => $positionX,
++                'positionY' => $positionY,
+             ];
+         }
+ 
+@@ -441,6 +455,8 @@
+ 
+         if ($type === self::CONTACT_FORM || $type === self::MEMBERSHIP_FORM) {
+             return [
++                'heading' => sanitize_text_field((string) ($props['heading'] ?? $defaults['heading'])),
++                'intro' => sanitize_textarea_field((string) ($props['intro'] ?? $defaults['intro'])),
+                 'columns' => max(1, min(2, (int) ($props['columns'] ?? $defaults['columns']))),
+                 'gap' => max(0, min(60, (int) ($props['gap'] ?? $defaults['gap']))),
+                 'padding' => max(0, min(80, (int) ($props['padding'] ?? $defaults['padding']))),
+--- a/src/Frontend/FormRenderer.php
++++ b/src/Frontend/FormRenderer.php
+@@ -35,6 +35,14 @@
+             echo $status; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+         }
+         echo '<form class="vdm-form vdm-form--' . esc_attr($isMembership ? 'membership' : 'contact') . '" method="post" action="' . esc_url(admin_url('admin-post.php')) . '" data-vdm-form-id="' . esc_attr($nodeId) . '">';
++        $heading = sanitize_text_field((string) ($props['heading'] ?? ($isMembership ? 'Bliv medlem' : 'Kontakt os')));
++        $intro = sanitize_textarea_field((string) ($props['intro'] ?? ''));
++        if ($heading !== '') {
++            echo '<h2 class="vdm-form-heading">' . esc_html($heading) . '</h2>';
++        }
++        if ($intro !== '') {
++            echo '<p class="vdm-form-intro">' . esc_html($intro) . '</p>';
++        }
+         echo '<input type="hidden" name="action" value="vdm_submit_form">';
+         echo '<input type="hidden" name="vdm_form_type" value="' . esc_attr($type) . '">';
+         echo '<input type="hidden" name="vdm_form_id" value="' . esc_attr($nodeId) . '">';
+--- a/src/Frontend/Renderer.php
++++ b/src/Frontend/Renderer.php
+@@ -147,6 +147,8 @@
+             $parts[] = '--vdm-text-radius:' . (int) ($props['radius'] ?? 0) . 'px';
+         } elseif ($type === NodeSchema::IMAGE) {
+             $parts[] = '--vdm-object-fit:' . (string) ($props['objectFit'] ?? 'cover');
++            $parts[] = '--vdm-object-position-x:' . (string) ($props['positionX'] ?? 'center');
++            $parts[] = '--vdm-object-position-y:' . (string) ($props['positionY'] ?? 'center');
+         } elseif ($type === NodeSchema::BUTTON) {
+             $align = (string) ($props['align'] ?? 'left');
+             $justify = match ($align) {
+--- a/src/Transfer/SchemaOneMigrator.php
++++ b/src/Transfer/SchemaOneMigrator.php
+@@ -42,11 +42,13 @@
+ 
+             $warnings = is_array($legacy['warnings'] ?? null) ? $legacy['warnings'] : [];
+             $catalog = self::moduleCatalog($modulesPayload);
+-            $pages = self::convertPages((array) ($pagesPayload['records'] ?? []), $catalog, $warnings);
++            $pageRecords = (array) ($pagesPayload['records'] ?? []);
++            $pageLinks = self::pageLinkMap($pageRecords, $site);
++            $pages = self::convertPages($pageRecords, $catalog, $warnings, $pageLinks);
+             [$events, $vehicles, $galleries] = self::convertModules((array) ($modulesPayload['records'] ?? []), $warnings);
+             $menus = self::convertMenus((array) ($navigationPayload['menus'] ?? []));
+-            $header = self::convertTemplate($templatesPayload, 'header', $warnings);
+-            $footer = self::convertTemplate($templatesPayload, 'footer', $warnings);
++            $header = self::convertTemplate($templatesPayload, 'header', $warnings, $pageLinks);
++            $footer = self::convertTemplate($templatesPayload, 'footer', $warnings, $pageLinks);
+             $media = self::convertMedia((array) ($mediaPayload['records'] ?? []), (array) ($legacy['manifestFiles'] ?? []), $warnings);
+             $nativeSite = self::convertSite($site);
+             $siteDesign = SiteDesignRepository::defaults();
+@@ -321,7 +323,7 @@
+      *  @param list<string> $warnings
+      *  @return list<array<string,mixed>>
+      */
+-    private static function convertPages(array $records, array $catalog, array &$warnings): array
++    private static function convertPages(array $records, array $catalog, array &$warnings, array $pageLinks): array
+     {
+         $items = [];
+         foreach ($records as $record) {
+@@ -346,6 +348,7 @@
+                     $warnings[] = 'A previous-generation detail page was omitted because V2 renders detail views natively: ' . (string) ($record['title'] ?? $sourceId);
+                     continue;
+                 }
++                $model = self::canonicalizeLegacyLinks($model, $pageLinks);
+                 $layout = self::convertDocument($model, $warnings);
+                 $module = self::classifyModulePage($record, $catalog);
+                 if ($module !== '') {
+@@ -488,7 +491,7 @@
+      *  @param list<string> $warnings
+      *  @return array<string,mixed>
+      */
+-    private static function convertTemplate(array $payload, string $type, array &$warnings): array
++    private static function convertTemplate(array $payload, string $type, array &$warnings, array $pageLinks): array
+     {
+         $defaults = is_array($payload['defaults'] ?? null) ? $payload['defaults'] : [];
+         $preferred = sanitize_key((string) ($defaults[$type] ?? ''));
+@@ -509,7 +512,7 @@
+             $warnings[] = 'No previous-generation ' . $type . ' template could be converted.';
+             return self::emptyDocument();
+         }
+-        return self::convertDocument($candidate['model'], $warnings);
++        return self::convertDocument(self::canonicalizeLegacyLinks($candidate['model'], $pageLinks), $warnings);
+     }
+ 
+     /** @param list<array<string,mixed>> $records
+@@ -585,6 +588,7 @@
+             }
+         }
+         unset($node);
++        self::reconcileContainerHeights($nodes);
+         return ['schemaVersion' => 2, 'nodes' => $nodes, 'settings' => ['rowPixelSize' => 8]];
+     }
+ 
+@@ -618,13 +622,21 @@
+         }
+         $parent = sanitize_key((string) ($node['parentId'] ?? ''));
+         $props = is_array($node['props'] ?? null) ? $node['props'] : [];
++        $responsive = self::convertGeometry(is_array($node['geometry'] ?? null) ? $node['geometry'] : [], $units);
++        if ($type === NodeSchema::CONTACT_FORM || $type === NodeSchema::MEMBERSHIP_FORM) {
++            $minimumRows = $type === NodeSchema::MEMBERSHIP_FORM ? 128 : 100;
++            foreach ($responsive as &$geometry) {
++                $geometry['h'] = max($minimumRows, (int) ($geometry['h'] ?? 1));
++            }
++            unset($geometry);
++        }
+         return [
+             'id' => $id,
+             'type' => $type,
+             'parentId' => $parent !== '' ? $parent : null,
+             'order' => $order,
+             'props' => self::convertProps($legacyType, $props, $warnings),
+-            'responsive' => self::convertGeometry(is_array($node['geometry'] ?? null) ? $node['geometry'] : [], $units),
++            'responsive' => $responsive,
+         ];
+     }
+ 
+@@ -693,13 +705,30 @@
+             if ($mediaId <= 0 && $url !== '') {
+                 $warnings[] = 'An image URL without a packaged media ID could not be migrated automatically.';
+             }
+-            return ['attachmentId' => $mediaId, 'alt' => sanitize_text_field((string) ($props['alt'] ?? '')), 'objectFit' => (string) ($props['objectFit'] ?? 'cover') === 'contain' ? 'contain' : 'cover'];
++            $legacyFit = strtolower((string) ($props['fit'] ?? $props['objectFit'] ?? 'cover'));
++            $objectFit = in_array($legacyFit, ['contain', 'original'], true) ? 'contain' : 'cover';
++            $positionX = strtolower((string) ($props['imageAlignX'] ?? 'center'));
++            if (!in_array($positionX, ['left', 'center', 'right'], true)) {
++                $positionX = 'center';
++            }
++            $positionY = strtolower((string) ($props['imageAlignY'] ?? 'center'));
++            if (!in_array($positionY, ['top', 'center', 'bottom'], true)) {
++                $positionY = 'center';
++            }
++            return [
++                'attachmentId' => $mediaId,
++                'alt' => sanitize_text_field((string) ($props['alt'] ?? '')),
++                'objectFit' => $objectFit,
++                'positionX' => $positionX,
++                'positionY' => $positionY,
++            ];
+         }
+         if ($type === 'button') {
+             return [
+                 'label' => sanitize_text_field((string) ($props['text'] ?? 'Knap')),
+                 'url' => esc_url_raw((string) ($props['url'] ?? '#')),
+                 'target' => !empty($props['targetBlank']) ? '_blank' : '_self',
+-                'align' => 'left',
++                'align' => 'stretch',
+                 'background' => self::color((string) ($props['background'] ?? ''), '#2f4858'),
+                 'color' => self::color((string) ($props['textColor'] ?? ''), '#ffffff'),
+                 'radius' => max(0, min(80, (int) ($props['radius'] ?? 4))),
+@@ -718,6 +747,8 @@
+         if ($type === 'contactform' || $type === 'membershipform') {
+             $membership = $type === 'membershipform';
+             return [
++                'heading' => sanitize_text_field((string) ($props['heading'] ?? ($membership ? 'Bliv medlem' : 'Kontakt os'))),
++                'intro' => sanitize_textarea_field((string) ($props['intro'] ?? '')),
+                 'columns' => 2,
+                 'gap' => 16,
+                 'padding' => max(0, min(80, (int) ($props['padding'] ?? 20))),
+@@ -748,7 +779,7 @@
+                 'menuId' => absint($props['menuId'] ?? 0),
+                 'orientation' => (string) ($props['orientation'] ?? 'horizontal') === 'vertical' ? 'vertical' : 'horizontal',
+                 'align' => in_array((string) ($props['align'] ?? ''), ['left','center','right'], true) ? (string) $props['align'] : 'left',
+-                'gap' => max(0, min(80, (int) ($props['gap'] ?? 24))),
++                'gap' => max(0, min(80, (int) ($props['menuGap'] ?? $props['gap'] ?? 24))),
+                 'fontSize' => max(10, min(48, (int) ($props['fontSize'] ?? 16))),
+                 'fontWeight' => self::fontWeight($props['fontWeight'] ?? 600),
+                 'textColor' => self::color((string) ($props['textColor'] ?? ''), '#222222'),
+@@ -766,21 +797,42 @@
+      */
+     private static function convertGeometry(array $geometry, int $units): array
+     {
++        $desktopRaw = is_array($geometry['desktop'] ?? null) ? $geometry['desktop'] : [];
++        $desktop = self::convertDeviceGeometry($desktopRaw, $units, ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4]);
++        $result = ['desktop' => $desktop];
++        foreach (['laptop','tablet','mobile'] as $breakpoint) {
++            $raw = is_array($geometry[$breakpoint] ?? null) ? $geometry[$breakpoint] : [];
++            if ($raw === [] || !empty($raw['inheritDesktop'])) {
++                $result[$breakpoint] = $desktop;
++                continue;
++            }
++            $result[$breakpoint] = self::convertDeviceGeometry($raw, $units, $desktop);
++        }
++        return $result;
++    }
++
++    /** @param array<string,mixed> $raw
++     *  @param array{x:int,y:int,w:int,h:int} $fallback
++     *  @return array{x:int,y:int,w:int,h:int}
++     */
++    private static function convertDeviceGeometry(array $raw, int $units, array $fallback): array
++    {
++        if ($raw === []) {
++            return $fallback;
++        }
+         $factor = $units / 12;
+-        $result = [];
+-        $last = ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4];
+-        foreach (['desktop','laptop','tablet','mobile'] as $breakpoint) {
+-            $raw = is_array($geometry[$breakpoint] ?? null) ? $geometry[$breakpoint] : [];
+-            if ($raw !== []) {
+-                $x = (int) round(((int) ($raw['x'] ?? 0)) / $factor);
+-                $w = (int) round(((int) ($raw['w'] ?? $units)) / $factor);
+-                $x = max(0, min(11, $x));
+-                $w = max(1, min(12 - $x, $w));
+-                $last = ['x' => $x, 'y' => max(0, (int) ($raw['y'] ?? 0)), 'w' => $w, 'h' => max(1, (int) ($raw['h'] ?? 4))];
+-            }
+-            $result[$breakpoint] = $last;
+-        }
+-        return $result;
++        $x = (int) round(((int) ($raw['x'] ?? 0)) / $factor);
++        $w = (int) round(((int) ($raw['w'] ?? $units)) / $factor);
++        $x = max(0, min(11, $x));
++        $w = max(1, min(12 - $x, $w));
++        return [
++            'x' => $x,
++            'y' => max(0, (int) ($raw['y'] ?? 0)),
++            'w' => $w,
++            'h' => max(1, (int) ($raw['h'] ?? ($fallback['h'] ?? 4))),
++        ];
+     }
+ 
+     /** @param array<string,mixed> $layout */
+@@ -830,6 +882,138 @@
+         ];
+     }
+ 
++    /**
++     * @param list<array<string,mixed>> $records
++     * @param array<string,mixed> $site
++     * @return array{byId:array<int,string>,byPath:array<string,string>}
++     */
++    private static function pageLinkMap(array $records, array $site): array
++    {
++        $source = is_array($site['source'] ?? null) ? $site['source'] : [];
++        $home = rtrim(esc_url_raw((string) ($source['homeUrl'] ?? '')), '/');
++        $byId = [];
++        $byPath = [];
++        foreach ($records as $record) {
++            if (!is_array($record)) {
++                continue;
++            }
++            $sourceId = absint($record['sourceId'] ?? 0);
++            if ($sourceId <= 0) {
++                continue;
++            }
++            $path = trim((string) ($record['path'] ?? ''), '/');
++            $sourceUrl = esc_url_raw((string) ($record['sourceUrl'] ?? ''));
++            if ($sourceUrl === '' && $home !== '') {
++                $sourceUrl = $path === '' ? $home . '/' : $home . '/' . $path . '/';
++            }
++            if ($sourceUrl === '') {
++                continue;
++            }
++            $byId[$sourceId] = $sourceUrl;
++            if ($path !== '') {
++                $byPath[self::normalizedPagePath('/' . $path . '/')] = $sourceUrl;
++            }
++            $parsedPath = parse_url($sourceUrl, PHP_URL_PATH);
++            $parsedQuery = parse_url($sourceUrl, PHP_URL_QUERY);
++            if (is_string($parsedPath) && ($parsedQuery === null || $parsedQuery === '')) {
++                $byPath[self::normalizedPagePath($parsedPath)] = $sourceUrl;
++            }
++        }
++        return ['byId' => $byId, 'byPath' => $byPath];
++    }
++
++    /**
++     * Canonicalize only links that resolve to pages included in the exported package.
++     * This repairs stale source-host URLs without rewriting unrelated external links.
++     *
++     * @param array<string,mixed> $model
++     * @param array{byId?:array<int,string>,byPath?:array<string,string>} $pageLinks
++     * @return array<string,mixed>
++     */
++    private static function canonicalizeLegacyLinks(array $model, array $pageLinks): array
++    {
++        $byId = is_array($pageLinks['byId'] ?? null) ? $pageLinks['byId'] : [];
++        $byPath = is_array($pageLinks['byPath'] ?? null) ? $pageLinks['byPath'] : [];
++        $nodes = is_array($model['nodes'] ?? null) ? $model['nodes'] : [];
++        foreach ($nodes as $index => $node) {
++            if (!is_array($node) || sanitize_key((string) ($node['type'] ?? '')) !== 'button') {
++                continue;
++            }
++            $props = is_array($node['props'] ?? null) ? $node['props'] : [];
++            $target = '';
++            if (sanitize_key((string) ($props['linkType'] ?? '')) === 'page') {
++                $pageId = absint($props['pageId'] ?? 0);
++                if ($pageId > 0 && isset($byId[$pageId])) {
++                    $target = (string) $byId[$pageId];
++                }
++            }
++            if ($target === '') {
++                $url = trim((string) ($props['url'] ?? ''));
++                if ($url !== '') {
++                    $path = parse_url($url, PHP_URL_PATH);
++                    if (is_string($path)) {
++                        $key = self::normalizedPagePath($path);
++                        if (isset($byPath[$key])) {
++                            $target = (string) $byPath[$key];
++                            $fragment = parse_url($url, PHP_URL_FRAGMENT);
++                            if (is_string($fragment) && $fragment !== '') {
++                                $target .= '#' . rawurlencode($fragment);
++                            }
++                        }
++                    }
++                }
++            }
++            if ($target !== '') {
++                $props['url'] = $target;
++                $props['linkType'] = 'url';
++                $props['pageId'] = 0;
++                $node['props'] = $props;
++                $nodes[$index] = $node;
++            }
++        }
++        $model['nodes'] = $nodes;
++        return $model;
++    }
++
++    private static function normalizedPagePath(string $path): string
++    {
++        $path = '/' . trim($path, '/');
++        return $path === '/' ? '/' : $path . '/';
++    }
++
++    /** @param list<array<string,mixed>> $nodes */
++    private static function reconcileContainerHeights(array &$nodes): void
++    {
++        $indexById = [];
++        foreach ($nodes as $index => $node) {
++            $indexById[(string) ($node['id'] ?? '')] = $index;
++        }
++        $depth = static function (array $node) use (&$nodes, $indexById): int {
++            $value = 0;
++            $parentId = (string) ($node['parentId'] ?? '');
++            $seen = [];
++            while ($parentId !== '' && isset($indexById[$parentId]) && !isset($seen[$parentId])) {
++                $seen[$parentId] = true;
++                $value++;
++                $parent = $nodes[$indexById[$parentId]];
++                $parentId = (string) ($parent['parentId'] ?? '');
++            }
++            return $value;
++        };
++        $order = array_keys($nodes);
++        usort($order, static fn(int $a, int $b): int => $depth($nodes[$b]) <=> $depth($nodes[$a]));
++
++        foreach ($order as $index) {
++            $node = $nodes[$index];
++            if (!in_array((string) ($node['type'] ?? ''), [NodeSchema::SECTION, NodeSchema::CONTAINER], true)) {
++                continue;
++            }
++            $id = (string) ($node['id'] ?? '');
++            $padding = max(0, (int) ($node['props']['padding'] ?? 0));
++            $paddingRows = (int) ceil(($padding * 2) / 8);
++            $minimum = max(1, (int) ($node['props']['minHeightRows'] ?? 1));
++            foreach (['desktop','laptop','tablet','mobile'] as $breakpoint) {
++                $bottom = 0;
++                foreach ($nodes as $child) {
++                    if ((string) ($child['parentId'] ?? '') !== $id) {
++                        continue;
++                    }
++                    $geometry = is_array($child['responsive'][$breakpoint] ?? null) ? $child['responsive'][$breakpoint] : [];
++                    $bottom = max($bottom, (int) ($geometry['y'] ?? 0) + (int) ($geometry['h'] ?? 0));
++                }
++                $current = (int) ($nodes[$index]['responsive'][$breakpoint]['h'] ?? 1);
++                $nodes[$index]['responsive'][$breakpoint]['h'] = max($current, $minimum, $bottom + $paddingRows);
++            }
++        }
++    }
++
+     /** @param array<string,mixed> $modules @return array<string,string> */
+     private static function moduleCatalog(array $modules): array
+     {
+--- a/assets/designer.js
++++ b/assets/designer.js
+@@ -62,7 +62,7 @@
+             section: {background: '#ffffff', padding: 0, radius: 0, borderWidth: 0, borderColor: '#d0d0d0', autoHeight: true, minHeightRows: 36},
+             container: {background: 'transparent', padding: 16, radius: 0, borderWidth: 0, borderColor: '#d0d0d0', autoHeight: true, minHeightRows: 24},
+             text: {content: '<p>Tekst</p>', color: '#222222', fontSize: 18, fontWeight: 400, lineHeight: 1.5, align: 'left', verticalAlign: 'top', background: 'transparent', padding: 0, radius: 0},
+-            image: {attachmentId: 0, alt: '', objectFit: 'cover'},
++            image: {attachmentId: 0, alt: '', objectFit: 'cover', positionX: 'center', positionY: 'center'},
+             button: {label: 'Knap', url: '#', target: '_self', align: 'left', background: '#2f4858', color: '#ffffff', radius: 4, paddingX: 18, paddingY: 10, fontSize: 16, fontWeight: 600, borderWidth: 0, borderColor: '#2f4858'},
+             spacer: {},
+             divider: {color: '#d0d0d0', thickness: 1},
+@@ -70,8 +70,8 @@
+             events: {count: 6, showPast: false, columns: 3, gap: 20, padding: 18, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showImage: true, showSummary: true, showFacts: true},
+             vehicles: {count: 12, columns: 3, gap: 20, padding: 18, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showImage: true, showSummary: true, showFacts: true},
+             galleries: {count: 12, columns: 3, gap: 20, padding: 16, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showCover: true, showSummary: true},
+-            'contact-form': {columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send besked', successMessage: 'Tak. Din henvendelse er sendt.', showPhone: true, showSubject: true, showAddress: false, showMessage: true, messageRows: 6, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at besvare min henvendelse.'},
+-            'membership-form': {columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send indmeldelse', successMessage: 'Tak. Din indmeldelse er sendt.', showPhone: true, showSubject: false, showAddress: true, showMessage: true, messageRows: 5, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at behandle min indmeldelse.'},
++            'contact-form': {heading: 'Kontakt os', intro: 'Har du spørgsmål, er du velkommen til at kontakte os.', columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send besked', successMessage: 'Tak. Din henvendelse er sendt.', showPhone: true, showSubject: true, showAddress: false, showMessage: true, messageRows: 6, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at besvare min henvendelse.'},
++            'membership-form': {heading: 'Bliv medlem', intro: 'Udfyld formularen, så kontakter vi dig om medlemskab.', columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send indmeldelse', successMessage: 'Tak. Din indmeldelse er sendt.', showPhone: true, showSubject: false, showAddress: true, showMessage: true, messageRows: 5, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at behandle min indmeldelse.'},
+             navigation: {menuId: 0, orientation: 'horizontal', align: 'left', gap: 24, fontSize: 16, fontWeight: 600, textColor: '#222222', hoverColor: '#2271b1', background: 'transparent', submenuBackground: '#ffffff', submenuTextColor: '#222222', toggleLabel: 'Menu'}
+         }[type] || {};
+         return {geometry, props};
+@@ -562,6 +562,16 @@
+                 ['contain', 'Vis hele billedet']
+             ], node.props.objectFit || 'cover', value => commitMutation(() => { node.props.objectFit = value; }))));
++            inspector.append(field('Vandret placering', selectInput([
++                ['left', 'Venstre'],
++                ['center', 'Centreret'],
++                ['right', 'Højre']
++            ], node.props.positionX || 'center', value => commitMutation(() => { node.props.positionX = value; }))));
++            inspector.append(field('Lodret placering', selectInput([
++                ['top', 'Top'],
++                ['center', 'Centreret'],
++                ['bottom', 'Bund']
++            ], node.props.positionY || 'center', value => commitMutation(() => { node.props.positionY = value; }))));
+         }
+ 
+         if (node.type === 'button') {
+@@ -647,6 +657,8 @@
+ 
+         if (['contact-form', 'membership-form'].includes(node.type)) {
+             const isMembershipForm = node.type === 'membership-form';
++            inspector.append(field('Overskrift', textInput(node.props.heading || (isMembershipForm ? 'Bliv medlem' : 'Kontakt os'), value => commitMutation(() => { node.props.heading = value; }))));
++            inspector.append(field('Introduktion', textInput(node.props.intro || '', value => commitMutation(() => { node.props.intro = value; }))));
+             inspector.append(field('Kolonner', selectInput([
+                 ['1', '1 kolonne'],
+                 ['2', '2 kolonner']
+--- a/assets/frontend.css
++++ b/assets/frontend.css
+@@ -31,7 +31,7 @@
+ }
+ .vdm-node--image{overflow:hidden}
+-.vdm-image{width:100%;height:100%;display:block;object-fit:var(--vdm-object-fit,cover)}
++.vdm-image{width:100%;height:100%;display:block;object-fit:var(--vdm-object-fit,cover);object-position:var(--vdm-object-position-x,center) var(--vdm-object-position-y,center)}
+ .vdm-image-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f2f2f2;border:1px dashed #aaa;box-sizing:border-box}
+ .vdm-node--button{display:flex;align-items:flex-start;justify-content:var(--vdm-button-justify,flex-start)}
+@@ -74,6 +74,8 @@
+ .vdm-node--contact-form,.vdm-node--membership-form{overflow:visible}
+ .vdm-form-wrap{width:100%}
+ .vdm-form{width:100%;box-sizing:border-box;padding:var(--vdm-form-padding,20px);background:var(--vdm-form-background,#fff);color:var(--vdm-form-text,#222);border-radius:var(--vdm-form-radius,6px)}
++.vdm-form-heading{margin:0 0 8px;color:var(--vdm-form-text,#222);font-size:32px;line-height:1.2;font-weight:700}
++.vdm-form-intro{margin:0 0 18px;color:var(--vdm-form-text,#222);line-height:1.5}
+ .vdm-form-grid{display:grid;grid-template-columns:repeat(var(--vdm-form-columns,2),minmax(0,1fr));gap:var(--vdm-form-gap,16px);align-items:start}
+ .vdm-form-field{display:flex;flex-direction:column;gap:6px;min-width:0;margin:0;color:var(--vdm-form-label,#222);font-weight:600}
+ .vdm-form-field--full{grid-column:1/-1}
