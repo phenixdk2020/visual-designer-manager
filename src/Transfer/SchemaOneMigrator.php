@@ -690,6 +690,9 @@ final class SchemaOneMigrator
             'section' => NodeSchema::SECTION,
             'container' => NodeSchema::CONTAINER,
             'text', 'table', 'datalist', 'icon', 'badge' => NodeSchema::TEXT,
+            'eventlist' => NodeSchema::EVENTS,
+            'vehiclelist' => NodeSchema::VEHICLES,
+            'gallerylist' => NodeSchema::GALLERIES,
             'image' => NodeSchema::IMAGE,
             'button' => NodeSchema::BUTTON,
             'spacer' => NodeSchema::SPACER,
@@ -788,6 +791,55 @@ final class SchemaOneMigrator
             $radius = max(0, min(100, (int) ($props['radius'] ?? 20)));
             $html = '<span style="display:inline-block;background:' . esc_attr($background) . ';color:' . esc_attr($textColor) . ';padding:' . $paddingY . 'px ' . $paddingX . 'px;border-radius:' . $radius . 'px;font-weight:' . self::fontWeight($props['fontWeight'] ?? 700) . '">' . esc_html((string) ($props['text'] ?? '')) . '</span>';
             return ['content' => $html, 'color' => $textColor, 'fontSize' => max(8, min(120, (int) ($props['fontSize'] ?? 13)))];
+        }
+        if ($type === 'eventlist') {
+            $filter = (string) ($props['dateFilter'] ?? 'upcoming');
+            return [
+                'count' => max(1, min(50, (int) ($props['limit'] ?? 12))),
+                'showPast' => $filter !== 'upcoming',
+                'columns' => max(1, min(4, (int) ($props['columns'] ?? 3))),
+                'gap' => max(0, min(80, (int) ($props['cardGap'] ?? 18))),
+                'padding' => max(0, min(80, (int) ($props['cardPadding'] ?? 12))),
+                'radius' => max(0, min(60, (int) ($props['cardRadius'] ?? 4))),
+                'cardBackground' => self::color((string) ($props['cardBackground'] ?? ''), '#ffffff'),
+                'textColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'headingColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'accentColor' => self::color((string) ($props['accentColor'] ?? ''), '#c3ae83'),
+                'showImage' => !array_key_exists('showImage', $props) || !empty($props['showImage']),
+                'showSummary' => !array_key_exists('showSummary', $props) || !empty($props['showSummary']),
+                'showFacts' => (!array_key_exists('showDate', $props) || !empty($props['showDate'])) || (!array_key_exists('showLocation', $props) || !empty($props['showLocation'])),
+            ];
+        }
+        if ($type === 'vehiclelist') {
+            return [
+                'count' => max(1, min(100, (int) ($props['limit'] ?? 24))),
+                'columns' => max(1, min(4, (int) ($props['columns'] ?? 3))),
+                'gap' => max(0, min(80, (int) ($props['cardGap'] ?? 18))),
+                'padding' => max(0, min(80, (int) ($props['cardPadding'] ?? 12))),
+                'radius' => max(0, min(60, (int) ($props['cardRadius'] ?? 4))),
+                'cardBackground' => self::color((string) ($props['cardBackground'] ?? ''), '#ffffff'),
+                'textColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'headingColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'accentColor' => self::color((string) ($props['accentColor'] ?? ''), '#c3ae83'),
+                'showImage' => !array_key_exists('showImage', $props) || !empty($props['showImage']),
+                'showSummary' => !array_key_exists('showSummary', $props) || !empty($props['showSummary']),
+                'showFacts' => true,
+            ];
+        }
+        if ($type === 'gallerylist') {
+            return [
+                'count' => max(1, min(100, (int) ($props['limit'] ?? 24))),
+                'columns' => max(1, min(4, (int) ($props['columns'] ?? 3))),
+                'gap' => max(0, min(80, (int) ($props['cardGap'] ?? 18))),
+                'padding' => max(0, min(80, (int) ($props['cardPadding'] ?? 12))),
+                'radius' => max(0, min(60, (int) ($props['cardRadius'] ?? 4))),
+                'cardBackground' => self::color((string) ($props['cardBackground'] ?? ''), '#ffffff'),
+                'textColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'headingColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'accentColor' => self::color((string) ($props['accentColor'] ?? ''), '#c3ae83'),
+                'showCover' => !array_key_exists('showImage', $props) || !empty($props['showImage']),
+                'showSummary' => !array_key_exists('showSummary', $props) || !empty($props['showSummary']),
+            ];
         }
         if ($type === 'image') {
             $mediaId = absint($props['mediaId'] ?? $props['attachmentId'] ?? 0);
@@ -934,6 +986,11 @@ final class SchemaOneMigrator
     {
         if (!in_array($module, [NodeSchema::EVENTS, NodeSchema::VEHICLES, NodeSchema::GALLERIES], true)) {
             return;
+        }
+        foreach ((array) ($layout['nodes'] ?? []) as $existing) {
+            if (is_array($existing) && (string) ($existing['type'] ?? '') === $module) {
+                return;
+            }
         }
         $parentId = null;
         foreach ($layout['nodes'] as &$node) {
