@@ -23,8 +23,70 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          patch --batch --forward --fuzz=3 --dry-run -p1 < .github/rc1-acceptance-preflight.patch
-          patch --batch --forward --fuzz=3 -p1 < .github/rc1-acceptance-preflight.patch
+          python3 - <<'PY'
+          from pathlib import Path
+          import sys
+
+          patch_path = Path('.github/rc1-acceptance-preflight.patch')
+          lines = patch_path.read_text(encoding='utf-8').splitlines(keepends=True)
+          i = 0
+          changed = []
+
+          while i < len(lines):
+              if not lines[i].startswith('--- a/'):
+                  i += 1
+                  continue
+              old_path = lines[i][6:].strip()
+              i += 1
+              if i >= len(lines) or not lines[i].startswith('+++ b/'):
+                  raise SystemExit(f'Malformed patch after {old_path}')
+              new_path = lines[i][6:].strip()
+              if old_path != new_path:
+                  raise SystemExit(f'Rename is not supported: {old_path} -> {new_path}')
+              i += 1
+              path = Path(old_path)
+              if not path.is_file():
+                  raise SystemExit(f'Patch target is missing: {path}')
+              text = path.read_text(encoding='utf-8')
+
+              while i < len(lines) and not lines[i].startswith('--- a/'):
+                  if not lines[i].startswith('@@'):
+                      i += 1
+                      continue
+                  i += 1
+                  old_lines = []
+                  new_lines = []
+                  while i < len(lines) and not lines[i].startswith('@@') and not lines[i].startswith('--- a/'):
+                      line = lines[i]
+                      if line.startswith(' '):
+                          old_lines.append(line[1:])
+                          new_lines.append(line[1:])
+                      elif line.startswith('-'):
+                          old_lines.append(line[1:])
+                      elif line.startswith('+'):
+                          new_lines.append(line[1:])
+                      elif line.startswith('\\ No newline at end of file'):
+                          pass
+                      else:
+                          raise SystemExit(f'Unsupported patch line for {path}: {line[:80]!r}')
+                      i += 1
+
+                  needle = ''.join(old_lines)
+                  replacement = ''.join(new_lines)
+                  count = text.count(needle)
+                  if count != 1:
+                      raise SystemExit(f'Expected exactly one hunk match in {path}, found {count}')
+                  text = text.replace(needle, replacement, 1)
+
+              path.write_text(text, encoding='utf-8')
+              changed.append(str(path))
+
+          if not changed:
+              raise SystemExit('Patch did not change any target files.')
+          print('Applied exact-content hunks to:')
+          for path in changed:
+              print(' -', path)
+          PY
 
       - name: Validate patched runtime
         shell: bash
