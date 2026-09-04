@@ -56,7 +56,7 @@ checks = {
     )),
     'floating button model': all(token in schema for token in (
         "'mode'=>'normal'", "'zIndex'=>10", "['normal','floating']", "'zIndex'=>self::int"
-    ) and 'Only sections and floating buttons may exist at document root.' in hierarchy,
+    )) and 'Only sections and floating buttons may exist at document root.' in hierarchy,
     'V1 placement commands': all(token in parity_js for token in (
         'Over', 'Under', 'Venstre', 'Højre', 'Ind i'
     )),
@@ -69,7 +69,7 @@ checks = {
         'docx', 'wp_insert_post', 'Brugermanual'
     ),
     'form recipient and receipt parity': all(token in form for token in (
-        "$props['recipient']", 'vdm_form_recipient', 'sendReceipt', 'receiptSubject', 'wp_mail($fields['email']'
+        "$props['recipient']", 'vdm_form_recipient', 'sendReceipt', 'receiptSubject', 'wp_mail($fields[\'email\']'
     )),
     'diagnostics parity': has(
         'src/Admin/DiagnosticsController.php',
