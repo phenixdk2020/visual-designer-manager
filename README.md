@@ -4,7 +4,7 @@ Visual Designer Manager is a model-driven visual WordPress designer.
 
 ## Current version
 
-`2.0.0-rc.2`
+`2.0.0-rc.3`
 
 ## Version 2 principles
 
@@ -39,6 +39,7 @@ src/
   Storage/
   Support/
   Transfer/
+  Update/
   Vehicles/
 assets/
 templates/
@@ -80,9 +81,26 @@ The V2 layout document uses schema version `2` and an 8 px row grid.
 
 ## Administration parity
 
-RC.2 restores the established user-facing administration flow and terminology, including Dashboard, Køretøjer, Køretøjsfelter, Events, Eventfelter, Billedgalleri, Sider, Backup, Opdateringer, Log, Brugermanual, Visual Designer, Eksport, Menu, Header / Footer, Tema and Siteindstillinger.
+RC.2 restored the established user-facing administration flow and terminology, including Dashboard, Køretøjer, Køretøjsfelter, Events, Eventfelter, Billedgalleri, Sider, Backup, Opdateringer, Log, Brugermanual, Visual Designer, Eksport, Menu, Header / Footer, Tema and Siteindstillinger.
 
 The implementation behind those screens is native VDM2. Reusable field definitions use VDM-owned storage and are included in native portable transfer packages.
+
+## GitHub updates
+
+RC.3 adds a native VDM2 update channel. The `Opdateringer` page checks the public `update.json` manifest from the Visual Designer Manager repository and integrates the same release into WordPress' normal plugin-update system.
+
+The updater:
+
+- accepts only the VDM repository manifest and versioned VDM package path;
+- compares the published version with `VDM_VERSION`;
+- verifies the downloaded ZIP against the manifest SHA-256 before WordPress can install it;
+- creates a program backup of the currently installed VDM plugin before replacement;
+- supports manual `Tjek GitHub-opdatering` and `Opdater` actions;
+- also supports WordPress' normal Plugins update flow once the manifest reports a newer version.
+
+GitHub Actions is the canonical publisher. After a version reaches `main`, the package workflow validates the runtime, builds the installable ZIP, publishes it under `dist/`, calculates SHA-256 and writes `update.json`. The publish commit is guarded against recursive package builds.
+
+RC.3 is the bootstrap version for this channel. Installations older than RC.3 do not contain the native VDM2 updater and therefore require one final manual RC.3 ZIP installation. Subsequent published versions can be installed from WordPress.
 
 ## Navigation and Siteindstillinger
 
@@ -102,11 +120,11 @@ The migration boundary can accept validated schema `1.0` site packages through a
 
 RC.2 preserves reusable field definitions and values, maps previous module-list styling into native V2 list nodes, and preserves previous 120-step horizontal placement through VDM2-native fine geometry while retaining the 12-column editor model.
 
-## RC.2 acceptance status
+## RC.3 acceptance status
 
-RC.2 is the V1 functional and visual parity candidate. It restores the established administration structure, carries reusable field definitions through transfer, preserves module-list styling and adds VDM2-native fine horizontal geometry so converted positions are not rounded away.
+RC.3 carries the RC.2 functional and visual parity work forward and adds the GitHub update channel. Production `2.0.0` remains blocked until environment acceptance confirms both V1 parity and the update workflow on the designated WordPress test target.
 
-The automated RC.2 contract extends the full alpha.1 → beta.3 and RC.1 regression chain. A production `2.0.0` release still requires environment acceptance on the designated WordPress test target after importing the intended site package: administration parity, Designer → Preview → Live parity, Header/Footer, Menu, Tema, forms, Events, Vehicles, Gallery, responsive breakpoints, images, Siteindstillinger and site-shell routing.
+Acceptance includes administration parity, Designer → Preview → Live parity, Header/Footer, Menu, Tema, forms, Events, Vehicles, Gallery, responsive breakpoints, images, Siteindstillinger, site-shell routing and a successful updater manifest/check path.
 
 ## Development sequence
 
@@ -122,8 +140,9 @@ The automated RC.2 contract extends the full alpha.1 → beta.3 and RC.1 regress
 10. `2.0.0-beta.2` — navigation and site settings. **Done.**
 11. `2.0.0-beta.3` — portable export/import and package validation. **Done.**
 12. `2.0.0-rc.1` — controlled schema 1.0 migration and automated migration/parity QA. **Technical candidate completed; environment parity failed.**
-13. `2.0.0-rc.2` — V1 functional/admin/visual parity, fine geometry and migration hardening. **Candidate for environment acceptance.**
-14. `2.0.0` — production release after successful WordPress acceptance QA.
+13. `2.0.0-rc.2` — V1 functional/admin/visual parity, fine geometry and migration hardening. **Superseded by RC.3.**
+14. `2.0.0-rc.3` — RC.2 parity plus native GitHub updater, verified package publishing and update-page integration. **Candidate for environment acceptance.**
+15. `2.0.0` — production release after successful WordPress acceptance QA.
 
 ## QA rule
 
