@@ -9,6 +9,8 @@ use VisualDesignerManager\Vehicles\VehicleRepository;
 
 final class VehicleRenderer
 {
+    private const CORE_FIELD_IDS = ['manufacturer', 'model', 'year', 'engine', 'weight', 'crew'];
+
     /** @param array<string,mixed> $props */
     public static function renderList(array $props): string
     {
@@ -98,43 +100,60 @@ final class VehicleRenderer
     private static function facts(array $vehicle, bool $compact): string
     {
         $items = [];
-        foreach (['type' => 'Type', 'country' => 'Oprindelsesland', 'status' => 'Status'] as $key => $label) {
-            $value = (string) ($vehicle[$key] ?? '');
-            if ($value !== '') {
-                $items[$label] = $value;
-            }
-        }
+        $core = [
+            'type' => 'Type',
+            'manufacturer' => 'Producent',
+            'model' => 'Model',
+            'year' => 'Årgang',
+            'country' => 'Oprindelsesland',
+            'status' => 'Status',
+            'engine' => 'Motor',
+            'power' => 'Motorydelse',
+            'weight' => 'Vægt',
+            'length' => 'Længde',
+            'width' => 'Bredde',
+            'height' => 'Højde',
+            'crew' => 'Besætning',
+        ];
 
-        $custom = is_array($vehicle['customFields'] ?? null) ? $vehicle['customFields'] : [];
-        $shown = 0;
-        foreach (VehicleFieldRegistry::all() as $definition) {
-            if (empty($definition['enabled'])) {
-                continue;
-            }
-            $id = (string) $definition['id'];
-            $value = (string) ($custom[$id] ?? ($vehicle[$id] ?? ''));
+        foreach ($core as $key => $label) {
+            $value = (string) ($vehicle[$key] ?? '');
             if ($value === '') {
                 continue;
             }
-            if ($compact && $shown >= 3) {
+            $items[$label] = $value;
+            if ($compact && count($items) >= 3) {
                 break;
             }
-            $label = (string) $definition['label'];
-            $unit = trim((string) ($definition['unit'] ?? ''));
-            if ($unit !== '') {
-                $label .= ' (' . $unit . ')';
+        }
+
+        if (!$compact || count($items) < 3) {
+            $custom = is_array($vehicle['customFields'] ?? null) ? $vehicle['customFields'] : [];
+            foreach (VehicleFieldRegistry::all() as $definition) {
+                if (empty($definition['enabled'])) {
+                    continue;
+                }
+                $id = (string) ($definition['id'] ?? '');
+                if ($id === '' || in_array($id, self::CORE_FIELD_IDS, true)) {
+                    continue;
+                }
+                $value = (string) ($custom[$id] ?? '');
+                if ($value === '') {
+                    continue;
+                }
+                $label = (string) ($definition['label'] ?? $id);
+                $unit = trim((string) ($definition['unit'] ?? ''));
+                if ($unit !== '') {
+                    $label .= ' (' . $unit . ')';
+                }
+                $items[$label] = ((string) ($definition['type'] ?? '') === 'boolean' && $value === '1') ? 'Ja' : wp_strip_all_tags($value);
+                if ($compact && count($items) >= 3) {
+                    break;
+                }
             }
-            $items[$label] = ((string) ($definition['type'] ?? '') === 'boolean' && $value === '1') ? 'Ja' : wp_strip_all_tags($value);
-            $shown++;
         }
 
         if (!$compact) {
-            foreach (['power' => 'Motorydelse', 'length' => 'Længde', 'width' => 'Bredde', 'height' => 'Højde'] as $key => $label) {
-                $value = (string) ($vehicle[$key] ?? '');
-                if ($value !== '') {
-                    $items[$label] = $value;
-                }
-            }
             foreach ((array) ($vehicle['specs'] ?? []) as $spec) {
                 if (!is_array($spec)) {
                     continue;
