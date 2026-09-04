@@ -65,15 +65,15 @@
             section: {background: '#ffffff', padding: 0, radius: 0, borderWidth: 0, borderColor: '#d0d0d0', autoHeight: true, minHeightRows: 36},
             container: {background: 'transparent', padding: 16, radius: 0, borderWidth: 0, borderColor: '#d0d0d0', autoHeight: true, minHeightRows: 24},
             text: {content: '<p>Tekst</p>', color: '#222222', fontSize: 18, fontWeight: 400, lineHeight: 1.5, align: 'left', verticalAlign: 'top', background: 'transparent', padding: 0, radius: 0},
-            image: {attachmentId: 0, alt: '', objectFit: 'cover'},
+            image: {attachmentId: 0, alt: '', objectFit: 'cover', positionX: 'center', positionY: 'center'},
             button: {label: 'Knap', url: '#', target: '_self', align: 'left', background: '#2f4858', color: '#ffffff', radius: 4, paddingX: 18, paddingY: 10, fontSize: 16, fontWeight: 600, borderWidth: 0, borderColor: '#2f4858'},
             spacer: {},
             divider: {color: '#d0d0d0', thickness: 1},
             events: {count: 6, showPast: false, columns: 3, gap: 20, padding: 18, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showImage: true, showSummary: true, showFacts: true},
             vehicles: {count: 12, columns: 3, gap: 20, padding: 18, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showImage: true, showSummary: true, showFacts: true},
             galleries: {count: 12, columns: 3, gap: 20, padding: 16, radius: 6, cardBackground: '#ffffff', textColor: '#222222', headingColor: '#222222', accentColor: '#2f4858', showCover: true, showSummary: true},
-            'contact-form': {columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send besked', successMessage: 'Tak. Din henvendelse er sendt.', showPhone: true, showSubject: true, showAddress: false, showMessage: true, messageRows: 6, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at besvare min henvendelse.'},
-            'membership-form': {columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send indmeldelse', successMessage: 'Tak. Din indmeldelse er sendt.', showPhone: true, showSubject: false, showAddress: true, showMessage: true, messageRows: 5, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at behandle min indmeldelse.'},
+            'contact-form': {heading: 'Kontakt os', intro: 'Har du spørgsmål, er du velkommen til at kontakte os.', columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send besked', successMessage: 'Tak. Din henvendelse er sendt.', showPhone: true, showSubject: true, showAddress: false, showMessage: true, messageRows: 6, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at besvare min henvendelse.'},
+            'membership-form': {heading: 'Bliv medlem', intro: 'Udfyld formularen, så kontakter vi dig om medlemskab.', columns: 2, gap: 16, padding: 20, radius: 6, background: '#ffffff', fieldBackground: '#ffffff', textColor: '#222222', labelColor: '#222222', borderColor: '#d0d0d0', accentColor: '#2f4858', buttonTextColor: '#ffffff', submitLabel: 'Send indmeldelse', successMessage: 'Tak. Din indmeldelse er sendt.', showPhone: true, showSubject: false, showAddress: true, showMessage: true, messageRows: 5, requireConsent: true, consentText: 'Jeg accepterer, at oplysningerne bruges til at behandle min indmeldelse.'},
             navigation: {menuId: 0, orientation: 'horizontal', align: 'left', gap: 24, fontSize: 16, fontWeight: 600, textColor: '#222222', hoverColor: '#2271b1', background: 'transparent', submenuBackground: '#ffffff', submenuTextColor: '#222222', toggleLabel: 'Menu'}
         }[type] || {};
         return {geometry, props};
@@ -1037,6 +1037,16 @@
                 ['cover', 'Beskær / fyld'],
                 ['contain', 'Vis hele billedet']
             ], node.props.objectFit || 'cover', value => commitMutation(() => { node.props.objectFit = value; }))));
+            inspector.append(field('Vandret placering', selectInput([
+                ['left', 'Venstre'],
+                ['center', 'Centreret'],
+                ['right', 'Højre']
+            ], node.props.positionX || 'center', value => commitMutation(() => { node.props.positionX = value; }))));
+            inspector.append(field('Lodret placering', selectInput([
+                ['top', 'Top'],
+                ['center', 'Centreret'],
+                ['bottom', 'Bund']
+            ], node.props.positionY || 'center', value => commitMutation(() => { node.props.positionY = value; }))));
         }
 
         if (node.type === 'button') {
@@ -1130,6 +1140,8 @@
 
         if (['contact-form', 'membership-form'].includes(node.type)) {
             const isMembershipForm = node.type === 'membership-form';
+            inspector.append(field('Overskrift', textInput(node.props.heading || (isMembershipForm ? 'Bliv medlem' : 'Kontakt os'), value => commitMutation(() => { node.props.heading = value; }))));
+            inspector.append(field('Introduktion', textInput(node.props.intro || '', value => commitMutation(() => { node.props.intro = value; }))));
             inspector.append(field('Kolonner', selectInput([
                 ['1', '1 kolonne'],
                 ['2', '2 kolonner']

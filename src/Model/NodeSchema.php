@@ -176,7 +176,7 @@ final class NodeSchema
                 'padding' => 0,
                 'radius' => 0,
             ],
-            self::IMAGE => ['attachmentId' => 0, 'alt' => '', 'objectFit' => 'cover'],
+            self::IMAGE => ['attachmentId' => 0, 'alt' => '', 'objectFit' => 'cover', 'positionX' => 'center', 'positionY' => 'center'],
             self::BUTTON => [
                 'label' => 'Knap',
                 'url' => '#',
@@ -235,6 +235,8 @@ final class NodeSchema
                 'showSummary' => true,
             ],
             self::CONTACT_FORM => [
+                'heading' => 'Kontakt os',
+                'intro' => 'Har du spørgsmål, er du velkommen til at kontakte os.',
                 'columns' => 2,
                 'gap' => 16,
                 'padding' => 20,
@@ -257,6 +259,8 @@ final class NodeSchema
                 'consentText' => 'Jeg accepterer, at oplysningerne bruges til at besvare min henvendelse.',
             ],
             self::MEMBERSHIP_FORM => [
+                'heading' => 'Bliv medlem',
+                'intro' => 'Udfyld formularen, så kontakter vi dig om medlemskab.',
                 'columns' => 2,
                 'gap' => 16,
                 'padding' => 20,
@@ -348,10 +352,20 @@ final class NodeSchema
             if (!in_array($fit, ['cover', 'contain'], true)) {
                 $fit = 'cover';
             }
+            $positionX = (string) ($props['positionX'] ?? $defaults['positionX']);
+            if (!in_array($positionX, ['left', 'center', 'right'], true)) {
+                $positionX = 'center';
+            }
+            $positionY = (string) ($props['positionY'] ?? $defaults['positionY']);
+            if (!in_array($positionY, ['top', 'center', 'bottom'], true)) {
+                $positionY = 'center';
+            }
             return [
                 'attachmentId' => absint($props['attachmentId'] ?? 0),
                 'alt' => sanitize_text_field((string) ($props['alt'] ?? '')),
                 'objectFit' => $fit,
+                'positionX' => $positionX,
+                'positionY' => $positionY,
             ];
         }
 
@@ -441,6 +455,8 @@ final class NodeSchema
 
         if ($type === self::CONTACT_FORM || $type === self::MEMBERSHIP_FORM) {
             return [
+                'heading' => sanitize_text_field((string) ($props['heading'] ?? $defaults['heading'])),
+                'intro' => sanitize_textarea_field((string) ($props['intro'] ?? $defaults['intro'])),
                 'columns' => max(1, min(2, (int) ($props['columns'] ?? $defaults['columns']))),
                 'gap' => max(0, min(60, (int) ($props['gap'] ?? $defaults['gap']))),
                 'padding' => max(0, min(80, (int) ($props['padding'] ?? $defaults['padding']))),

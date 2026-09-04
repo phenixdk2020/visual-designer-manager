@@ -42,11 +42,13 @@ final class SchemaOneMigrator
 
             $warnings = is_array($legacy['warnings'] ?? null) ? $legacy['warnings'] : [];
             $catalog = self::moduleCatalog($modulesPayload);
-            $pages = self::convertPages((array) ($pagesPayload['records'] ?? []), $catalog, $warnings);
+            $pageRecords = (array) ($pagesPayload['records'] ?? []);
+            $pageLinks = self::pageLinkMap($pageRecords, $site);
+            $pages = self::convertPages($pageRecords, $catalog, $warnings, $pageLinks);
             [$events, $vehicles, $galleries] = self::convertModules((array) ($modulesPayload['records'] ?? []), $warnings);
             $menus = self::convertMenus((array) ($navigationPayload['menus'] ?? []));
-            $header = self::convertTemplate($templatesPayload, 'header', $warnings);
-            $footer = self::convertTemplate($templatesPayload, 'footer', $warnings);
+            $header = self::convertTemplate($templatesPayload, 'header', $warnings, $pageLinks);
+            $footer = self::convertTemplate($templatesPayload, 'footer', $warnings, $pageLinks);
             $media = self::convertMedia((array) ($mediaPayload['records'] ?? []), (array) ($legacy['manifestFiles'] ?? []), $warnings);
             $nativeSite = self::convertSite($site);
             $siteDesign = SiteDesignRepository::defaults();
@@ -321,7 +323,7 @@ final class SchemaOneMigrator
      *  @param list<string> $warnings
      *  @return list<array<string,mixed>>
      */
-    private static function convertPages(array $records, array $catalog, array &$warnings): array
+    private static function convertPages(array $records, array $catalog, array &$warnings, array $pageLinks): array
     {
         $items = [];
         foreach ($records as $record) {
@@ -346,6 +348,7 @@ final class SchemaOneMigrator
                     $warnings[] = 'A previous-generation detail page was omitted because V2 renders detail views natively: ' . (string) ($record['title'] ?? $sourceId);
                     continue;
                 }
+                $model = self::canonicalizeLegacyLinks($model, $pageLinks);
                 $layout = self::convertDocument($model, $warnings);
                 $module = self::classifyModulePage($record, $catalog);
                 if ($module !== '') {
@@ -488,7 +491,7 @@ final class SchemaOneMigrator
      *  @param list<string> $warnings
      *  @return array<string,mixed>
      */
-    private static function convertTemplate(array $payload, string $type, array &$warnings): array
+    private static function convertTemplate(array $payload, string $type, array &$warnings, array $pageLinks): array
     {
         $defaults = is_array($payload['defaults'] ?? null) ? $payload['defaults'] : [];
         $preferred = sanitize_key((string) ($defaults[$type] ?? ''));
@@ -509,7 +512,7 @@ final class SchemaOneMigrator
             $warnings[] = 'No previous-generation ' . $type . ' template could be converted.';
             return self::emptyDocument();
         }
-        return self::convertDocument($candidate['model'], $warnings);
+        return self::convertDocument(self::canonicalizeLegacyLinks($candidate['model'], $pageLinks), $warnings);
     }
 
     /** @param list<array<string,mixed>> $records
@@ -585,6 +588,7 @@ final class SchemaOneMigrator
             }
         }
         unset($node);
+        self::reconcileContainerHeights($nodes);
         return ['schemaVersion' => 2, 'nodes' => $nodes, 'settings' => ['rowPixelSize' => 8]];
     }
 
@@ -618,13 +622,21 @@ final class SchemaOneMigrator
         }
         $parent = sanitize_key((string) ($node['parentId'] ?? ''));
         $props = is_array($node['props'] ?? null) ? $node['props'] : [];
+        $responsive = self::convertGeometry(is_array($node['geometry'] ?? null) ? $node['geometry'] : [], $units);
+        if ($type === NodeSchema::CONTACT_FORM || $type === NodeSchema::MEMBERSHIP_FORM) {
+            $minimumRows = $type === NodeSchema::MEMBERSHIP_FORM ? 128 : 100;
+            foreach ($responsive as &$geometry) {
+                $geometry['h'] = max($minimumRows, (int) ($geometry['h'] ?? 1));
+            }
+            unset($geometry);
+        }
         return [
             'id' => $id,
             'type' => $type,
             'parentId' => $parent !== '' ? $parent : null,
             'order' => $order,
             'props' => self::convertProps($legacyType, $props, $warnings),
-            'responsive' => self::convertGeometry(is_array($node['geometry'] ?? null) ? $node['geometry'] : [], $units),
+            'responsive' => $responsive,
         ];
     }
 
@@ -690,14 +702,30 @@ final class SchemaOneMigrator
             if ($mediaId <= 0 && $url !== '') {
                 $warnings[] = 'An image URL without a packaged media ID could not be migrated automatically.';
             }
-            return ['attachmentId' => $mediaId, 'alt' => sanitize_text_field((string) ($props['alt'] ?? '')), 'objectFit' => (string) ($props['objectFit'] ?? 'cover') === 'contain' ? 'contain' : 'cover'];
+            $legacyFit = strtolower((string) ($props['fit'] ?? $props['objectFit'] ?? 'cover'));
+            $objectFit = in_array($legacyFit, ['contain', 'original'], true) ? 'contain' : 'cover';
+            $positionX = strtolower((string) ($props['imageAlignX'] ?? 'center'));
+            if (!in_array($positionX, ['left', 'center', 'right'], true)) {
+                $positionX = 'center';
+            }
+            $positionY = strtolower((string) ($props['imageAlignY'] ?? 'center'));
+            if (!in_array($positionY, ['top', 'center', 'bottom'], true)) {
+                $positionY = 'center';
+            }
+            return [
+                'attachmentId' => $mediaId,
+                'alt' => sanitize_text_field((string) ($props['alt'] ?? '')),
+                'objectFit' => $objectFit,
+                'positionX' => $positionX,
+                'positionY' => $positionY,
+            ];
         }
         if ($type === 'button') {
             return [
                 'label' => sanitize_text_field((string) ($props['text'] ?? 'Knap')),
                 'url' => esc_url_raw((string) ($props['url'] ?? '#')),
                 'target' => !empty($props['targetBlank']) ? '_blank' : '_self',
-                'align' => 'left',
+                'align' => 'stretch',
                 'background' => self::color((string) ($props['background'] ?? ''), '#2f4858'),
                 'color' => self::color((string) ($props['textColor'] ?? ''), '#ffffff'),
                 'radius' => max(0, min(80, (int) ($props['radius'] ?? 4))),
@@ -715,6 +743,8 @@ final class SchemaOneMigrator
         if ($type === 'contactform' || $type === 'membershipform') {
             $membership = $type === 'membershipform';
             return [
+                'heading' => sanitize_text_field((string) ($props['heading'] ?? ($membership ? 'Bliv medlem' : 'Kontakt os'))),
+                'intro' => sanitize_textarea_field((string) ($props['intro'] ?? '')),
                 'columns' => 2,
                 'gap' => 16,
                 'padding' => max(0, min(80, (int) ($props['padding'] ?? 20))),
@@ -742,7 +772,7 @@ final class SchemaOneMigrator
                 'menuId' => absint($props['menuId'] ?? 0),
                 'orientation' => (string) ($props['orientation'] ?? 'horizontal') === 'vertical' ? 'vertical' : 'horizontal',
                 'align' => in_array((string) ($props['align'] ?? ''), ['left','center','right'], true) ? (string) $props['align'] : 'left',
-                'gap' => max(0, min(80, (int) ($props['gap'] ?? 24))),
+                'gap' => max(0, min(80, (int) ($props['menuGap'] ?? $props['gap'] ?? 24))),
                 'fontSize' => max(10, min(48, (int) ($props['fontSize'] ?? 16))),
                 'fontWeight' => self::fontWeight($props['fontWeight'] ?? 600),
                 'textColor' => self::color((string) ($props['textColor'] ?? ''), '#222222'),
@@ -761,21 +791,40 @@ final class SchemaOneMigrator
      */
     private static function convertGeometry(array $geometry, int $units): array
     {
-        $factor = $units / 12;
-        $result = [];
-        $last = ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4];
-        foreach (['desktop','laptop','tablet','mobile'] as $breakpoint) {
+        $desktopRaw = is_array($geometry['desktop'] ?? null) ? $geometry['desktop'] : [];
+        $desktop = self::convertDeviceGeometry($desktopRaw, $units, ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4]);
+        $result = ['desktop' => $desktop];
+        foreach (['laptop','tablet','mobile'] as $breakpoint) {
             $raw = is_array($geometry[$breakpoint] ?? null) ? $geometry[$breakpoint] : [];
-            if ($raw !== []) {
-                $x = (int) round(((int) ($raw['x'] ?? 0)) / $factor);
-                $w = (int) round(((int) ($raw['w'] ?? $units)) / $factor);
-                $x = max(0, min(11, $x));
-                $w = max(1, min(12 - $x, $w));
-                $last = ['x' => $x, 'y' => max(0, (int) ($raw['y'] ?? 0)), 'w' => $w, 'h' => max(1, (int) ($raw['h'] ?? 4))];
+            if ($raw === [] || !empty($raw['inheritDesktop'])) {
+                $result[$breakpoint] = $desktop;
+                continue;
             }
-            $result[$breakpoint] = $last;
+            $result[$breakpoint] = self::convertDeviceGeometry($raw, $units, $desktop);
         }
         return $result;
+    }
+
+    /** @param array<string,mixed> $raw
+     *  @param array{x:int,y:int,w:int,h:int} $fallback
+     *  @return array{x:int,y:int,w:int,h:int}
+     */
+    private static function convertDeviceGeometry(array $raw, int $units, array $fallback): array
+    {
+        if ($raw === []) {
+            return $fallback;
+        }
+        $factor = $units / 12;
+        $x = (int) round(((int) ($raw['x'] ?? 0)) / $factor);
+        $w = (int) round(((int) ($raw['w'] ?? $units)) / $factor);
+        $x = max(0, min(11, $x));
+        $w = max(1, min(12 - $x, $w));
+        return [
+            'x' => $x,
+            'y' => max(0, (int) ($raw['y'] ?? 0)),
+            'w' => $w,
+            'h' => max(1, (int) ($raw['h'] ?? ($fallback['h'] ?? 4))),
+        ];
     }
 
     /** @param array<string,mixed> $layout */
@@ -810,6 +859,151 @@ final class SchemaOneMigrator
                     : ['count'=>24,'columns'=>3,'gap'=>20,'padding'=>16,'radius'=>6,'cardBackground'=>'#ffffff','textColor'=>'#222222','headingColor'=>'#222222','accentColor'=>'#2f4858','showCover'=>true,'showSummary'=>true]),
             'responsive' => ['desktop'=>['x'=>0,'y'=>0,'w'=>12,'h'=>60], 'laptop'=>['x'=>0,'y'=>0,'w'=>12,'h'=>60], 'tablet'=>['x'=>0,'y'=>0,'w'=>12,'h'=>60], 'mobile'=>['x'=>0,'y'=>0,'w'=>12,'h'=>60]],
         ];
+    }
+
+    /**
+     * @param list<array<string,mixed>> $records
+     * @param array<string,mixed> $site
+     * @return array{byId:array<int,string>,byPath:array<string,string>}
+     */
+    private static function pageLinkMap(array $records, array $site): array
+    {
+        $source = is_array($site['source'] ?? null) ? $site['source'] : [];
+        $home = rtrim(esc_url_raw((string) ($source['homeUrl'] ?? '')), '/');
+        $byId = [];
+        $byPath = [];
+        foreach ($records as $record) {
+            if (!is_array($record)) {
+                continue;
+            }
+            $sourceId = absint($record['sourceId'] ?? 0);
+            if ($sourceId <= 0) {
+                continue;
+            }
+            $path = trim((string) ($record['path'] ?? ''), '/');
+            $sourceUrl = esc_url_raw((string) ($record['sourceUrl'] ?? ''));
+            if ($sourceUrl === '' && $home !== '') {
+                $sourceUrl = $path === '' ? $home . '/' : $home . '/' . $path . '/';
+            }
+            if ($sourceUrl === '') {
+                continue;
+            }
+            $byId[$sourceId] = $sourceUrl;
+            if ($path !== '') {
+                $byPath[self::normalizedPagePath('/' . $path . '/')] = $sourceUrl;
+            }
+            $parsedPath = parse_url($sourceUrl, PHP_URL_PATH);
+            $parsedQuery = parse_url($sourceUrl, PHP_URL_QUERY);
+            if (is_string($parsedPath) && ($parsedQuery === null || $parsedQuery === '')) {
+                $byPath[self::normalizedPagePath($parsedPath)] = $sourceUrl;
+            }
+        }
+        return ['byId' => $byId, 'byPath' => $byPath];
+    }
+
+    /**
+     * Canonicalize only links that resolve to pages included in the exported package.
+     * This repairs stale source-host URLs without rewriting unrelated external links.
+     *
+     * @param array<string,mixed> $model
+     * @param array{byId?:array<int,string>,byPath?:array<string,string>} $pageLinks
+     * @return array<string,mixed>
+     */
+    private static function canonicalizeLegacyLinks(array $model, array $pageLinks): array
+    {
+        $byId = is_array($pageLinks['byId'] ?? null) ? $pageLinks['byId'] : [];
+        $byPath = is_array($pageLinks['byPath'] ?? null) ? $pageLinks['byPath'] : [];
+        $nodes = is_array($model['nodes'] ?? null) ? $model['nodes'] : [];
+        foreach ($nodes as $index => $node) {
+            if (!is_array($node) || sanitize_key((string) ($node['type'] ?? '')) !== 'button') {
+                continue;
+            }
+            $props = is_array($node['props'] ?? null) ? $node['props'] : [];
+            $target = '';
+            if (sanitize_key((string) ($props['linkType'] ?? '')) === 'page') {
+                $pageId = absint($props['pageId'] ?? 0);
+                if ($pageId > 0 && isset($byId[$pageId])) {
+                    $target = (string) $byId[$pageId];
+                }
+            }
+            if ($target === '') {
+                $url = trim((string) ($props['url'] ?? ''));
+                if ($url !== '') {
+                    $path = parse_url($url, PHP_URL_PATH);
+                    if (is_string($path)) {
+                        $key = self::normalizedPagePath($path);
+                        if (isset($byPath[$key])) {
+                            $target = (string) $byPath[$key];
+                            $fragment = parse_url($url, PHP_URL_FRAGMENT);
+                            if (is_string($fragment) && $fragment !== '') {
+                                $target .= '#' . rawurlencode($fragment);
+                            }
+                        }
+                    }
+                }
+            }
+            if ($target !== '') {
+                $props['url'] = $target;
+                $props['linkType'] = 'url';
+                $props['pageId'] = 0;
+                $node['props'] = $props;
+                $nodes[$index] = $node;
+            }
+        }
+        $model['nodes'] = $nodes;
+        return $model;
+    }
+
+    private static function normalizedPagePath(string $path): string
+    {
+        $path = '/' . trim($path, '/');
+        return $path === '/' ? '/' : $path . '/';
+    }
+
+    /** @param list<array<string,mixed>> $nodes */
+    private static function reconcileContainerHeights(array &$nodes): void
+    {
+        $indexById = [];
+        foreach ($nodes as $index => $node) {
+            $indexById[(string) ($node['id'] ?? '')] = $index;
+        }
+        $depth = static function (array $node) use (&$nodes, $indexById): int {
+            $value = 0;
+            $parentId = (string) ($node['parentId'] ?? '');
+            $seen = [];
+            while ($parentId !== '' && isset($indexById[$parentId]) && !isset($seen[$parentId])) {
+                $seen[$parentId] = true;
+                $value++;
+                $parent = $nodes[$indexById[$parentId]];
+                $parentId = (string) ($parent['parentId'] ?? '');
+            }
+            return $value;
+        };
+        $order = array_keys($nodes);
+        usort($order, static fn(int $a, int $b): int => $depth($nodes[$b]) <=> $depth($nodes[$a]));
+
+        foreach ($order as $index) {
+            $node = $nodes[$index];
+            if (!in_array((string) ($node['type'] ?? ''), [NodeSchema::SECTION, NodeSchema::CONTAINER], true)) {
+                continue;
+            }
+            $id = (string) ($node['id'] ?? '');
+            $padding = max(0, (int) ($node['props']['padding'] ?? 0));
+            $paddingRows = (int) ceil(($padding * 2) / 8);
+            $minimum = max(1, (int) ($node['props']['minHeightRows'] ?? 1));
+            foreach (['desktop','laptop','tablet','mobile'] as $breakpoint) {
+                $bottom = 0;
+                foreach ($nodes as $child) {
+                    if ((string) ($child['parentId'] ?? '') !== $id) {
+                        continue;
+                    }
+                    $geometry = is_array($child['responsive'][$breakpoint] ?? null) ? $child['responsive'][$breakpoint] : [];
+                    $bottom = max($bottom, (int) ($geometry['y'] ?? 0) + (int) ($geometry['h'] ?? 0));
+                }
+                $current = (int) ($nodes[$index]['responsive'][$breakpoint]['h'] ?? 1);
+                $nodes[$index]['responsive'][$breakpoint]['h'] = max($current, $minimum, $bottom + $paddingRows);
+            }
+        }
     }
 
     /** @param array<string,mixed> $modules @return array<string,string> */

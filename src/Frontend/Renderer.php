@@ -147,6 +147,8 @@ final class Renderer
             $parts[] = '--vdm-text-radius:' . (int) ($props['radius'] ?? 0) . 'px';
         } elseif ($type === NodeSchema::IMAGE) {
             $parts[] = '--vdm-object-fit:' . (string) ($props['objectFit'] ?? 'cover');
+            $parts[] = '--vdm-object-position-x:' . (string) ($props['positionX'] ?? 'center');
+            $parts[] = '--vdm-object-position-y:' . (string) ($props['positionY'] ?? 'center');
         } elseif ($type === NodeSchema::BUTTON) {
             $align = (string) ($props['align'] ?? 'left');
             $justify = match ($align) {

@@ -35,6 +35,14 @@ final class FormRenderer
             echo $status; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         }
         echo '<form class="vdm-form vdm-form--' . esc_attr($isMembership ? 'membership' : 'contact') . '" method="post" action="' . esc_url(admin_url('admin-post.php')) . '" data-vdm-form-id="' . esc_attr($nodeId) . '">';
+        $heading = sanitize_text_field((string) ($props['heading'] ?? ($isMembership ? 'Bliv medlem' : 'Kontakt os')));
+        $intro = sanitize_textarea_field((string) ($props['intro'] ?? ''));
+        if ($heading !== '') {
+            echo '<h2 class="vdm-form-heading">' . esc_html($heading) . '</h2>';
+        }
+        if ($intro !== '') {
+            echo '<p class="vdm-form-intro">' . esc_html($intro) . '</p>';
+        }
         echo '<input type="hidden" name="action" value="vdm_submit_form">';
         echo '<input type="hidden" name="vdm_form_type" value="' . esc_attr($type) . '">';
         echo '<input type="hidden" name="vdm_form_id" value="' . esc_attr($nodeId) . '">';
