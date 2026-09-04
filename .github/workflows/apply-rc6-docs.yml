@@ -1,0 +1,50 @@
+name: Apply RC.6 release documentation
+
+on:
+  push:
+    branches: [rc6-update-checkpoint-parity]
+    paths:
+      - '.github/workflows/apply-rc6-docs.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rc6-update-checkpoint-parity
+      - name: Update RC.6 documentation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          readme = Path('README.md')
+          text = readme.read_text(encoding='utf-8')
+          text = text.replace('## Current version\n\n`2.0.0-rc.5`', '## Current version\n\n`2.0.0-rc.6`', 1)
+          marker = '## RC.5 V1 page workflow parity\n'
+          section = '''## RC.6 update checkpoint parity\n\nRC.6 restores the established update-checkpoint workflow on the native VDM2 updater. After the existing SHA-256 verified program backup succeeds, VDM creates a second checkpoint using the canonical portable site exporter. That VDM-data ZIP includes pages/layouts, Header/Footer, Site Design, Site settings, reusable fields, Events, Vehicles, Gallery, menus and referenced media.\n\nBoth checkpoint files are validated before installation may continue. A failed data checkpoint returns a WordPress updater error and stops the update. RC.6 keeps up to 12 complete checkpoint pairs and exposes their from/to versions, local timestamp, filenames, sizes and authenticated download actions on the `Opdateringer` page. Older V2 program-only backups are surfaced as legacy checkpoint rows when they still exist.\n\nThe RC.5 to RC.6 update itself is the bootstrap transition for this feature: RC.5 can only create its existing program backup before RC.6 code is installed. From RC.6 onward, subsequent updates create the complete program + VDM-data pair automatically.\n\n'''
+          if section not in text:
+              text = text.replace(marker, section + marker, 1)
+          text = text.replace('16. `2.0.0-rc.5` — V1 page lifecycle, unsaved frontend preview, save/view, version restore/copy and Designer clipboard parity. **Candidate for environment acceptance.**\n17. `2.0.0` — production release after successful WordPress acceptance QA.', '16. `2.0.0-rc.5` — V1 page lifecycle, unsaved frontend preview, save/view, version restore/copy and Designer clipboard parity. **Superseded by RC.6 acceptance.**\n17. `2.0.0-rc.6` — V1-style dual update checkpoints with full portable VDM-data backup and 12-entry history. **Candidate for environment acceptance.**\n18. `2.0.0` — production release after successful WordPress acceptance QA.', 1)
+          readme.write_text(text, encoding='utf-8')
+
+          changelog = Path('CHANGELOG.md')
+          current = changelog.read_text(encoding='utf-8')
+          entry = '''# Changelog\n\n## 2.0.0-rc.6\n\n- Restored V1-style update checkpoint history on the native VDM2 update channel.\n- Added a complete portable VDM-data checkpoint after the existing verified program backup and before plugin replacement.\n- The VDM-data checkpoint includes pages/layouts, Header/Footer, Site Design, Site settings, reusable fields, Events, Vehicles, Gallery, menus and referenced media.\n- Revalidates the portable package after moving it into permanent checkpoint storage and records SHA-256 plus file size for both program and VDM-data files.\n- Stops the WordPress plugin update if the VDM-data checkpoint cannot be created or validated.\n- Keeps up to 12 complete checkpoint pairs and removes both files together when retention is exceeded.\n- Added an `Update-checkpoints` table with Fra, Til, Dato, Program, VDM-data and authenticated download actions.\n- Surfaces still-existing earlier V2 program-only backups as legacy checkpoint rows.\n- Keeps the RC.3 SHA-256 package verification, WordPress Plugins integration and GitHub build-status links.\n- Added permanent RC.6 regression coverage while retaining every earlier Alpha/Beta/RC gate.\n- RC.5 to RC.6 is the bootstrap transition: the RC.5 updater can only create its existing program backup before RC.6 is installed; later updates create both checkpoint files automatically.\n\n'''
+          if '## 2.0.0-rc.6\n' not in current:
+              current = current.replace('# Changelog\n\n', entry, 1)
+          changelog.write_text(current, encoding='utf-8')
+          PY
+      - name: Commit documentation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md CHANGELOG.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Document RC.6 update checkpoint parity'
+          git push origin HEAD:rc6-update-checkpoint-parity
