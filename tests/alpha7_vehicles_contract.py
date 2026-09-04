@@ -23,6 +23,7 @@ version_match = re.search(r'Version:\s*2\.0\.0(?:-(alpha|beta|rc)\.(\d+))?', plu
 version_ok = bool(version_match)
 if version_match and version_match.group(1) == 'alpha':
     version_ok = int(version_match.group(2) or 0) >= 7
+compact_schema = re.sub(r'\s+', '', schema)
 
 checks = {
     'runtime version alpha.7 or newer': version_ok,
@@ -30,7 +31,7 @@ checks = {
     'vehicle admin registration': 'register_post_type(VehicleRepository::POST_TYPE' in admin and 'vdm_save_vehicle' in admin and 'Køretøjsoplysninger' in admin,
     'vehicle core fields': all(token in admin for token in ('Type', 'Producent', 'Model', 'Årgang', 'Oprindelsesland', 'Status', 'Motor', 'Motorydelse', 'Vægt', 'Længde', 'Bredde', 'Højde', 'Besætning')),
     'flexible technical fields': 'Ekstra tekniske felter' in admin and 'vdm_vehicle[specs]' in admin and 'vdm-add-vehicle-spec' in admin and 'normalizeSpecs' in repository and 'vdm-remove-vehicle-spec' in vehicle_admin_js,
-    'vehicle node schema': "public const VEHICLES = 'vehicles';" in schema and "self::VEHICLES => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60]" in schema and "'showFacts' => true" in schema,
+    'vehicle node schema': "publicconstVEHICLES='vehicles';" in compact_schema and "self::EVENTS,self::VEHICLES,self::GALLERIES=>['x'=>0,'y'=>0,'w'=>12,'h'=>60]" in compact_schema and "'showFacts'=>true" in compact_schema,
     'canonical vehicle renderer': 'NodeSchema::VEHICLES' in renderer and 'VehicleRenderer::renderList' in renderer,
     'vehicle list rendering': 'VehicleRepository::query' in vehicle_renderer and 'vdm-vehicles-grid' in vehicle_renderer and 'Læs mere' in vehicle_renderer,
     'vehicle detail geometry': 'vdm-vehicle-detail-grid' in vehicle_renderer and 'vdm-vehicle-detail-media' in vehicle_renderer and 'vdm-vehicle-detail-specs' in vehicle_renderer,
