@@ -149,6 +149,7 @@ final class ParityController
         $frontId = get_option('show_on_front', 'posts') === 'page' ? absint(get_option('page_on_front', 0)) : 0;
         self::open('Sider', 'Alle WordPress-sider med Visual Designer-status, version og direkte adgang til Designeren.');
         self::notice();
+        PageWorkflowController::renderCreateForm($pages);
         echo '<table class="widefat striped"><thead><tr><th>Side</th><th>Status</th><th>Visual Designer</th><th>Version</th><th>Elementer</th><th>Handlinger</th></tr></thead><tbody>';
         foreach ($pages as $page) {
             if (!$page instanceof \WP_Post) {

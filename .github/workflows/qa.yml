@@ -34,6 +34,7 @@ jobs:
           node --check assets/vehicle-admin.js
           node --check assets/gallery-admin.js
           node --check assets/site-settings.js
+          node --check assets/page-workflow.js
 
       - name: V2 identity gate
         run: python3 tests/identity_gate.py
@@ -88,6 +89,9 @@ jobs:
 
       - name: RC.4 legacy media recovery contract
         run: python3 tests/rc4_legacy_media_recovery_contract.py
+
+      - name: RC.5 V1 page workflow contract
+        run: python3 tests/rc5_page_workflow_contract.py
 
       - name: Install package contract
         run: python3 tests/package_contract.py

@@ -4,7 +4,7 @@ Visual Designer Manager is a model-driven visual WordPress designer.
 
 ## Current version
 
-`2.0.0-rc.4`
+`2.0.0-rc.5`
 
 ## Version 2 principles
 
@@ -122,6 +122,16 @@ RC.2 preserves reusable field definitions and values, maps previous module-list 
 
 RC.4 hardens schema 1.0 preflight for image nodes that contain an uploads URL but no media ID. VDM first retries the same uploads path on the package source site and may then use the original URL through WordPress' safe HTTP client. A recovered file is size/type checked, SHA-256 hashed and embedded into the temporary native V2 package before the canonical importer runs. Preflight reports both recovered and unresolved legacy images and still does not create WordPress media objects.
 
+## RC.5 V1 page workflow parity
+
+RC.5 restores the established daily page workflow from the shipped V1 product on top of the native VDM2 model. The `Sider` administration page can create a new WordPress page with title, optional slug, parent and draft/published status and open it directly in Visual Designer. The Designer exposes `Forhåndsvis`, `Gem som ny version` and `Gem & vis`, plus session clipboard controls for Copy/Paste/Duplicate.
+
+Unsaved preview is user-bound and temporary. VDM normalizes the unsaved document, stores it under a short-lived opaque token tied to the current administrator and renders that document through the actual page frontend/site-shell path. The saved page is not changed by preview.
+
+Saved page history is available directly under the Designer. Historical versions can be previewed, restored non-destructively as a new version, or copied to a new draft page with its own version history.
+
+RC.5 intentionally concentrates on V1 page lifecycle and editor productivity parity. General element parity and the richer named Header/Footer template/assignment model remain separate parity workstreams before production `2.0.0`.
+
 ## RC.4 acceptance status
 
 RC.4 carries the RC.2 parity work and RC.3 GitHub update channel forward, and adds controlled legacy-media recovery for the real schema 1.0 acceptance package. Production `2.0.0` remains blocked until environment acceptance confirms V1 parity, recovered media and the update workflow on the designated WordPress test target.
@@ -144,8 +154,9 @@ Acceptance includes administration parity, Designer → Preview → Live parity,
 12. `2.0.0-rc.1` — controlled schema 1.0 migration and automated migration/parity QA. **Technical candidate completed; environment parity failed.**
 13. `2.0.0-rc.2` — V1 functional/admin/visual parity, fine geometry and migration hardening. **Superseded by RC.3.**
 14. `2.0.0-rc.3` — RC.2 parity plus native GitHub updater, verified package publishing and update-page integration. **Done; superseded by RC.4 acceptance.**
-15. `2.0.0-rc.4` — controlled recovery of URL-only legacy upload images during schema 1.0 preflight, with explicit recovery reporting. **Candidate for environment acceptance.**
-16. `2.0.0` — production release after successful WordPress acceptance QA.
+15. `2.0.0-rc.4` — controlled recovery of URL-only legacy upload images during schema 1.0 preflight, with explicit recovery reporting. **Superseded by RC.5 acceptance.**
+16. `2.0.0-rc.5` — V1 page lifecycle, unsaved frontend preview, save/view, version restore/copy and Designer clipboard parity. **Candidate for environment acceptance.**
+17. `2.0.0` — production release after successful WordPress acceptance QA.
 
 ## QA rule
 

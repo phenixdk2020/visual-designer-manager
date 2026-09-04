@@ -1,0 +1,50 @@
+.vdm-version-history {
+    margin: 20px 0 32px;
+    padding: 18px;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+}
+
+.vdm-version-history-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.vdm-version-history-heading h2,
+.vdm-version-history-heading p {
+    margin: 0;
+}
+
+.vdm-version-history-heading p {
+    margin-top: 4px;
+    color: #646970;
+}
+
+.vdm-version-actions {
+    white-space: nowrap;
+}
+
+#vdm-save-status.is-error {
+    color: #b32d2e;
+    font-weight: 600;
+}
+
+.vdm-toolbar-left > .button,
+.vdm-toolbar-right > .button {
+    margin-left: 4px;
+}
+
+@media (max-width: 782px) {
+    .vdm-version-history-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .vdm-version-actions {
+        white-space: normal;
+    }
+}

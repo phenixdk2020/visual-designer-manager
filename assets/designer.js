@@ -1263,12 +1263,38 @@
             saveStatus.textContent = 'Gemt · version ' + data.version;
             renderInspector();
             scheduleRender();
+            return true;
         } catch (error) {
             saveStatus.textContent = 'Fejl: ' + (error.message || String(error));
+            return false;
         } finally {
             saveButton.disabled = false;
         }
     }
+
+    window.VDMDesignerRuntime = Object.freeze({
+        getDocument() {
+            return JSON.parse(serialize());
+        },
+        getSelectedId() {
+            return selectedId;
+        },
+        replaceDocument(nextDocument, nextSelectedId = null) {
+            if (!nextDocument || !Array.isArray(nextDocument.nodes)) return false;
+            const before = serialize();
+            documentState = JSON.parse(JSON.stringify(nextDocument));
+            selectedId = nextSelectedId && documentState.nodes.some(node => node.id === nextSelectedId) ? nextSelectedId : null;
+            applyAutoHeight(breakpoint);
+            return afterMutation(before);
+        },
+        save,
+        isDirty() {
+            return dirty;
+        },
+        getVersion() {
+            return Number.parseInt(config.version || '0', 10) || 0;
+        }
+    });
 
     function escapeHtml(value) {
         const div = document.createElement('div');

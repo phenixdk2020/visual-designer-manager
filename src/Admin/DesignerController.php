@@ -43,8 +43,10 @@ final class DesignerController
         wp_enqueue_media();
         wp_enqueue_style('vdm-frontend', VDM_URL . 'assets/frontend.css', [], VDM_VERSION);
         wp_enqueue_style('vdm-designer', VDM_URL . 'assets/designer.css', ['vdm-frontend'], VDM_VERSION);
+        wp_enqueue_style('vdm-page-workflow', VDM_URL . 'assets/page-workflow.css', ['vdm-designer'], VDM_VERSION);
         wp_enqueue_script('vdm-frontend-runtime', VDM_URL . 'assets/frontend.js', [], VDM_VERSION, true);
         wp_enqueue_script('vdm-designer', VDM_URL . 'assets/designer.js', ['media-editor', 'vdm-frontend-runtime'], VDM_VERSION, true);
+        wp_enqueue_script('vdm-page-workflow', VDM_URL . 'assets/page-workflow.js', ['vdm-designer'], VDM_VERSION, true);
 
         $postId = self::requestedPageId();
         wp_localize_script('vdm-designer', 'VDMDesignerConfig', [
@@ -53,6 +55,7 @@ final class DesignerController
             'restBase' => esc_url_raw(rest_url(RestController::NAMESPACE)),
             'saveUrl' => $postId > 0 ? esc_url_raw(rest_url(RestController::NAMESPACE . '/layouts/' . $postId)) : '',
             'renderUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/render')),
+            'viewUrl' => $postId > 0 ? esc_url_raw((string) get_permalink($postId)) : '',
             'nonce' => wp_create_nonce('wp_rest'),
             'document' => $postId > 0 ? LayoutRepository::get($postId) : null,
             'version' => $postId > 0 ? LayoutRepository::version($postId) : 0,
@@ -75,7 +78,7 @@ final class DesignerController
         $postId = self::requestedPageId();
 
         echo '<div class="wrap vdm-designer-admin">';
-        echo '<div class="vdm-designer-heading"><div><h1>Visual Designer Manager · Designer</h1><p>Version ' . esc_html(VDM_VERSION) . '</p></div>';
+        echo '<div class="vdm-designer-heading"><div><h1>Visual Designer Manager · Visual Designer</h1><p>Version ' . esc_html(VDM_VERSION) . '</p></div>';
         echo '<form method="get"><input type="hidden" name="page" value="' . esc_attr(self::MENU_SLUG) . '"><label for="vdm-page-select">Side</label> <select id="vdm-page-select" name="post_id" onchange="this.form.submit()">';
         echo '<option value="0">Vælg side</option>';
         foreach ($pages as $page) {
@@ -98,7 +101,7 @@ final class DesignerController
         echo '<button type="button" class="button" id="vdm-undo" disabled title="Fortryd (Ctrl+Z)">Fortryd</button>';
         echo '<button type="button" class="button" id="vdm-redo" disabled title="Annuller fortryd (Ctrl+Y)">Gentag</button>';
         echo '</div>';
-        echo '<div class="vdm-toolbar-right"><span id="vdm-save-status" class="vdm-save-status">Ikke gemt</span> <button type="button" class="button button-primary" id="vdm-save" title="Gem (Ctrl+S)">Gem</button></div>';
+        echo '<div class="vdm-toolbar-right"><span id="vdm-save-status" class="vdm-save-status">Ikke gemt</span> <button type="button" class="button button-primary" id="vdm-save" title="Gem som ny version (Ctrl+S)">Gem som ny version</button></div>';
         echo '</div>';
 
         echo '<div class="vdm-workspace">';
