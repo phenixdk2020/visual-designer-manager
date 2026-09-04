@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace VisualDesignerManager\Frontend;
 
+use VisualDesignerManager\Fields\VehicleFieldRegistry;
 use VisualDesignerManager\Vehicles\VehicleRepository;
 
 final class VehicleRenderer
@@ -72,9 +73,7 @@ final class VehicleRenderer
         return (string) ob_get_clean();
     }
 
-    /** @param array<string,mixed> $vehicle
-     *  @param array<string,mixed> $props
-     */
+    /** @param array<string,mixed> $vehicle @param array<string,mixed> $props */
     private static function card(array $vehicle, array $props): string
     {
         ob_start();
@@ -99,30 +98,38 @@ final class VehicleRenderer
     private static function facts(array $vehicle, bool $compact): string
     {
         $items = [];
-        foreach ([
-            'type' => 'Type',
-            'manufacturer' => 'Producent',
-            'model' => 'Model',
-            'year' => 'Årgang',
-            'country' => 'Oprindelsesland',
-            'status' => 'Status',
-        ] as $key => $label) {
+        foreach (['type' => 'Type', 'country' => 'Oprindelsesland', 'status' => 'Status'] as $key => $label) {
             $value = (string) ($vehicle[$key] ?? '');
             if ($value !== '') {
                 $items[$label] = $value;
             }
         }
 
+        $custom = is_array($vehicle['customFields'] ?? null) ? $vehicle['customFields'] : [];
+        $shown = 0;
+        foreach (VehicleFieldRegistry::all() as $definition) {
+            if (empty($definition['enabled'])) {
+                continue;
+            }
+            $id = (string) $definition['id'];
+            $value = (string) ($custom[$id] ?? ($vehicle[$id] ?? ''));
+            if ($value === '') {
+                continue;
+            }
+            if ($compact && $shown >= 3) {
+                break;
+            }
+            $label = (string) $definition['label'];
+            $unit = trim((string) ($definition['unit'] ?? ''));
+            if ($unit !== '') {
+                $label .= ' (' . $unit . ')';
+            }
+            $items[$label] = ((string) ($definition['type'] ?? '') === 'boolean' && $value === '1') ? 'Ja' : wp_strip_all_tags($value);
+            $shown++;
+        }
+
         if (!$compact) {
-            foreach ([
-                'engine' => 'Motor',
-                'power' => 'Motorydelse',
-                'weight' => 'Vægt',
-                'length' => 'Længde',
-                'width' => 'Bredde',
-                'height' => 'Højde',
-                'crew' => 'Besætning',
-            ] as $key => $label) {
+            foreach (['power' => 'Motorydelse', 'length' => 'Længde', 'width' => 'Bredde', 'height' => 'Højde'] as $key => $label) {
                 $value = (string) ($vehicle[$key] ?? '');
                 if ($value !== '') {
                     $items[$label] = $value;
