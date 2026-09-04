@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace VisualDesignerManager\Admin;
 
 use VisualDesignerManager\Events\EventRepository;
+use VisualDesignerManager\Fields\EventFieldRegistry;
 
 final class EventController
 {
@@ -74,6 +75,16 @@ final class EventController
         echo '<textarea class="large-text" rows="4" id="vdm-event-summary" name="vdm_event[summary]">' . esc_textarea((string) $event['summary']) . '</textarea>';
         echo '<p class="description">Vises på eventkort. Selve eventbeskrivelsen skrives i WordPress-editoren ovenfor.</p></td></tr>';
         echo '</tbody></table>';
+
+        $values = is_array($event['customFields'] ?? null) ? $event['customFields'] : [];
+        $definitions = array_values(array_filter(EventFieldRegistry::all(), static fn(array $row): bool => !empty($row['enabled'])));
+        if ($definitions !== []) {
+            echo '<hr><h3>Eventfelter</h3><p class="description">Disse felter styres centralt under Visual Designer Manager → Eventfelter.</p><table class="form-table" role="presentation"><tbody>';
+            foreach ($definitions as $definition) {
+                self::customField($definition, (string) ($values[(string) $definition['id']] ?? ''));
+            }
+            echo '</tbody></table>';
+        }
     }
 
     public static function save(int $postId, \WP_Post $post): void
@@ -125,6 +136,36 @@ final class EventController
     {
         echo '<tr><th scope="row"><label for="vdm-event-' . esc_attr($name) . '">' . esc_html($label) . '</label></th><td>';
         echo '<input class="regular-text" type="' . esc_attr($type) . '" id="vdm-event-' . esc_attr($name) . '" name="vdm_event[' . esc_attr($name) . ']" value="' . esc_attr($value) . '">';
+        echo '</td></tr>';
+    }
+
+    /** @param array<string,mixed> $definition */
+    private static function customField(array $definition, string $value): void
+    {
+        $id = sanitize_key((string) ($definition['id'] ?? ''));
+        if ($id === '') {
+            return;
+        }
+        $label = (string) ($definition['label'] ?? $id);
+        $type = (string) ($definition['type'] ?? 'text');
+        $required = !empty($definition['required']) ? ' required' : '';
+        $name = 'vdm_event[customFields][' . $id . ']';
+        echo '<tr><th scope="row"><label for="vdm-event-custom-' . esc_attr($id) . '">' . esc_html($label) . '</label></th><td>';
+        if (in_array($type, ['textarea', 'richtext'], true)) {
+            echo '<textarea class="large-text" rows="5" id="vdm-event-custom-' . esc_attr($id) . '" name="' . esc_attr($name) . '"' . $required . '>' . esc_textarea($value) . '</textarea>';
+        } elseif ($type === 'boolean') {
+            echo '<label><input type="checkbox" id="vdm-event-custom-' . esc_attr($id) . '" name="' . esc_attr($name) . '" value="1"' . checked($value, '1', false) . '> Ja</label>';
+        } else {
+            $inputType = match ($type) {
+                'number', 'integer' => 'number',
+                'date' => 'date',
+                'datetime' => 'datetime-local',
+                'url' => 'url',
+                default => 'text',
+            };
+            $step = $type === 'number' ? ' step="any"' : '';
+            echo '<input class="regular-text" type="' . esc_attr($inputType) . '"' . $step . ' id="vdm-event-custom-' . esc_attr($id) . '" name="' . esc_attr($name) . '" value="' . esc_attr($value) . '"' . $required . '>';
+        }
         echo '</td></tr>';
     }
 }
