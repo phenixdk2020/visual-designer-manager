@@ -4,7 +4,7 @@ RC.2 is the V1 functional and visual parity candidate.
 
 ## Product rule
 
-Version 2 is a clean technical reimplementation of the established Visual Designer Manager product. User-facing names, administration flow and migrated output are preserved unless a later product change is explicitly approved.
+Version 2 is an independent technical reimplementation of the established Visual Designer Manager product. User-facing names, administration flow and migrated output are preserved unless a later product change is explicitly approved.
 
 The migration adapter may understand the previous package schema. Runtime code, storage keys, namespaces, routes and file names remain native VDM2 after conversion.
 
