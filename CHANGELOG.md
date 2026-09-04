@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0-rc.5
+
+- Restored the V1-style `Sider` workflow for creating a page with title, optional slug, parent and draft/published status and opening it directly in Visual Designer.
+- Renamed the canonical Designer save action to `Gem som ny version` and added `Gem & vis`.
+- Added user-bound, short-lived unsaved frontend preview through the real VDM page/frontend or site-shell rendering path without changing the saved page.
+- Added saved version history below the Designer with historical preview, non-destructive restore-as-new-version and copy-to-new-draft actions.
+- Added session clipboard controls for Copy, Paste and Duplicate of a selected Designer subtree, including Ctrl+C, Ctrl+V and Ctrl+D.
+- Exposed a minimal VDM2 Designer runtime bridge for controlled page-workflow extensions without introducing previous-generation runtime aliases.
+- Added diagnostic records for page creation, historical restore and historical page copy.
+- Added permanent RC.5 page-workflow regression coverage while retaining every earlier Alpha/Beta/RC gate.
+- Production `2.0.0` remains blocked on the remaining V1 element, Header/Footer and real reference-to-V2 visual parity workstreams.
+
 ## 2.0.0-rc.4
 
 - Added controlled schema 1.0 recovery for Image nodes that have an uploads URL but no media ID.

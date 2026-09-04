@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace VisualDesignerManager\Frontend;
 
 use VisualDesignerManager\Storage\LayoutRepository;
+use VisualDesignerManager\Storage\PreviewRepository;
 use VisualDesignerManager\Storage\SiteDesignRepository;
 
 final class FrontendController
@@ -61,7 +62,8 @@ final class FrontendController
         }
 
         $postId = get_queried_object_id();
-        if ($postId <= 0 || (LayoutRepository::get($postId)['nodes'] ?? []) === []) {
+        $document = $postId > 0 ? (PreviewRepository::resolve($postId) ?? LayoutRepository::get($postId)) : [];
+        if ($postId <= 0 || ($document['nodes'] ?? []) === []) {
             return $template;
         }
 
@@ -89,12 +91,21 @@ final class FrontendController
             return $content;
         }
 
-        $document = LayoutRepository::get($postId);
+        $previewDocument = PreviewRepository::resolve($postId);
+        $document = $previewDocument ?? LayoutRepository::get($postId);
         if (($document['nodes'] ?? []) === []) {
             return $content;
         }
 
         self::enqueueAssets();
-        return Renderer::render($document);
+        $rendered = Renderer::render($document);
+        return $previewDocument !== null ? self::previewBanner() . $rendered : $rendered;
+    }
+
+    private static function previewBanner(): string
+    {
+        return '<div class="vdm-preview-banner" role="status" style="position:relative;z-index:99999;padding:10px 16px;background:#fff3cd;border:1px solid #dba617;color:#1d2327;font:600 14px/1.4 sans-serif;text-align:center">'
+            . esc_html__('Ikke-gemt forhåndsvisning · kun synlig for dig', 'visual-designer-manager')
+            . '</div>';
     }
 }
