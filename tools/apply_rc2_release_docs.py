@@ -14,8 +14,8 @@ def replace_once(path: str, old: str, new: str) -> None:
 
 replace_once(
     'README.md',
-    '`2.0.0-rc.1`',
-    '`2.0.0-rc.2`',
+    '## Current version\n\n`2.0.0-rc.1`',
+    '## Current version\n\n`2.0.0-rc.2`',
 )
 
 replace_once(
