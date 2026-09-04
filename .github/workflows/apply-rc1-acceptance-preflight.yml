@@ -23,8 +23,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git apply --check .github/rc1-acceptance-preflight.patch
-          git apply .github/rc1-acceptance-preflight.patch
+          patch --batch --forward --fuzz=3 --dry-run -p1 < .github/rc1-acceptance-preflight.patch
+          patch --batch --forward --fuzz=3 -p1 < .github/rc1-acceptance-preflight.patch
 
       - name: Validate patched runtime
         shell: bash
