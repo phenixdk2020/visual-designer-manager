@@ -9,6 +9,8 @@ use VisualDesignerManager\Vehicles\VehicleRepository;
 
 final class VehicleController
 {
+    private const CORE_FIELD_IDS = ['manufacturer', 'model', 'year', 'engine', 'weight', 'crew'];
+
     private function __construct()
     {
     }
@@ -80,12 +82,18 @@ final class VehicleController
         echo '<table class="form-table" role="presentation"><tbody>';
         foreach ([
             'type' => 'Type',
+            'manufacturer' => 'Producent',
+            'model' => 'Model',
+            'year' => 'Årgang',
             'country' => 'Oprindelsesland',
             'status' => 'Status',
+            'engine' => 'Motor',
             'power' => 'Motorydelse',
+            'weight' => 'Vægt',
             'length' => 'Længde',
             'width' => 'Bredde',
             'height' => 'Højde',
+            'crew' => 'Besætning',
         ] as $name => $label) {
             self::field($label, $name, (string) ($vehicle[$name] ?? ''));
         }
@@ -95,17 +103,20 @@ final class VehicleController
         echo '</tbody></table>';
 
         $customValues = is_array($vehicle['customFields'] ?? null) ? $vehicle['customFields'] : [];
-        $definitions = array_values(array_filter(VehicleFieldRegistry::all(), static fn(array $row): bool => !empty($row['enabled'])));
+        $definitions = array_values(array_filter(
+            VehicleFieldRegistry::all(),
+            static fn(array $row): bool => !empty($row['enabled']) && !in_array((string) ($row['id'] ?? ''), self::CORE_FIELD_IDS, true)
+        ));
         if ($definitions !== []) {
-            echo '<hr><h3>Tekniske data</h3><p class="description">Felterne styres centralt under Visual Designer Manager → Køretøjsfelter.</p><table class="form-table" role="presentation"><tbody>';
+            echo '<hr><h3>Genbrugsfelter</h3><p class="description">Felterne styres centralt under Visual Designer Manager → Køretøjsfelter.</p><table class="form-table" role="presentation"><tbody>';
             foreach ($definitions as $definition) {
                 self::customField($definition, (string) ($customValues[(string) $definition['id']] ?? ''));
             }
             echo '</tbody></table>';
         }
 
-        echo '<hr><h3>Ekstra felter for dette køretøj</h3>';
-        echo '<p class="description">Brug disse rækker til oplysninger, der ikke skal være et centralt genbrugsfelt.</p>';
+        echo '<hr><h3>Ekstra tekniske felter</h3>';
+        echo '<p class="description">Brug disse rækker til oplysninger, der kun gælder dette køretøj og ikke skal være et centralt genbrugsfelt.</p>';
         echo '<table class="widefat striped" id="vdm-vehicle-specs"><thead><tr><th>Felt</th><th>Værdi</th><th style="width:90px">Handling</th></tr></thead><tbody>';
         $specs = is_array($vehicle['specs'] ?? null) ? $vehicle['specs'] : [];
         if ($specs === []) {
