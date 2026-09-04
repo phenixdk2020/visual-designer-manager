@@ -27,24 +27,35 @@ if version_match:
     elif phase == 'beta':
         version_ok = number >= 1
 
+compact_schema = re.sub(r'\s+', '', schema)
+
 checks = {
     'runtime version beta.1 or newer': version_ok,
-    'form node types': all(token in schema for token in (
-        "public const CONTACT_FORM = 'contact-form';",
-        "public const MEMBERSHIP_FORM = 'membership-form';",
-        "self::CONTACT_FORM => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 100]",
-        "self::MEMBERSHIP_FORM => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 128]",
-        "'submitLabel' => 'Send besked'",
-        "'submitLabel' => 'Send indmeldelse'",
-        "'requireConsent' => true",
-    )),
-    'form props normalized': all(token in schema for token in (
-        "$type === self::CONTACT_FORM || $type === self::MEMBERSHIP_FORM",
-        "'fieldBackground' => self::color",
-        "'borderColor' => self::color",
-        "'messageRows' => max(3, min(12",
-        "'consentText' => sanitize_text_field",
-    )),
+    'form node types': all(token in compact_schema for token in (
+        "publicconstCONTACT_FORM='contact-form';",
+        "publicconstMEMBERSHIP_FORM='membership-form';",
+        "self::CONTACT_FORM=>['x'=>0,'y'=>0,'w'=>12,'h'=>100]",
+        "self::MEMBERSHIP_FORM=>['x'=>0,'y'=>0,'w'=>12,'h'=>128]",
+        "'submitLabel'=>'Sendbesked'" if False else "'submitLabel'=>'Sendbesked'",
+    )) if False else (
+        "publicconstCONTACT_FORM='contact-form';" in compact_schema
+        and "publicconstMEMBERSHIP_FORM='membership-form';" in compact_schema
+        and "self::CONTACT_FORM=>['x'=>0,'y'=>0,'w'=>12,'h'=>100]" in compact_schema
+        and "self::MEMBERSHIP_FORM=>['x'=>0,'y'=>0,'w'=>12,'h'=>128]" in compact_schema
+        and "'submitLabel'=>'Sendbesked'" not in compact_schema
+        and "'submitLabel'=>'Send besked'" in schema
+        and "'submitLabel'=>'Send indmeldelse'" in schema
+        and "'requireConsent'=>true" in compact_schema
+    ),
+    'form props normalized': (
+        "in_array($type,[self::CONTACT_FORM,self::MEMBERSHIP_FORM],true)" in compact_schema
+        and "'fieldBackground'=>self::color" in compact_schema
+        and "'borderColor'=>self::color" in compact_schema
+        and "'messageRows'=>self::int($props,'messageRows'" in compact_schema
+        and "'consentText'=>sanitize_text_field" in compact_schema
+        and "'recipient'=>sanitize_email" in compact_schema
+        and "'sendReceipt'=>" in compact_schema
+    ),
     'canonical form renderer wired': 'FormRenderer::render($type' in renderer and 'NodeSchema::CONTACT_FORM' in renderer and 'NodeSchema::MEMBERSHIP_FORM' in renderer,
     'canonical form style variables': all(token in renderer for token in (
         '--vdm-form-columns:',
