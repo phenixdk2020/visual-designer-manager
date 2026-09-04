@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Temporary release applicator: preserves RC.1 canonical geometry while RC.2 fine geometry remains authoritative for rendering.
 path = Path(__file__).resolve().parents[1] / 'src/Transfer/SchemaOneMigrator.php'
 text = path.read_text(encoding='utf-8')
 
