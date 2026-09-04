@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace VisualDesignerManager\Admin;
 
+use VisualDesignerManager\Fields\VehicleFieldRegistry;
 use VisualDesignerManager\Vehicles\VehicleRepository;
 
 final class VehicleController
@@ -79,18 +80,12 @@ final class VehicleController
         echo '<table class="form-table" role="presentation"><tbody>';
         foreach ([
             'type' => 'Type',
-            'manufacturer' => 'Producent',
-            'model' => 'Model',
-            'year' => 'Årgang',
             'country' => 'Oprindelsesland',
             'status' => 'Status',
-            'engine' => 'Motor',
             'power' => 'Motorydelse',
-            'weight' => 'Vægt',
             'length' => 'Længde',
             'width' => 'Bredde',
             'height' => 'Højde',
-            'crew' => 'Besætning',
         ] as $name => $label) {
             self::field($label, $name, (string) ($vehicle[$name] ?? ''));
         }
@@ -99,8 +94,18 @@ final class VehicleController
         echo '<p class="description">Vises på køretøjskort. Den fulde beskrivelse skrives i WordPress-editoren.</p></td></tr>';
         echo '</tbody></table>';
 
-        echo '<hr><h3>Ekstra tekniske felter</h3>';
-        echo '<p class="description">Tilføj de tekniske oplysninger, der kun gælder for dette køretøj.</p>';
+        $customValues = is_array($vehicle['customFields'] ?? null) ? $vehicle['customFields'] : [];
+        $definitions = array_values(array_filter(VehicleFieldRegistry::all(), static fn(array $row): bool => !empty($row['enabled'])));
+        if ($definitions !== []) {
+            echo '<hr><h3>Tekniske data</h3><p class="description">Felterne styres centralt under Visual Designer Manager → Køretøjsfelter.</p><table class="form-table" role="presentation"><tbody>';
+            foreach ($definitions as $definition) {
+                self::customField($definition, (string) ($customValues[(string) $definition['id']] ?? ''));
+            }
+            echo '</tbody></table>';
+        }
+
+        echo '<hr><h3>Ekstra felter for dette køretøj</h3>';
+        echo '<p class="description">Brug disse rækker til oplysninger, der ikke skal være et centralt genbrugsfelt.</p>';
         echo '<table class="widefat striped" id="vdm-vehicle-specs"><thead><tr><th>Felt</th><th>Værdi</th><th style="width:90px">Handling</th></tr></thead><tbody>';
         $specs = is_array($vehicle['specs'] ?? null) ? $vehicle['specs'] : [];
         if ($specs === []) {
@@ -135,9 +140,7 @@ final class VehicleController
         VehicleRepository::save($postId, is_array($raw) ? $raw : []);
     }
 
-    /** @param array<string,string> $columns
-     *  @return array<string,string>
-     */
+    /** @param array<string,string> $columns @return array<string,string> */
     public static function columns(array $columns): array
     {
         $result = [];
@@ -169,6 +172,37 @@ final class VehicleController
     {
         echo '<tr><th scope="row"><label for="vdm-vehicle-' . esc_attr($name) . '">' . esc_html($label) . '</label></th><td>';
         echo '<input class="regular-text" type="text" id="vdm-vehicle-' . esc_attr($name) . '" name="vdm_vehicle[' . esc_attr($name) . ']" value="' . esc_attr($value) . '">';
+        echo '</td></tr>';
+    }
+
+    /** @param array<string,mixed> $definition */
+    private static function customField(array $definition, string $value): void
+    {
+        $id = sanitize_key((string) ($definition['id'] ?? ''));
+        if ($id === '') {
+            return;
+        }
+        $label = (string) ($definition['label'] ?? $id);
+        $unit = trim((string) ($definition['unit'] ?? ''));
+        if ($unit !== '') {
+            $label .= ' (' . $unit . ')';
+        }
+        $type = (string) ($definition['type'] ?? 'text');
+        $name = 'vdm_vehicle[customFields][' . $id . ']';
+        echo '<tr><th scope="row"><label for="vdm-vehicle-custom-' . esc_attr($id) . '">' . esc_html($label) . '</label></th><td>';
+        if (in_array($type, ['textarea', 'richtext'], true)) {
+            echo '<textarea class="large-text" rows="4" id="vdm-vehicle-custom-' . esc_attr($id) . '" name="' . esc_attr($name) . '">' . esc_textarea($value) . '</textarea>';
+        } elseif ($type === 'boolean') {
+            echo '<label><input type="checkbox" id="vdm-vehicle-custom-' . esc_attr($id) . '" name="' . esc_attr($name) . '" value="1"' . checked($value, '1', false) . '> Ja</label>';
+        } else {
+            $inputType = match ($type) {
+                'number', 'integer' => 'number',
+                'date' => 'date',
+                default => 'text',
+            };
+            $step = $type === 'number' ? ' step="any"' : '';
+            echo '<input class="regular-text" type="' . esc_attr($inputType) . '"' . $step . ' id="vdm-vehicle-custom-' . esc_attr($id) . '" name="' . esc_attr($name) . '" value="' . esc_attr($value) . '">';
+        }
         echo '</td></tr>';
     }
 
