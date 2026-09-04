@@ -24,6 +24,7 @@ version_match = re.search(r'Version:\s*2\.0\.0(?:-(alpha|beta|rc)\.(\d+))?', plu
 version_ok = bool(version_match)
 if version_match and version_match.group(1) == 'alpha':
     version_ok = int(version_match.group(2) or 0) >= 8
+compact_schema = re.sub(r'\s+', '', schema)
 
 checks = {
     'runtime version alpha.8 or newer': version_ok,
@@ -32,7 +33,7 @@ checks = {
     'gallery admin registration': 'register_post_type(GalleryRepository::POST_TYPE' in admin and 'vdm_save_gallery' in admin and 'Albumbilleder' in admin,
     'gallery media manager': all(token in admin for token in ('Vælg billeder', 'Fjern alle', 'vdm-gallery-image-ids')) and all(token in gallery_admin_js for token in ('wp.media', 'multiple:', 'dragstart', 'vdm-gallery-remove-image')),
     'gallery admin styling': '.vdm-gallery-image-list' in gallery_admin_css and '.vdm-gallery-admin-image' in gallery_admin_css,
-    'gallery node schema': "public const GALLERIES = 'galleries';" in schema and "self::GALLERIES => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60]" in schema and "'showCover' => true" in schema,
+    'gallery node schema': "publicconstGALLERIES='galleries';" in compact_schema and "self::EVENTS,self::VEHICLES,self::GALLERIES=>['x'=>0,'y'=>0,'w'=>12,'h'=>60]" in compact_schema and "'showCover'=>true" in compact_schema,
     'canonical gallery renderer': 'NodeSchema::GALLERIES' in renderer and 'GalleryRenderer::renderList' in renderer,
     'album list rendering': 'GalleryRepository::query' in gallery_renderer and 'vdm-gallery-albums' in gallery_renderer and 'Åbn album' in gallery_renderer,
     'album detail rendering': 'vdm-gallery-images' in gallery_renderer and 'figcaption' in gallery_renderer and 'renderDetail(int $postId)' in gallery_renderer,
