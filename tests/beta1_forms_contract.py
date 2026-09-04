@@ -34,7 +34,6 @@ checks = {
         and "publicconstMEMBERSHIP_FORM='membership-form';" in compact_schema
         and "self::CONTACT_FORM=>['x'=>0,'y'=>0,'w'=>12,'h'=>100]" in compact_schema
         and "self::MEMBERSHIP_FORM=>['x'=>0,'y'=>0,'w'=>12,'h'=>128]" in compact_schema
-        and "'submitLabel'=>'Sendbesked'" not in compact_schema
         and "'submitLabel'=>'Send besked'" in schema
         and "'submitLabel'=>'Send indmeldelse'" in schema
         and "'requireConsent'=>true" in compact_schema
