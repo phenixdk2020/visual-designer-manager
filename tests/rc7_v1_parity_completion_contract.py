@@ -38,7 +38,8 @@ checks = {
     ),
     'template assignment UI': has(
         'src/Admin/TemplateAssignmentController.php',
-        'Ingen Header', 'Ingen Footer', 'Automatisk / standard', 'saveChoice('
+        'Automatisk / standard', 'value="none"', 'TemplateAssignmentRepository::saveChoice',
+        'Resolver: sidevalg → website-standard → tom fallback.'
     ),
     'full VDM navigation manager': all(token in nav for token in (
         'wp_get_nav_menus', 'wp_get_nav_menu_items', 'wp_update_nav_menu_item',
@@ -82,7 +83,7 @@ checks = {
         'src/Frontend/Renderer.php',
         'NodeSchema::LINK', 'NodeSchema::ICON', 'NodeSchema::BADGE', 'NodeSchema::DATA_LIST', 'NodeSchema::TABLE',
         'NodeSchema::EVENT_VALUE', 'NodeSchema::VEHICLE_DETAIL', 'NodeSchema::GALLERY_DETAIL'
-    ) and has('assets/parity.css', '.vdm-node--link', '.vdm-node--table'),
+    ) and has('assets/parity.css', '.vdm-node--link', '.vdm-table', '.vdm-node--event-value'),
     'new controllers are booted': all(token in core for token in (
         'PageLifecycleController::register();', 'DesignerParityController::register();',
         'DiagnosticsController::register();', 'TemplateAssignmentController::register();', 'ManualController::register();'
