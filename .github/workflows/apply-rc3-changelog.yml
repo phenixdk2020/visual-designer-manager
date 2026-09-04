@@ -1,0 +1,49 @@
+name: Apply RC.3 changelog
+
+on:
+  push:
+    branches: [rc3-github-updater]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip rc3 changelog]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rc3-github-updater
+
+      - name: Prepend RC.3 changelog
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('CHANGELOG.md')
+          text = path.read_text(encoding='utf-8')
+          if '## 2.0.0-rc.3' not in text:
+              section = '''## 2.0.0-rc.3\n\n- Carried all RC.2 V1 functional and visual parity work forward.\n- Added a native VDM2 GitHub updater integrated with WordPress plugin update transients and plugin information.\n- Added direct update status, manual GitHub check and install actions to the `Opdateringer` administration page.\n- Restricted the updater to the Visual Designer Manager repository manifest and versioned `dist/` package path.\n- Added SHA-256 verification of downloaded update packages before WordPress can install them.\n- Added an automatic program backup of the installed VDM plugin before replacement, with bounded backup retention.\n- Extended the package workflow to publish the verified versioned ZIP under `dist/` and generate the canonical `update.json` manifest with version, package path and SHA-256.\n- Added a recursion guard so the updater publication commit cannot trigger another package publication loop.\n- Added the permanent RC.3 GitHub updater contract on top of the existing regression chain.\n- RC.3 is the one-time bootstrap for the VDM2 update channel; older VDM2 candidates require one final manual RC.3 ZIP installation.\n- Production `2.0.0` remains gated on environment parity and update-channel acceptance.\n\n'''
+              text = text.replace('# Changelog\n\n', '# Changelog\n\n' + section, 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate identity and updater contract
+        run: |
+          python3 tests/identity_gate.py
+          python3 tests/rc3_github_updater_contract.py
+
+      - name: Commit changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo 'RC.3 changelog already current.'
+          else
+            git commit -m 'Add RC.3 release notes [skip rc3 changelog]'
+            git push origin HEAD:rc3-github-updater
+          fi
