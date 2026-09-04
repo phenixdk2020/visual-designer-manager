@@ -9,6 +9,7 @@ use VisualDesignerManager\Fields\EventFieldRegistry;
 use VisualDesignerManager\Fields\VehicleFieldRegistry;
 use VisualDesignerManager\Storage\LayoutRepository;
 use VisualDesignerManager\Transfer\PortableExporter;
+use VisualDesignerManager\Update\GitHubUpdater;
 
 final class ParityController
 {
@@ -248,11 +249,42 @@ final class ParityController
     public static function updates(): void
     {
         self::guard('update_plugins');
-        self::open('Opdateringer', 'Versionsstatus for Visual Designer Manager.');
-        echo '<div class="card" style="max-width:760px"><h2>Installeret version</h2><p><strong>' . esc_html(VDM_VERSION) . '</strong></p>';
-        echo '<p>RC.2 bruger GitHub Actions som kontrolleret build- og QA-kanal. En pakke må først installeres, når både QA og package-workflow er grønne.</p>';
-        echo '<p><a class="button" href="' . esc_url('https://github.com/phenixdk2020/visual-designer-manager/actions') . '" target="_blank" rel="noopener noreferrer">Åbn build-status på GitHub</a> ';
-        echo '<a class="button" href="' . esc_url(admin_url('plugins.php')) . '">WordPress plugins</a></p></div>';
+        $force = isset($_GET['vdm_update_check']);
+        $status = GitHubUpdater::status($force);
+        self::open('Opdateringer', 'Kontroller og installer publicerede Visual Designer Manager-versioner direkte fra GitHub.');
+
+        $check = sanitize_key((string) ($_GET['vdm_update_check'] ?? ''));
+        $message = sanitize_text_field((string) ($_GET['vdm_update_message'] ?? ''));
+        if ($check === 'installed') {
+            echo '<div class="notice notice-success inline"><p>Visual Designer Manager blev opdateret til <strong>' . esc_html((string) ($_GET['vdm_update_version'] ?? VDM_VERSION)) . '</strong>.</p></div>';
+        } elseif ($check === 'install-error') {
+            echo '<div class="notice notice-error inline"><p>Opdateringen fejlede' . ($message !== '' ? ': ' . esc_html($message) : '.') . '</p></div>';
+        } elseif ($check === 'error') {
+            echo '<div class="notice notice-error inline"><p>GitHub-manifestet kunne ikke hentes eller valideres.</p></div>';
+        } elseif ($check === 'current') {
+            echo '<div class="notice notice-success inline"><p>Du har allerede den seneste publicerede version.</p></div>';
+        } elseif ($check === 'available') {
+            echo '<div class="notice notice-info inline"><p>En nyere version er tilgængelig.</p></div>';
+        }
+
+        echo '<div class="card" style="max-width:820px"><h2>Versionsstatus</h2>';
+        echo '<table class="widefat striped"><tbody>';
+        echo '<tr><th style="width:220px">Installeret</th><td><strong>' . esc_html(VDM_VERSION) . '</strong></td></tr>';
+        echo '<tr><th>Seneste på GitHub</th><td>' . ($status['ok'] ? '<strong>' . esc_html($status['latest']) . '</strong>' : '<span style="color:#b32d2e">Kunne ikke læses</span>') . '</td></tr>';
+        echo '<tr><th>Status</th><td>';
+        if (!$status['ok']) {
+            echo '<strong style="color:#b32d2e">GitHub ikke tilgængelig</strong>';
+        } elseif ($status['available']) {
+            echo '<strong>Opdatering tilgængelig</strong>';
+        } else {
+            echo '<strong>Opdateret</strong>';
+        }
+        echo '</td></tr></tbody></table>';
+        echo '<p style="margin-top:16px">' . GitHubUpdater::checkButtonHtml() . ' ' . GitHubUpdater::installButtonHtml() . ' ';
+        echo '<a class="button" href="' . esc_url(admin_url('plugins.php')) . '">WordPress plugins</a> ';
+        echo '<a class="button" href="' . esc_url('https://github.com/phenixdk2020/visual-designer-manager/actions') . '" target="_blank" rel="noopener noreferrer">GitHub build-status</a></p>';
+        echo '<p><strong>Sikkerhed:</strong> VDM installerer kun pakken fra det publicerede <code>update.json</code>, validerer SHA-256 før installation og opretter automatisk en programbackup før opdatering.</p>';
+        echo '</div>';
         self::close();
     }
 
@@ -293,7 +325,7 @@ final class ParityController
         echo '<h2>Visual Designer</h2><p>Vælg en side, byg layoutet, kontrollér breakpoint og gem. Preview og live-output bruger samme VDM-renderer.</p>';
         echo '<h2>Backup og Eksport</h2><p>Backup opretter en komplet portabel VDM-pakke. Eksport indeholder også import med forhåndskontrol før ændringer udføres.</p>';
         echo '<h2>Migration</h2><p>Importer fra tidligere schema gennem Eksport. Efter konvertering gemmes indholdet kun i VDM2-format.</p>';
-        echo '<h2>RC.2 test</h2><p>Sammenlign den migrerede installation med referenceinstallationen på desktop, laptop, tablet og mobil. Ingen manuel efterstyling skal være nødvendig for et godkendt resultat.</p></div>';
+        echo '<h2>RC.3 test</h2><p>Sammenlign den migrerede installation med referenceinstallationen på desktop, laptop, tablet og mobil. Kontrollér desuden at Opdateringer kan læse GitHub-manifestet. Ingen manuel efterstyling skal være nødvendig for et godkendt resultat.</p></div>';
         self::close();
     }
 
