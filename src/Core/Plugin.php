@@ -21,6 +21,7 @@ use VisualDesignerManager\Frontend\GalleryFrontendController;
 use VisualDesignerManager\Frontend\VehicleFrontendController;
 use VisualDesignerManager\Forms\FormSubmissionController;
 use VisualDesignerManager\Http\RestController;
+use VisualDesignerManager\Update\GitHubUpdater;
 
 final class Plugin
 {
@@ -54,6 +55,7 @@ final class Plugin
         GalleryFrontendController::register();
         FormSubmissionController::register();
         RestController::register();
+        GitHubUpdater::register();
     }
 
     public static function activate(): void
