@@ -9,6 +9,7 @@ use VisualDesignerManager\Admin\DesignerController;
 use VisualDesignerManager\Admin\EventController;
 use VisualDesignerManager\Admin\GalleryController;
 use VisualDesignerManager\Admin\NavigationController;
+use VisualDesignerManager\Admin\ParityController;
 use VisualDesignerManager\Admin\SiteDesignController;
 use VisualDesignerManager\Admin\SiteSettingsController;
 use VisualDesignerManager\Admin\TemplateDesignerController;
@@ -37,6 +38,7 @@ final class Plugin
 
         self::$booted = true;
         AdminController::register();
+        ParityController::register();
         DesignerController::register();
         TemplateDesignerController::register();
         SiteDesignController::register();
