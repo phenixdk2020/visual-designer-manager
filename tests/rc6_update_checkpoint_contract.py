@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,8 +18,12 @@ manager = read('src/Update/UpdateCheckpointManager.php')
 controller = read('src/Admin/UpdateCheckpointController.php')
 updater = read('src/Update/GitHubUpdater.php')
 
+version_match = re.search(r'Version:\s*2\.0\.0-rc\.(\d+)', plugin)
+runtime_match = re.search(r"define\('VDM_VERSION',\s*'2\.0\.0-rc\.(\d+)'\)", plugin)
+version_ok = bool(version_match and runtime_match and int(version_match.group(1)) >= 6 and version_match.group(1) == runtime_match.group(1))
+
 checks = [
-    ('RC.6 version header', 'Version: 2.0.0-rc.6' in plugin and "define('VDM_VERSION', '2.0.0-rc.6')" in plugin),
+    ('RC.6 or newer version header', version_ok),
     ('checkpoint manager registered', 'UpdateCheckpointManager::register();' in core),
     ('checkpoint admin registered', 'UpdateCheckpointController::register();' in core),
     ('runs after program backup', "add_filter('upgrader_pre_install', [self::class, 'checkpointBeforeInstall'], 30, 2);" in manager),
