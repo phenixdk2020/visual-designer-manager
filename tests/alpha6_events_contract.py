@@ -28,7 +28,7 @@ checks = {
     'event post type and VDM meta': "public const POST_TYPE = 'vdm_event';" in repository and "'_vdm_event_start_date'" in repository and "'_vdm_event_contact'" in repository,
     'event admin registration': 'register_post_type(EventRepository::POST_TYPE' in admin and 'vdm_save_event' in admin and 'Eventoplysninger' in admin,
     'event fields': all(token in admin for token in ('Dato', 'Starttid', 'Sluttid', 'Sted', 'Adresse', 'Kontakt', 'Kort beskrivelse')),
-    'event node schema': "publicconstEVENTS='events';" in compact_schema and "self::EVENTS,['x'=>0,'y'=>0,'w'=>12,'h'=>60]" in compact_schema and "'showFacts'=>true" in compact_schema,
+    'event node schema': "publicconstEVENTS='events';" in compact_schema and "self::EVENTS,self::VEHICLES,self::GALLERIES=>['x'=>0,'y'=>0,'w'=>12,'h'=>60]" in compact_schema and "'showFacts'=>true" in compact_schema,
     'canonical event renderer': 'NodeSchema::EVENTS' in renderer and 'EventRenderer::renderList' in renderer,
     'event fact ribbon': all(token in event_renderer for token in ("$items['Dato']", "$items['Tid']", "$items['Sted']", "$items['Adresse']", "$items['Kontakt']")),
     'event list rendering': 'EventRepository::query' in event_renderer and 'vdm-events-grid' in event_renderer and 'Læs mere' in event_renderer,
