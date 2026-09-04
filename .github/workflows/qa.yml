@@ -93,5 +93,8 @@ jobs:
       - name: RC.5 V1 page workflow contract
         run: python3 tests/rc5_page_workflow_contract.py
 
+      - name: RC.6 update checkpoint contract
+        run: python3 tests/rc6_update_checkpoint_contract.py
+
       - name: Install package contract
         run: python3 tests/package_contract.py
