@@ -1,0 +1,52 @@
+name: Apply VDM 2 RC.1 Acceptance Preflight Fixes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/rc1-acceptance-preflight.patch'
+      - '.github/workflows/apply-rc1-acceptance-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply acceptance preflight patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check .github/rc1-acceptance-preflight.patch
+          git apply .github/rc1-acceptance-preflight.patch
+
+      - name: Validate patched runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l src/Model/NodeSchema.php >/dev/null
+          php -l src/Frontend/FormRenderer.php >/dev/null
+          php -l src/Frontend/Renderer.php >/dev/null
+          php -l src/Transfer/SchemaOneMigrator.php >/dev/null
+          node --check assets/designer.js
+          echo 'Acceptance preflight syntax: PASS'
+
+      - name: Commit acceptance preflight fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/Model/NodeSchema.php src/Frontend/FormRenderer.php src/Frontend/Renderer.php src/Transfer/SchemaOneMigrator.php assets/designer.js assets/frontend.css
+          if git diff --cached --quiet; then
+            echo 'No runtime changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Fix RC.1 legacy acceptance parity [skip rc1 acceptance apply]'
+          git push origin HEAD:main
