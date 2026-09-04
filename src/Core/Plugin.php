@@ -13,6 +13,7 @@ use VisualDesignerManager\Admin\PageWorkflowController;
 use VisualDesignerManager\Admin\ParityController;
 use VisualDesignerManager\Admin\SiteDesignController;
 use VisualDesignerManager\Admin\SiteSettingsController;
+use VisualDesignerManager\Admin\TemplateAssignmentController;
 use VisualDesignerManager\Admin\TemplateDesignerController;
 use VisualDesignerManager\Admin\TransferController;
 use VisualDesignerManager\Admin\UpdateCheckpointController;
@@ -48,6 +49,7 @@ final class Plugin
         PageWorkflowController::register();
         DesignerController::register();
         TemplateDesignerController::register();
+        TemplateAssignmentController::register();
         SiteDesignController::register();
         SiteSettingsController::register();
         NavigationController::register();
