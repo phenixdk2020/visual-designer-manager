@@ -1,0 +1,32 @@
+name: Fix RC.3 geometry
+
+on:
+  push:
+    branches: [rc3-github-updater]
+    paths:
+      - tools/fix_rc3_geometry.py
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rc3-github-updater
+      - run: python3 tools/fix_rc3_geometry.py
+      - run: php -l src/Transfer/SchemaOneMigrator.php
+      - run: python3 tests/identity_gate.py
+      - run: python3 tests/rc1_schema_one_migration_contract.py
+      - run: python3 tests/rc2_parity_contract.py
+      - name: Commit fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/Transfer/SchemaOneMigrator.php
+          git commit -m 'Preserve canonical grid alongside fine migration geometry'
+          git push origin HEAD:rc3-github-updater
