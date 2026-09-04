@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace VisualDesignerManager\Frontend;
 
 use VisualDesignerManager\Events\EventRepository;
+use VisualDesignerManager\Fields\EventFieldRegistry;
 
 final class EventRenderer
 {
@@ -61,13 +62,12 @@ final class EventRenderer
             $content = has_blocks($content) ? do_blocks($content) : wpautop($content);
             echo '<div class="vdm-event-detail-content">' . wp_kses_post(do_shortcode($content)) . '</div>';
         }
+        echo self::customDetailFields($event); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo '</article>';
         return (string) ob_get_clean();
     }
 
-    /** @param array<string,mixed> $event
-     *  @param array<string,mixed> $props
-     */
+    /** @param array<string,mixed> $event @param array<string,mixed> $props */
     private static function card(array $event, array $props): string
     {
         ob_start();
@@ -95,7 +95,6 @@ final class EventRenderer
         if ((string) $event['startDate'] !== '') {
             $items['Dato'] = self::formatDate((string) $event['startDate']);
         }
-
         $time = self::formatTime((string) $event['startTime'], (string) $event['endTime']);
         if ($time !== '') {
             $items['Tid'] = $time;
@@ -110,16 +109,57 @@ final class EventRenderer
             $items['Kontakt'] = (string) $event['contact'];
         }
 
+        if ($compact) {
+            $values = is_array($event['customFields'] ?? null) ? $event['customFields'] : [];
+            foreach (EventFieldRegistry::all() as $definition) {
+                if (empty($definition['enabled']) || empty($definition['showCard'])) {
+                    continue;
+                }
+                $id = (string) $definition['id'];
+                $value = trim(wp_strip_all_tags((string) ($values[$id] ?? '')));
+                if ($value !== '') {
+                    $items[(string) $definition['label']] = $value;
+                }
+            }
+        }
+
         if ($items === []) {
             return '';
         }
-
         $class = $compact ? 'vdm-event-facts is-compact' : 'vdm-event-facts';
         $html = '<dl class="' . esc_attr($class) . '">';
         foreach ($items as $label => $value) {
             $html .= '<div class="vdm-event-fact"><dt>' . esc_html($label) . '</dt><dd>' . esc_html($value) . '</dd></div>';
         }
         return $html . '</dl>';
+    }
+
+    /** @param array<string,mixed> $event */
+    private static function customDetailFields(array $event): string
+    {
+        $values = is_array($event['customFields'] ?? null) ? $event['customFields'] : [];
+        if ($values === []) {
+            return '';
+        }
+        $html = '';
+        foreach (EventFieldRegistry::all() as $definition) {
+            if (empty($definition['enabled']) || empty($definition['showDetail'])) {
+                continue;
+            }
+            $id = (string) $definition['id'];
+            $value = (string) ($values[$id] ?? '');
+            if ($value === '') {
+                continue;
+            }
+            $html .= '<section class="vdm-event-custom-field"><h2>' . esc_html((string) $definition['label']) . '</h2>';
+            if ((string) ($definition['type'] ?? '') === 'richtext') {
+                $html .= '<div>' . wp_kses_post(wpautop($value)) . '</div>';
+            } else {
+                $html .= '<p>' . esc_html($value === '1' && (string) ($definition['type'] ?? '') === 'boolean' ? 'Ja' : $value) . '</p>';
+            }
+            $html .= '</section>';
+        }
+        return $html;
     }
 
     private static function formatDate(string $date): string
