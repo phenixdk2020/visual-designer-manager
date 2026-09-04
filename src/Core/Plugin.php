@@ -8,6 +8,7 @@ use VisualDesignerManager\Admin\AdminController;
 use VisualDesignerManager\Admin\DesignerController;
 use VisualDesignerManager\Admin\EventController;
 use VisualDesignerManager\Admin\GalleryController;
+use VisualDesignerManager\Admin\ManualController;
 use VisualDesignerManager\Admin\NavigationController;
 use VisualDesignerManager\Admin\PageWorkflowController;
 use VisualDesignerManager\Admin\ParityController;
@@ -57,6 +58,7 @@ final class Plugin
         EventController::register();
         VehicleController::register();
         GalleryController::register();
+        ManualController::register();
         FrontendController::register();
         EventFrontendController::register();
         VehicleFrontendController::register();
