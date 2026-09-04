@@ -1,0 +1,38 @@
+name: Apply RC.2 module parity
+
+on:
+  push:
+    branches: [rc2-v1-functional-visual-parity]
+    paths:
+      - tools/apply_rc2_module_parity.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rc2-v1-functional-visual-parity
+      - name: Apply module parity
+        run: python3 tools/apply_rc2_module_parity.py
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -type f -name '*.php' -print0 | while IFS= read -r -d '' file; do php -l "$file" >/dev/null; done
+      - name: Identity gate
+        run: python3 tests/identity_gate.py
+      - name: Commit module parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src
+          git commit -m 'Preserve RC.2 module list styling [skip rc2 module apply]'
+          git push
