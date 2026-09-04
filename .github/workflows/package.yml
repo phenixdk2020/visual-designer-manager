@@ -1,0 +1,142 @@
+name: Visual Designer Manager Package
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve package identity
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          from pathlib import Path
+          import re
+          import os
+
+          text = Path('visual-designer-manager.php').read_text(encoding='utf-8')
+          header = re.search(r'^\s*\*\s*Version:\s*([^\s]+)\s*$', text, re.MULTILINE)
+          runtime = re.search(r"define\('VDM_VERSION',\s*'([^']+)'\);", text)
+          if not header or not runtime:
+              raise SystemExit('Plugin version metadata is missing.')
+          if header.group(1) != runtime.group(1):
+              raise SystemExit('Plugin header version and VDM_VERSION differ.')
+          version = header.group(1)
+          if not re.fullmatch(r'\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?', version):
+              raise SystemExit(f'Unsupported package version: {version}')
+          print(f'version={version}')
+          print(f'short_sha={os.environ["GITHUB_SHA"][:12]}')
+          PY
+
+      - name: Assemble install tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build
+          mkdir -p build/visual-designer-manager
+          cp visual-designer-manager.php README.md CHANGELOG.md build/visual-designer-manager/
+          cp -R src assets templates build/visual-designer-manager/
+
+      - name: Validate packaged runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='build/visual-designer-manager'
+          test -f "$root/visual-designer-manager.php"
+          test -d "$root/src"
+          test -d "$root/assets"
+          test -d "$root/templates"
+          test ! -e "$root/.github"
+          test ! -e "$root/tests"
+          test ! -e "$root/docs"
+          find "$root" -type f -name '*.php' -print0 | while IFS= read -r -d '' file; do
+            php -l "$file" >/dev/null
+          done
+          find "$root/assets" -type f -name '*.js' -print0 | while IFS= read -r -d '' file; do
+            node --check "$file"
+          done
+          echo 'Packaged runtime syntax: PASS'
+
+      - name: Create deterministic ZIP
+        shell: bash
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          export TZ=UTC
+          find build/visual-designer-manager -exec touch -t 202001010000.00 {} +
+          (
+            cd build
+            LC_ALL=C find visual-designer-manager -type f -print | sort | zip -X -q "../visual-designer-manager-v${VERSION}.zip" -@
+          )
+          sha256sum "visual-designer-manager-v${VERSION}.zip" > "visual-designer-manager-v${VERSION}.zip.sha256"
+
+      - name: Inspect finished ZIP
+        shell: bash
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import hashlib
+          import os
+
+          version = os.environ['VERSION']
+          archive = Path(f'visual-designer-manager-v{version}.zip')
+          checksum = Path(str(archive) + '.sha256')
+          if not archive.is_file() or archive.stat().st_size <= 0:
+              raise SystemExit('Package ZIP is missing or empty.')
+
+          with ZipFile(archive, 'r') as zf:
+              names = zf.namelist()
+              if not names:
+                  raise SystemExit('Package ZIP is empty.')
+              if len(names) != len({name.casefold() for name in names}):
+                  raise SystemExit('Package ZIP contains duplicate paths.')
+              for name in names:
+                  if not name.startswith('visual-designer-manager/'):
+                      raise SystemExit(f'Unexpected ZIP root: {name}')
+                  parts = [part for part in name.split('/') if part]
+                  if '..' in parts or name.startswith('/') or '\\' in name:
+                      raise SystemExit(f'Unsafe ZIP path: {name}')
+                  if any(part in {'.git', '.github', 'tests', 'docs'} for part in parts):
+                      raise SystemExit(f'Development-only path leaked into package: {name}')
+              required = {
+                  'visual-designer-manager/visual-designer-manager.php',
+                  'visual-designer-manager/README.md',
+                  'visual-designer-manager/CHANGELOG.md',
+              }
+              missing = required.difference(names)
+              if missing:
+                  raise SystemExit('Required package files missing: ' + ', '.join(sorted(missing)))
+
+          digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+          recorded = checksum.read_text(encoding='utf-8').split()[0].lower()
+          if digest != recorded:
+              raise SystemExit('Package SHA-256 verification failed.')
+          print(f'Package ZIP: {archive.name}')
+          print(f'SHA-256: {digest}')
+          print(f'Bytes: {archive.stat().st_size}')
+          PY
+
+      - name: Upload installable RC artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v${{ steps.meta.outputs.version }}-${{ steps.meta.outputs.short_sha }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            visual-designer-manager-v${{ steps.meta.outputs.version }}.zip
+            visual-designer-manager-v${{ steps.meta.outputs.version }}.zip.sha256
