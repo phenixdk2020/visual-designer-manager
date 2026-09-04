@@ -23,6 +23,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo 'RC.5 apply runner v2'
           python3 tools/apply_rc5.py
 
       - name: Validate transformed RC.5
