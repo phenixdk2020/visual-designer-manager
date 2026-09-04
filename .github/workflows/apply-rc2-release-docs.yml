@@ -1,0 +1,31 @@
+name: Apply RC.2 release documentation
+
+on:
+  push:
+    branches: [rc2-v1-functional-visual-parity]
+    paths:
+      - tools/apply_rc2_release_docs.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rc2-v1-functional-visual-parity
+      - run: python3 tools/apply_rc2_release_docs.py
+      - run: python3 tests/identity_gate.py
+      - name: Commit release documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md CHANGELOG.md
+          git commit -m 'Document Visual Designer Manager 2.0.0-rc.2'
+          git push
