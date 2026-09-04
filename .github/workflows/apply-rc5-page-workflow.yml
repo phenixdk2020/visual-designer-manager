@@ -1,0 +1,53 @@
+name: Apply VDM 2 RC.5 Page Workflow
+
+on:
+  push:
+    branches: [rc5-v1-page-workflow]
+    paths:
+      - '.github/rc5-page-workflow.patch'
+      - '.github/workflows/apply-rc5-page-workflow.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply RC.5 runtime patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check .github/rc5-page-workflow.patch
+          git apply --whitespace=fix .github/rc5-page-workflow.patch
+
+      - name: Validate RC.5 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -type f -name '*.php' -print0 | while IFS= read -r -d '' file; do
+            php -l "$file" >/dev/null
+          done
+          node --check assets/designer.js
+          node --check assets/page-workflow.js
+          python3 tests/rc5_page_workflow_contract.py
+          echo 'RC.5 page workflow patch: PASS'
+
+      - name: Commit RC.5 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add visual-designer-manager.php src/Core/Plugin.php src/Admin/ParityController.php src/Admin/DesignerController.php assets/designer.js src/Frontend/FrontendController.php templates/page-shell.php .github/workflows/qa.yml README.md CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo 'No runtime changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Implement RC.5 V1 page workflow parity [skip rc5 apply]'
+          git push origin HEAD:rc5-v1-page-workflow
