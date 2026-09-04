@@ -15,6 +15,7 @@ use VisualDesignerManager\Admin\SiteDesignController;
 use VisualDesignerManager\Admin\SiteSettingsController;
 use VisualDesignerManager\Admin\TemplateDesignerController;
 use VisualDesignerManager\Admin\TransferController;
+use VisualDesignerManager\Admin\UpdateCheckpointController;
 use VisualDesignerManager\Admin\VehicleController;
 use VisualDesignerManager\Frontend\EventFrontendController;
 use VisualDesignerManager\Frontend\FrontendController;
@@ -24,6 +25,7 @@ use VisualDesignerManager\Forms\FormSubmissionController;
 use VisualDesignerManager\Http\RestController;
 use VisualDesignerManager\Http\PageWorkflowRestController;
 use VisualDesignerManager\Update\GitHubUpdater;
+use VisualDesignerManager\Update\UpdateCheckpointManager;
 
 final class Plugin
 {
@@ -42,6 +44,7 @@ final class Plugin
         self::$booted = true;
         AdminController::register();
         ParityController::register();
+        UpdateCheckpointController::register();
         PageWorkflowController::register();
         DesignerController::register();
         TemplateDesignerController::register();
@@ -60,6 +63,7 @@ final class Plugin
         RestController::register();
         PageWorkflowRestController::register();
         GitHubUpdater::register();
+        UpdateCheckpointManager::register();
     }
 
     public static function activate(): void
