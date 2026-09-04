@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -14,11 +15,19 @@ def require(path: str, *needles: str) -> None:
         raise SystemExit(f'{path}: missing contract markers: {missing}')
 
 
-require(
-    'visual-designer-manager.php',
-    'Version: 2.0.0-rc.2',
-    "define('VDM_VERSION', '2.0.0-rc.2')",
-)
+plugin = text('visual-designer-manager.php')
+version_match = re.search(r'Version:\s*2\.0\.0(?:-(alpha|beta|rc)\.(\d+))?', plugin)
+version_ok = False
+if version_match:
+    phase = version_match.group(1)
+    number = int(version_match.group(2) or 0)
+    version_ok = phase is None or (phase == 'rc' and number >= 2)
+if not version_ok:
+    raise SystemExit('RC.2 parity contract requires Visual Designer Manager 2.0.0-rc.2 or newer.')
+
+runtime_match = re.search(r"define\('VDM_VERSION',\s*'([^']+)'\);", plugin)
+if not runtime_match or runtime_match.group(1) != version_match.group(0).split('Version:', 1)[1].strip():
+    raise SystemExit('Plugin header version and VDM_VERSION must match.')
 
 require(
     'src/Admin/ParityController.php',
