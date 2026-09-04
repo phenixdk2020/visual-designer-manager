@@ -63,8 +63,6 @@ final class FormSubmissionController
             $recipient = sanitize_email((string) get_option('admin_email', ''));
         }
         $recipient = (string) apply_filters('vdm_form_recipient', $recipient, $type, $pageId, $formId, $props);
-        // V1 compatibility filter for installations that already used the old hook.
-        $recipient = (string) apply_filters('h18_vd_form_recipient', $recipient, $type, $pageId, $formId);
         if (!is_email($recipient)) {
             self::redirect($pageId, $formId, 'error');
         }
