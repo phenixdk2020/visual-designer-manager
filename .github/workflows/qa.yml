@@ -76,3 +76,6 @@ jobs:
 
       - name: RC.1 schema 1.0 migration contract
         run: python3 tests/rc1_schema_one_migration_contract.py
+
+      - name: Install package contract
+        run: python3 tests/package_contract.py
