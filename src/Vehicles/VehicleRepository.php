@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace VisualDesignerManager\Vehicles;
 
+use VisualDesignerManager\Fields\VehicleFieldRegistry;
+
 final class VehicleRepository
 {
     public const POST_TYPE = 'vdm_vehicle';
@@ -22,6 +24,7 @@ final class VehicleRepository
     public const META_CREW = '_vdm_vehicle_crew';
     public const META_SUMMARY = '_vdm_vehicle_summary';
     public const META_SPECS = '_vdm_vehicle_specs';
+    public const META_CUSTOM_FIELDS = '_vdm_vehicle_custom_fields_v2';
 
     /** @return array<string,mixed> */
     public static function get(int $postId): array
@@ -30,8 +33,12 @@ final class VehicleRepository
         if (!is_array($specs)) {
             $specs = [];
         }
+        $custom = get_post_meta($postId, self::META_CUSTOM_FIELDS, true);
+        if (!is_array($custom)) {
+            $custom = [];
+        }
 
-        return [
+        $result = [
             'id' => $postId,
             'title' => get_the_title($postId),
             'permalink' => get_permalink($postId) ?: '',
@@ -53,6 +60,15 @@ final class VehicleRepository
             'content' => (string) get_post_field('post_content', $postId),
             'image' => get_the_post_thumbnail_url($postId, 'large') ?: '',
         ];
+
+        $normalizedCustom = self::normalizeCustomFields($custom);
+        foreach (['manufacturer', 'model', 'year', 'engine', 'weight', 'crew'] as $fixedId) {
+            if (!isset($normalizedCustom[$fixedId]) && (string) ($result[$fixedId] ?? '') !== '') {
+                $normalizedCustom[$fixedId] = (string) $result[$fixedId];
+            }
+        }
+        $result['customFields'] = $normalizedCustom;
+        return $result;
     }
 
     /** @param array<string,mixed> $data */
@@ -74,6 +90,13 @@ final class VehicleRepository
             self::META_CREW => 'crew',
         ];
 
+        $custom = self::normalizeCustomFields(is_array($data['customFields'] ?? null) ? $data['customFields'] : []);
+        foreach (['manufacturer', 'model', 'year', 'engine', 'weight', 'crew'] as $fixedId) {
+            if (isset($custom[$fixedId])) {
+                $data[$fixedId] = $custom[$fixedId];
+            }
+        }
+
         foreach ($fields as $metaKey => $inputKey) {
             self::update($postId, $metaKey, sanitize_text_field((string) ($data[$inputKey] ?? '')));
         }
@@ -85,6 +108,11 @@ final class VehicleRepository
             delete_post_meta($postId, self::META_SPECS);
         } else {
             update_post_meta($postId, self::META_SPECS, $specs);
+        }
+        if ($custom === []) {
+            delete_post_meta($postId, self::META_CUSTOM_FIELDS);
+        } else {
+            update_post_meta($postId, self::META_CUSTOM_FIELDS, $custom);
         }
     }
 
@@ -129,6 +157,37 @@ final class VehicleRepository
             }
         }
         return $normalized;
+    }
+
+    /** @param array<string,mixed> $values @return array<string,string> */
+    private static function normalizeCustomFields(array $values): array
+    {
+        $definitions = [];
+        foreach (VehicleFieldRegistry::all() as $definition) {
+            $definitions[(string) $definition['id']] = $definition;
+        }
+        $out = [];
+        foreach ($values as $key => $value) {
+            $id = sanitize_key((string) $key);
+            if ($id === '' || !isset($definitions[$id]) || empty($definitions[$id]['enabled'])) {
+                continue;
+            }
+            $type = (string) ($definitions[$id]['type'] ?? 'text');
+            $text = is_scalar($value) ? (string) $value : '';
+            if ($type === 'richtext') {
+                $text = wp_kses_post($text);
+            } elseif ($type === 'textarea') {
+                $text = sanitize_textarea_field($text);
+            } elseif ($type === 'boolean') {
+                $text = !empty($value) ? '1' : '';
+            } else {
+                $text = sanitize_text_field($text);
+            }
+            if ($text !== '') {
+                $out[$id] = $text;
+            }
+        }
+        return $out;
     }
 
     private static function update(int $postId, string $key, string $value): void
