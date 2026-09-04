@@ -23,7 +23,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo 'RC.5 apply runner v2'
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('tools/apply_rc5.py')
+          text = p.read_text(encoding='utf-8')
+          old = "replace('README.md', '`2.0.0-rc.4`', '`2.0.0-rc.5`')"
+          new = "replace('README.md', '## Current version\\n\\n`2.0.0-rc.4`', '## Current version\\n\\n`2.0.0-rc.5`')"
+          if text.count(old) != 1:
+              raise SystemExit('README transformer target was not unique.')
+          p.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
           python3 tools/apply_rc5.py
 
       - name: Validate transformed RC.5
