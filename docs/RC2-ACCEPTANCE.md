@@ -10,8 +10,7 @@ The migration adapter may understand the previous package schema. Runtime code, 
 
 ## Reference environments
 
-- `test3.hangar18.dk`: reference installation.
-- `test4.hangar18.dk`: RC.2 acceptance installation.
+The externally defined V1 reference installation is the golden source. The separately defined RC.2 test installation is the acceptance target. Environment hostnames are intentionally kept outside the VDM2 repository so product code and documentation remain product-neutral.
 
 ## RC.2 changes
 
@@ -27,7 +26,7 @@ The migration adapter may understand the previous package schema. Runtime code, 
 
 ## Environment acceptance
 
-RC.2 is not production-approved until test4 has been compared against test3 for:
+RC.2 is not production-approved until the RC.2 test installation has been compared against the V1 reference for:
 
 - administration menu and workflows;
 - page structure;
