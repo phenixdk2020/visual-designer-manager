@@ -31,8 +31,8 @@ checks = {
         "$props['buttonText'] ??",
     )),
     'V2 form model owns heading and intro': (
-        "'heading' => 'Kontakt os'" in schema
-        and "'heading' => 'Bliv medlem'" in schema
+        "'heading'=>'Kontaktos'" in compact_schema
+        and "'heading'=>'Blivmedlem'" in compact_schema
         and "'intro'=>sanitize_textarea_field" in compact_schema
     ),
     'canonical form renderer outputs heading and intro': all(token in form_renderer for token in (
