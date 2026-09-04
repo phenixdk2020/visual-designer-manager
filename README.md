@@ -129,7 +129,7 @@ RC.4 hardens schema 1.0 preflight for image nodes that contain an uploads URL bu
 
 ## RC.7 V1 parity completion batch
 
-RC.7 restores a large group of behaviors from the established V1 reference while keeping the clean V2 identity and storage model. It adds named Header/Footer templates with stable IDs, defaults and histories; page-specific Header/Footer selection including `Ingen`; the VDM menu editor and snapshots; Link/Icon/Badge/Data List/Table nodes; floating buttons and layer control; V1-style placement helpers; composable Event/Vehicle/Gallery detail nodes; page lifecycle actions; manual/Word export; form recipient/receipt parity; and page-filtered support diagnostics.
+RC.7 restores a large group of behaviors from the established V1 reference while keeping the independent V2 identity and storage model. It adds named Header/Footer templates with stable IDs, defaults and histories; page-specific Header/Footer selection including `Ingen`; the VDM menu editor and snapshots; Link/Icon/Badge/Data List/Table nodes; floating buttons and layer control; V1-style placement helpers; composable Event/Vehicle/Gallery detail nodes; page lifecycle actions; manual/Word export; form recipient/receipt parity; and page-filtered support diagnostics.
 
 RC.7 adds a permanent regression contract on top of every earlier Alpha/Beta/RC gate. Production `2.0.0` remains blocked until the remaining module/export/theme parity work and the real test3→test4 visual acceptance are complete.
 
