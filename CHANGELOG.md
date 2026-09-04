@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.0-rc.3
+
+- Carried all RC.2 V1 functional and visual parity work forward.
+- Added a native VDM2 GitHub updater integrated with WordPress plugin update transients and plugin information.
+- Added direct update status, manual GitHub check and install actions to the `Opdateringer` administration page.
+- Restricted the updater to the Visual Designer Manager repository manifest and versioned `dist/` package path.
+- Added SHA-256 verification of downloaded update packages before WordPress can install them.
+- Added an automatic program backup of the installed VDM plugin before replacement, with bounded backup retention.
+- Extended the package workflow to publish the verified versioned ZIP under `dist/` and generate the canonical `update.json` manifest with version, package path and SHA-256.
+- Added a recursion guard so the updater publication commit cannot trigger another package publication loop.
+- Added the permanent RC.3 GitHub updater contract on top of the existing regression chain.
+- RC.3 is the one-time bootstrap for the VDM2 update channel; older VDM2 candidates require one final manual RC.3 ZIP installation.
+- Production `2.0.0` remains gated on environment parity and update-channel acceptance.
+
 ## 2.0.0-rc.2
 
 - Restored the established Visual Designer Manager administration menu order and user-facing terminology.
