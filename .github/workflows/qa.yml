@@ -86,5 +86,8 @@ jobs:
       - name: RC.3 GitHub updater contract
         run: python3 tests/rc3_github_updater_contract.py
 
+      - name: RC.4 legacy media recovery contract
+        run: python3 tests/rc4_legacy_media_recovery_contract.py
+
       - name: Install package contract
         run: python3 tests/package_contract.py

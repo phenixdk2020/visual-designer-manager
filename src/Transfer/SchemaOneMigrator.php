@@ -41,7 +41,22 @@ final class SchemaOneMigrator
             $navigationPayload = self::readJson($zip, 'navigation/navigation.json');
             $mediaPayload = self::readJson($zip, 'media/media-index.json');
 
+            $recovery = LegacyMediaRecovery::recover(
+                $site,
+                $pagesPayload,
+                $templatesPayload,
+                (array) ($mediaPayload['records'] ?? [])
+            );
+            $pagesPayload = is_array($recovery['pagesPayload'] ?? null) ? $recovery['pagesPayload'] : $pagesPayload;
+            $templatesPayload = is_array($recovery['templatesPayload'] ?? null) ? $recovery['templatesPayload'] : $templatesPayload;
+            foreach ((array) ($recovery['tempFiles'] ?? []) as $recoveryTemp) {
+                if (is_string($recoveryTemp) && $recoveryTemp !== '') {
+                    $tempFiles[] = $recoveryTemp;
+                }
+            }
+
             $warnings = is_array($legacy['warnings'] ?? null) ? $legacy['warnings'] : [];
+            $warnings = array_merge($warnings, (array) ($recovery['warnings'] ?? []));
             $catalog = self::moduleCatalog($modulesPayload);
             $pageRecords = (array) ($pagesPayload['records'] ?? []);
             $pageLinks = self::pageLinkMap($pageRecords, $site);
@@ -51,6 +66,12 @@ final class SchemaOneMigrator
             $header = self::convertTemplate($templatesPayload, 'header', $warnings, $pageLinks);
             $footer = self::convertTemplate($templatesPayload, 'footer', $warnings, $pageLinks);
             $media = self::convertMedia((array) ($mediaPayload['records'] ?? []), (array) ($legacy['manifestFiles'] ?? []), $warnings);
+            foreach ((array) ($recovery['items'] ?? []) as $recoveredRecord) {
+                if (is_array($recoveredRecord)) {
+                    $media[] = $recoveredRecord;
+                }
+            }
+            $recoveredTempFiles = is_array($recovery['tempFiles'] ?? null) ? $recovery['tempFiles'] : [];
             $nativeSite = self::convertSite($site);
             $siteDesign = self::convertSiteDesign($templatesPayload);
             $customFields = self::convertFieldDefinitions($customFieldsPayload);
@@ -90,8 +111,24 @@ final class SchemaOneMigrator
                 }
                 foreach ($media as $record) {
                     $archive = (string) ($record['archivePath'] ?? '');
-                    $sourceTemp = self::copyEntryToTemp($zip, $archive, (int) ($record['size'] ?? 0), (string) ($record['sha256'] ?? ''));
-                    $tempFiles[] = $sourceTemp;
+                    if (isset($recoveredTempFiles[$archive])) {
+                        $sourceTemp = (string) $recoveredTempFiles[$archive];
+                        if ($sourceTemp === '' || !is_file($sourceTemp) || !is_readable($sourceTemp)) {
+                            throw new \RuntimeException('Recovered media temporary file is unavailable: ' . $archive);
+                        }
+                        $actualSize = filesize($sourceTemp);
+                        $actualSha = hash_file('sha256', $sourceTemp);
+                        if (!is_int($actualSize)
+                            || $actualSize !== (int) ($record['size'] ?? -1)
+                            || !is_string($actualSha)
+                            || !hash_equals(strtolower((string) ($record['sha256'] ?? '')), strtolower($actualSha))
+                        ) {
+                            throw new \RuntimeException('Recovered media changed before package assembly: ' . $archive);
+                        }
+                    } else {
+                        $sourceTemp = self::copyEntryToTemp($zip, $archive, (int) ($record['size'] ?? 0), (string) ($record['sha256'] ?? ''));
+                        $tempFiles[] = $sourceTemp;
+                    }
                     if (!$out->addFile($sourceTemp, $archive)) {
                         throw new \RuntimeException('Converted media could not be added: ' . $archive);
                     }
@@ -139,6 +176,8 @@ final class SchemaOneMigrator
                     'sourceSchemaVersion' => self::SCHEMA,
                     'sourceManagerVersion' => (string) ($legacy['managerVersion'] ?? ''),
                     'warnings' => array_values(array_unique(array_map('strval', $warnings))),
+                    'recoveredMedia' => max(0, (int) ($recovery['recovered'] ?? 0)),
+                    'unresolvedMedia' => max(0, (int) ($recovery['unresolved'] ?? 0)),
                     'countsBefore' => is_array($legacy['counts'] ?? null) ? $legacy['counts'] : [],
                     'countsAfter' => is_array($inspection['summary'] ?? null) ? $inspection['summary'] : [],
                 ],

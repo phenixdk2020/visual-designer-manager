@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0-rc.4
+
+- Added controlled schema 1.0 recovery for Image nodes that have an uploads URL but no media ID.
+- Recovery first retries the same `/wp-content/uploads/` path against the package source site, allowing stale source-host references to resolve without changing the source package.
+- Original remote URLs are only fetched through WordPress' safe HTTP client and only for validated upload-image paths.
+- Added strict 25 MiB recovery limit, non-SVG image validation, temporary-file validation and SHA-256 integrity checks.
+- Recovered media is embedded into the temporary native V2 package and receives a normal source ID so the canonical importer remaps it like packaged media.
+- Preflight remains non-mutating for WordPress content: recovered files exist only in temporary package storage until explicit import confirmation.
+- Added explicit preflight counts for recovered and unresolved legacy images.
+- Added the permanent RC.4 legacy-media recovery contract while retaining all earlier regression gates.
+- RC.4 is the next environment-acceptance candidate before production `2.0.0`.
+
 ## 2.0.0-rc.3
 
 - Carried all RC.2 V1 functional and visual parity work forward.
