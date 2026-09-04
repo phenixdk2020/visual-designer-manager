@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace VisualDesignerManager\Events;
 
+use VisualDesignerManager\Fields\EventFieldRegistry;
+
 final class EventRepository
 {
     public const POST_TYPE = 'vdm_event';
@@ -14,10 +16,15 @@ final class EventRepository
     public const META_ADDRESS = '_vdm_event_address';
     public const META_CONTACT = '_vdm_event_contact';
     public const META_SUMMARY = '_vdm_event_summary';
+    public const META_CUSTOM_FIELDS = '_vdm_event_custom_fields_v2';
 
     /** @return array<string,mixed> */
     public static function get(int $postId): array
     {
+        $custom = get_post_meta($postId, self::META_CUSTOM_FIELDS, true);
+        if (!is_array($custom)) {
+            $custom = [];
+        }
         return [
             'id' => $postId,
             'title' => get_the_title($postId),
@@ -29,6 +36,7 @@ final class EventRepository
             'address' => (string) get_post_meta($postId, self::META_ADDRESS, true),
             'contact' => (string) get_post_meta($postId, self::META_CONTACT, true),
             'summary' => (string) get_post_meta($postId, self::META_SUMMARY, true),
+            'customFields' => self::normalizeCustomFields($custom),
             'content' => (string) get_post_field('post_content', $postId),
             'image' => get_the_post_thumbnail_url($postId, 'large') ?: '',
         ];
@@ -44,6 +52,13 @@ final class EventRepository
         self::update($postId, self::META_ADDRESS, sanitize_text_field((string) ($data['address'] ?? '')));
         self::update($postId, self::META_CONTACT, sanitize_text_field((string) ($data['contact'] ?? '')));
         self::update($postId, self::META_SUMMARY, sanitize_textarea_field((string) ($data['summary'] ?? '')));
+
+        $custom = self::normalizeCustomFields(is_array($data['customFields'] ?? null) ? $data['customFields'] : []);
+        if ($custom === []) {
+            delete_post_meta($postId, self::META_CUSTOM_FIELDS);
+        } else {
+            update_post_meta($postId, self::META_CUSTOM_FIELDS, $custom);
+        }
     }
 
     /** @return list<array<string,mixed>> */
@@ -75,6 +90,36 @@ final class EventRepository
         }
         wp_reset_postdata();
         return $events;
+    }
+
+    /** @param array<string,mixed> $values @return array<string,string> */
+    private static function normalizeCustomFields(array $values): array
+    {
+        $definitions = EventFieldRegistry::byId();
+        $out = [];
+        foreach ($values as $key => $value) {
+            $id = sanitize_key((string) $key);
+            if ($id === '' || !isset($definitions[$id]) || empty($definitions[$id]['enabled'])) {
+                continue;
+            }
+            $type = (string) ($definitions[$id]['type'] ?? 'text');
+            $text = is_scalar($value) ? (string) $value : '';
+            if ($type === 'richtext') {
+                $text = wp_kses_post($text);
+            } elseif (in_array($type, ['textarea'], true)) {
+                $text = sanitize_textarea_field($text);
+            } elseif ($type === 'url') {
+                $text = esc_url_raw($text);
+            } elseif ($type === 'boolean') {
+                $text = !empty($value) ? '1' : '';
+            } else {
+                $text = sanitize_text_field($text);
+            }
+            if ($text !== '') {
+                $out[$id] = $text;
+            }
+        }
+        return $out;
     }
 
     private static function update(int $postId, string $key, string $value): void

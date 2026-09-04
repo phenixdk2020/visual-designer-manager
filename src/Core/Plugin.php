@@ -9,6 +9,7 @@ use VisualDesignerManager\Admin\DesignerController;
 use VisualDesignerManager\Admin\EventController;
 use VisualDesignerManager\Admin\GalleryController;
 use VisualDesignerManager\Admin\NavigationController;
+use VisualDesignerManager\Admin\ParityController;
 use VisualDesignerManager\Admin\SiteDesignController;
 use VisualDesignerManager\Admin\SiteSettingsController;
 use VisualDesignerManager\Admin\TemplateDesignerController;
@@ -20,6 +21,7 @@ use VisualDesignerManager\Frontend\GalleryFrontendController;
 use VisualDesignerManager\Frontend\VehicleFrontendController;
 use VisualDesignerManager\Forms\FormSubmissionController;
 use VisualDesignerManager\Http\RestController;
+use VisualDesignerManager\Update\GitHubUpdater;
 
 final class Plugin
 {
@@ -37,6 +39,7 @@ final class Plugin
 
         self::$booted = true;
         AdminController::register();
+        ParityController::register();
         DesignerController::register();
         TemplateDesignerController::register();
         SiteDesignController::register();
@@ -52,6 +55,7 @@ final class Plugin
         GalleryFrontendController::register();
         FormSubmissionController::register();
         RestController::register();
+        GitHubUpdater::register();
     }
 
     public static function activate(): void

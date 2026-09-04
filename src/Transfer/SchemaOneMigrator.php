@@ -37,6 +37,7 @@ final class SchemaOneMigrator
             $pagesPayload = self::readJson($zip, 'pages/pages.json');
             $templatesPayload = self::readJson($zip, 'templates/templates.json');
             $modulesPayload = self::readJson($zip, 'modules/modules.json');
+            $customFieldsPayload = self::readJson($zip, 'modules/custom-fields.json');
             $navigationPayload = self::readJson($zip, 'navigation/navigation.json');
             $mediaPayload = self::readJson($zip, 'media/media-index.json');
 
@@ -51,8 +52,8 @@ final class SchemaOneMigrator
             $footer = self::convertTemplate($templatesPayload, 'footer', $warnings, $pageLinks);
             $media = self::convertMedia((array) ($mediaPayload['records'] ?? []), (array) ($legacy['manifestFiles'] ?? []), $warnings);
             $nativeSite = self::convertSite($site);
-            $siteDesign = SiteDesignRepository::defaults();
-            $siteDesign['shellEnabled'] = true;
+            $siteDesign = self::convertSiteDesign($templatesPayload);
+            $customFields = self::convertFieldDefinitions($customFieldsPayload);
 
             $payloads = [
                 'site.json' => PortablePackage::json($nativeSite),
@@ -64,6 +65,7 @@ final class SchemaOneMigrator
                 'templates/header.json' => PortablePackage::json(['document' => $header]),
                 'templates/footer.json' => PortablePackage::json(['document' => $footer]),
                 'settings/site-design.json' => PortablePackage::json(['settings' => $siteDesign]),
+                'settings/custom-fields.json' => PortablePackage::json($customFields),
                 'media/index.json' => PortablePackage::json(['items' => $media]),
             ];
 
@@ -286,6 +288,89 @@ final class SchemaOneMigrator
         }
     }
 
+    /** @param array<string,mixed> $templates @return array<string,mixed> */
+    private static function convertSiteDesign(array $templates): array
+    {
+        $design = SiteDesignRepository::defaults();
+        $design['shellEnabled'] = true;
+        $design['contentPadding'] = 0;
+        foreach ((array) ($templates['records'] ?? []) as $record) {
+            if (!is_array($record) || empty($record['active'])) {
+                continue;
+            }
+            $settings = is_array($record['settings'] ?? null) ? $record['settings'] : [];
+            $width = (int) ($settings['contentWidth'] ?? 0);
+            if ($width >= 640 && $width <= 2400) {
+                $design['maxWidth'] = $width;
+                break;
+            }
+        }
+        return SiteDesignRepository::normalize($design);
+    }
+
+    /** @param array<string,mixed> $payload @return array{vehicleFields:list<array<string,mixed>>,eventFields:list<array<string,mixed>>} */
+    private static function convertFieldDefinitions(array $payload): array
+    {
+        $vehicles = [];
+        foreach ((array) ($payload['vehicleFields'] ?? []) as $index => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $id = sanitize_key((string) ($row['id'] ?? ''));
+            $label = sanitize_text_field((string) ($row['label'] ?? ''));
+            if ($id === '' || $label === '') {
+                continue;
+            }
+            $vehicles[] = [
+                'id' => $id,
+                'label' => $label,
+                'type' => sanitize_key((string) ($row['type'] ?? 'text')),
+                'unit' => sanitize_text_field((string) ($row['unit'] ?? '')),
+                'enabled' => array_key_exists('enabled', $row) ? (bool) $row['enabled'] : true,
+                'order' => (int) ($row['order'] ?? (($index + 1) * 10)),
+            ];
+        }
+        $events = [];
+        foreach ((array) ($payload['eventFields'] ?? []) as $index => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $id = sanitize_key((string) ($row['id'] ?? ''));
+            $label = sanitize_text_field((string) ($row['label'] ?? ''));
+            if ($id === '' || $label === '') {
+                continue;
+            }
+            $events[] = [
+                'id' => $id,
+                'label' => $label,
+                'type' => sanitize_key((string) ($row['type'] ?? 'text')),
+                'enabled' => array_key_exists('enabled', $row) ? (bool) $row['enabled'] : true,
+                'required' => !empty($row['required']),
+                'showCard' => !empty($row['showCard']),
+                'showDetail' => array_key_exists('showDetail', $row) ? (bool) $row['showDetail'] : true,
+                'order' => (int) ($row['order'] ?? (($index + 1) * 10)),
+            ];
+        }
+        return ['vehicleFields' => $vehicles, 'eventFields' => $events];
+    }
+
+    /** @param list<array<string,mixed>> $attributes @return array<string,string> */
+    private static function attributeValues(array $attributes): array
+    {
+        $values = [];
+        foreach ($attributes as $attribute) {
+            if (!is_array($attribute) || empty($attribute['enabled'])) {
+                continue;
+            }
+            $key = sanitize_key((string) ($attribute['key'] ?? ''));
+            $value = wp_kses_post((string) ($attribute['value'] ?? ''));
+            if ($key !== '' && $value !== '') {
+                $values[$key] = $value;
+            }
+        }
+        return $values;
+    }
+
     /** @return array<string,mixed> */
     private static function convertSite(array $site): array
     {
@@ -411,6 +496,7 @@ final class SchemaOneMigrator
                     'contact' => sanitize_text_field((string) ($fields['contact'] ?? '')),
                     'summary' => sanitize_textarea_field((string) ($record['summary'] ?? '')),
                     'content' => self::moduleContent((string) ($fields['description'] ?? ''), (array) ($record['attributes'] ?? [])),
+                    'customFields' => self::attributeValues((array) ($record['attributes'] ?? [])),
                 ];
             } elseif ($kind === 'vehicles') {
                 $fields = is_array($record['fields'] ?? null) ? $record['fields'] : [];
@@ -426,6 +512,7 @@ final class SchemaOneMigrator
                     'summary' => sanitize_textarea_field((string) ($record['summary'] ?? '')),
                     'content' => wp_kses_post((string) ($fields['description'] ?? '')),
                     'specs' => $extra,
+                    'customFields' => self::attributeValues((array) ($record['attributes'] ?? [])),
                 ], $fixed);
             } elseif ($kind === 'galleries') {
                 $fields = is_array($record['fields'] ?? null) ? $record['fields'] : [];
@@ -603,6 +690,9 @@ final class SchemaOneMigrator
             'section' => NodeSchema::SECTION,
             'container' => NodeSchema::CONTAINER,
             'text', 'table', 'datalist', 'icon', 'badge' => NodeSchema::TEXT,
+            'eventlist' => NodeSchema::EVENTS,
+            'vehiclelist' => NodeSchema::VEHICLES,
+            'gallerylist' => NodeSchema::GALLERIES,
             'image' => NodeSchema::IMAGE,
             'button' => NodeSchema::BUTTON,
             'spacer' => NodeSchema::SPACER,
@@ -694,7 +784,62 @@ final class SchemaOneMigrator
             return ['content' => '<p>◆</p>', 'color' => self::color((string) ($props['iconColor'] ?? ''), '#222222'), 'fontSize' => max(8, min(120, (int) ($props['iconSize'] ?? 24)))];
         }
         if ($type === 'badge') {
-            return ['content' => '<p><strong>' . esc_html((string) ($props['text'] ?? '')) . '</strong></p>', 'color' => self::color((string) ($props['textColor'] ?? ''), '#222222'), 'fontSize' => max(8, min(120, (int) ($props['fontSize'] ?? 13)))];
+            $background = self::color((string) ($props['background'] ?? ''), '#c3ae83');
+            $textColor = self::color((string) ($props['textColor'] ?? ''), '#222222');
+            $paddingX = max(0, min(120, (int) ($props['paddingX'] ?? 12)));
+            $paddingY = max(0, min(120, (int) ($props['paddingY'] ?? 5)));
+            $radius = max(0, min(100, (int) ($props['radius'] ?? 20)));
+            $html = '<span style="display:inline-block;background:' . esc_attr($background) . ';color:' . esc_attr($textColor) . ';padding:' . $paddingY . 'px ' . $paddingX . 'px;border-radius:' . $radius . 'px;font-weight:' . self::fontWeight($props['fontWeight'] ?? 700) . '">' . esc_html((string) ($props['text'] ?? '')) . '</span>';
+            return ['content' => $html, 'color' => $textColor, 'fontSize' => max(8, min(120, (int) ($props['fontSize'] ?? 13)))];
+        }
+        if ($type === 'eventlist') {
+            $filter = (string) ($props['dateFilter'] ?? 'upcoming');
+            return [
+                'count' => max(1, min(50, (int) ($props['limit'] ?? 12))),
+                'showPast' => $filter !== 'upcoming',
+                'columns' => max(1, min(4, (int) ($props['columns'] ?? 3))),
+                'gap' => max(0, min(80, (int) ($props['cardGap'] ?? 18))),
+                'padding' => max(0, min(80, (int) ($props['cardPadding'] ?? 12))),
+                'radius' => max(0, min(60, (int) ($props['cardRadius'] ?? 4))),
+                'cardBackground' => self::color((string) ($props['cardBackground'] ?? ''), '#ffffff'),
+                'textColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'headingColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'accentColor' => self::color((string) ($props['accentColor'] ?? ''), '#c3ae83'),
+                'showImage' => !array_key_exists('showImage', $props) || !empty($props['showImage']),
+                'showSummary' => !array_key_exists('showSummary', $props) || !empty($props['showSummary']),
+                'showFacts' => (!array_key_exists('showDate', $props) || !empty($props['showDate'])) || (!array_key_exists('showLocation', $props) || !empty($props['showLocation'])),
+            ];
+        }
+        if ($type === 'vehiclelist') {
+            return [
+                'count' => max(1, min(100, (int) ($props['limit'] ?? 24))),
+                'columns' => max(1, min(4, (int) ($props['columns'] ?? 3))),
+                'gap' => max(0, min(80, (int) ($props['cardGap'] ?? 18))),
+                'padding' => max(0, min(80, (int) ($props['cardPadding'] ?? 12))),
+                'radius' => max(0, min(60, (int) ($props['cardRadius'] ?? 4))),
+                'cardBackground' => self::color((string) ($props['cardBackground'] ?? ''), '#ffffff'),
+                'textColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'headingColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'accentColor' => self::color((string) ($props['accentColor'] ?? ''), '#c3ae83'),
+                'showImage' => !array_key_exists('showImage', $props) || !empty($props['showImage']),
+                'showSummary' => !array_key_exists('showSummary', $props) || !empty($props['showSummary']),
+                'showFacts' => true,
+            ];
+        }
+        if ($type === 'gallerylist') {
+            return [
+                'count' => max(1, min(100, (int) ($props['limit'] ?? 24))),
+                'columns' => max(1, min(4, (int) ($props['columns'] ?? 3))),
+                'gap' => max(0, min(80, (int) ($props['cardGap'] ?? 18))),
+                'padding' => max(0, min(80, (int) ($props['cardPadding'] ?? 12))),
+                'radius' => max(0, min(60, (int) ($props['cardRadius'] ?? 4))),
+                'cardBackground' => self::color((string) ($props['cardBackground'] ?? ''), '#ffffff'),
+                'textColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'headingColor' => self::color((string) ($props['textColor'] ?? ''), '#30382a'),
+                'accentColor' => self::color((string) ($props['accentColor'] ?? ''), '#c3ae83'),
+                'showCover' => !array_key_exists('showImage', $props) || !empty($props['showImage']),
+                'showSummary' => !array_key_exists('showSummary', $props) || !empty($props['showSummary']),
+            ];
         }
         if ($type === 'image') {
             $mediaId = absint($props['mediaId'] ?? $props['attachmentId'] ?? 0);
@@ -806,24 +951,36 @@ final class SchemaOneMigrator
     }
 
     /** @param array<string,mixed> $raw
-     *  @param array{x:int,y:int,w:int,h:int} $fallback
-     *  @return array{x:int,y:int,w:int,h:int}
+     *  @param array<string,int> $fallback
+     *  @return array{x:int,y:int,w:int,h:int,fineX:int,fineW:int}
      */
     private static function convertDeviceGeometry(array $raw, int $units, array $fallback): array
     {
         if ($raw === []) {
-            return $fallback;
+            $x = max(0, min(11, (int) ($fallback['x'] ?? 0)));
+            $w = max(1, min(12 - $x, (int) ($fallback['w'] ?? 12)));
+            return array_merge($fallback, [
+                'fineX' => (int) ($fallback['fineX'] ?? ($x * 10)),
+                'fineW' => (int) ($fallback['fineW'] ?? ($w * 10)),
+            ]);
         }
         $factor = $units / 12;
         $x = (int) round(((int) ($raw['x'] ?? 0)) / $factor);
         $w = (int) round(((int) ($raw['w'] ?? $units)) / $factor);
         $x = max(0, min(11, $x));
         $w = max(1, min(12 - $x, $w));
+
+        $sourceX = max(0, min($units - 1, (int) ($raw['x'] ?? 0)));
+        $sourceW = max(1, min($units - $sourceX, (int) ($raw['w'] ?? $units)));
+        $fineX = max(0, min(119, (int) round(($sourceX * 120) / $units)));
+        $fineW = max(1, min(120 - $fineX, (int) round(($sourceW * 120) / $units)));
         return [
             'x' => $x,
             'y' => max(0, (int) ($raw['y'] ?? 0)),
             'w' => $w,
             'h' => max(1, (int) ($raw['h'] ?? ($fallback['h'] ?? 4))),
+            'fineX' => $fineX,
+            'fineW' => $fineW,
         ];
     }
 
@@ -832,6 +989,11 @@ final class SchemaOneMigrator
     {
         if (!in_array($module, [NodeSchema::EVENTS, NodeSchema::VEHICLES, NodeSchema::GALLERIES], true)) {
             return;
+        }
+        foreach ((array) ($layout['nodes'] ?? []) as $existing) {
+            if (is_array($existing) && (string) ($existing['type'] ?? '') === $module) {
+                return;
+            }
         }
         $parentId = null;
         foreach ($layout['nodes'] as &$node) {

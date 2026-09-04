@@ -6,10 +6,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   package:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip package]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -117,6 +118,7 @@ jobs:
                   'visual-designer-manager/visual-designer-manager.php',
                   'visual-designer-manager/README.md',
                   'visual-designer-manager/CHANGELOG.md',
+                  'visual-designer-manager/src/Update/GitHubUpdater.php',
               }
               missing = required.difference(names)
               if missing:
@@ -130,6 +132,51 @@ jobs:
           print(f'SHA-256: {digest}')
           print(f'Bytes: {archive.stat().st_size}')
           PY
+
+      - name: Publish updater package and manifest
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        shell: bash
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp "visual-designer-manager-v${VERSION}.zip" "dist/visual-designer-manager-v${VERSION}.zip"
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import json
+          import os
+
+          version = os.environ['VERSION']
+          archive = Path(f'dist/visual-designer-manager-v{version}.zip')
+          digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+          manifest = {
+              'name': 'Visual Designer Manager',
+              'slug': 'visual-designer-manager',
+              'version': version,
+              'homepage': 'https://github.com/phenixdk2020/visual-designer-manager',
+              'requires': '6.4',
+              'requires_php': '8.0',
+              'package': f'https://raw.githubusercontent.com/phenixdk2020/visual-designer-manager/main/dist/visual-designer-manager-v{version}.zip',
+              'sha256': digest,
+              'source_commit': os.environ['GITHUB_SHA'],
+              'sections': {
+                  'description': 'Visual Designer Manager – modeldrevet visuel WordPress-designer.',
+                  'changelog': f'Version {version}. Se CHANGELOG.md i repository for komplette release-noter.'
+              }
+          }
+          Path('update.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "dist/visual-designer-manager-v${VERSION}.zip" update.json
+          if git diff --cached --quiet; then
+            echo 'Updater payload is already current.'
+          else
+            git commit -m "Publish Visual Designer Manager ${VERSION} updater package [skip ci] [skip package]"
+            git push origin HEAD:main
+          fi
 
       - name: Upload installable RC artifact
         uses: actions/upload-artifact@v4

@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.0.0-rc.3
+
+- Carried all RC.2 V1 functional and visual parity work forward.
+- Added a native VDM2 GitHub updater integrated with WordPress plugin update transients and plugin information.
+- Added direct update status, manual GitHub check and install actions to the `Opdateringer` administration page.
+- Restricted the updater to the Visual Designer Manager repository manifest and versioned `dist/` package path.
+- Added SHA-256 verification of downloaded update packages before WordPress can install them.
+- Added an automatic program backup of the installed VDM plugin before replacement, with bounded backup retention.
+- Extended the package workflow to publish the verified versioned ZIP under `dist/` and generate the canonical `update.json` manifest with version, package path and SHA-256.
+- Added a recursion guard so the updater publication commit cannot trigger another package publication loop.
+- Added the permanent RC.3 GitHub updater contract on top of the existing regression chain.
+- RC.3 is the one-time bootstrap for the VDM2 update channel; older VDM2 candidates require one final manual RC.3 ZIP installation.
+- Production `2.0.0` remains gated on environment parity and update-channel acceptance.
+
+## 2.0.0-rc.2
+
+- Restored the established Visual Designer Manager administration menu order and user-facing terminology.
+- Added native VDM2 administration pages for reusable vehicle fields, reusable event fields, pages, complete backup, update status, diagnostics log and user manual.
+- Added native reusable vehicle/event field registries and integrated them with record editors and frontend rendering.
+- Added portable transfer of reusable field definitions and record values while keeping older native schema 2.0 packages importable.
+- Added VDM2-native fine horizontal geometry so converted 120-step X/width values can render precisely while the editor continues to expose the canonical 12-column geometry.
+- Changed converted site-shell padding to a neutral zero value and carries supported active template content width into Site Design.
+- Converts previous event, vehicle and gallery list nodes directly to their native VDM2 list nodes, retaining count, columns, spacing, card padding/radius and core colors instead of injecting generic defaults.
+- Improved badge migration fallback styling.
+- Added the permanent RC.2 functional/visual parity contract on top of all existing regression gates.
+- RC.2 remains environment-gated: production 2.0.0 requires successful comparison of the designated V2 test installation against the established V1 reference.
+
 ## 2.0.0-rc.1
 
 - Added an isolated schema `1.0` site-package migrator without introducing runtime compatibility storage or aliases into V2.
