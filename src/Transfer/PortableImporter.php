@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace VisualDesignerManager\Transfer;
 
 use VisualDesignerManager\Events\EventRepository;
+use VisualDesignerManager\Fields\EventFieldRegistry;
+use VisualDesignerManager\Fields\VehicleFieldRegistry;
 use VisualDesignerManager\Gallery\GalleryRepository;
 use VisualDesignerManager\Model\LayoutDocument;
 use VisualDesignerManager\Model\NodeSchema;
@@ -38,6 +40,8 @@ final class PortableImporter
         $createdPosts = [];
         $createdMenuItems = [];
         $createdMenus = [];
+        $previousVehicleFields = null;
+        $previousEventFields = null;
 
         try {
             $site = PortablePackage::readJson($zip, 'site.json');
@@ -50,6 +54,9 @@ final class PortableImporter
             $headerPayload = PortablePackage::readJson($zip, 'templates/header.json');
             $footerPayload = PortablePackage::readJson($zip, 'templates/footer.json');
             $siteDesignPayload = PortablePackage::readJson($zip, 'settings/site-design.json');
+            $customFieldPayload = $zip->locateName('settings/custom-fields.json') !== false
+                ? PortablePackage::readJson($zip, 'settings/custom-fields.json')
+                : [];
 
             $header = is_array($headerPayload['document'] ?? null) ? $headerPayload['document'] : [];
             $footer = is_array($footerPayload['document'] ?? null) ? $footerPayload['document'] : [];
@@ -68,6 +75,15 @@ final class PortableImporter
                 $footer,
                 $siteDesign
             );
+
+            $previousVehicleFields = VehicleFieldRegistry::all();
+            $previousEventFields = EventFieldRegistry::all();
+            if (is_array($customFieldPayload['vehicleFields'] ?? null)) {
+                VehicleFieldRegistry::save($customFieldPayload['vehicleFields']);
+            }
+            if (is_array($customFieldPayload['eventFields'] ?? null)) {
+                EventFieldRegistry::save($customFieldPayload['eventFields']);
+            }
 
             $sourceKey = self::sourceKey($site, $manifest);
             $source = is_array($site['source'] ?? null) ? $site['source'] : [];
@@ -167,6 +183,12 @@ final class PortableImporter
             ];
         } catch (\Throwable $exception) {
             self::rollbackCreated($createdMenuItems, $createdMenus, $createdPosts);
+            if (is_array($previousVehicleFields)) {
+                VehicleFieldRegistry::save($previousVehicleFields);
+            }
+            if (is_array($previousEventFields)) {
+                EventFieldRegistry::save($previousEventFields);
+            }
             throw $exception;
         } finally {
             $zip->close();

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace VisualDesignerManager\Transfer;
 
 use VisualDesignerManager\Events\EventRepository;
+use VisualDesignerManager\Fields\EventFieldRegistry;
+use VisualDesignerManager\Fields\VehicleFieldRegistry;
 use VisualDesignerManager\Gallery\GalleryRepository;
 use VisualDesignerManager\Model\NodeSchema;
 use VisualDesignerManager\Storage\LayoutRepository;
@@ -110,6 +112,10 @@ final class PortableExporter
             'templates/header.json' => PortablePackage::json(['document' => $header]),
             'templates/footer.json' => PortablePackage::json(['document' => $footer]),
             'settings/site-design.json' => PortablePackage::json(['settings' => SiteDesignRepository::get()]),
+            'settings/custom-fields.json' => PortablePackage::json([
+                'vehicleFields' => VehicleFieldRegistry::all(),
+                'eventFields' => EventFieldRegistry::all(),
+            ]),
             'media/index.json' => PortablePackage::json(['items' => $mediaPayload]),
         ];
 

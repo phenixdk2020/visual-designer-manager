@@ -106,18 +106,22 @@ final class NodeSchema
     }
 
     /** @param array<string,mixed> $geometry
-     *  @return array{x:int,y:int,w:int,h:int}
+     *  @return array{x:int,y:int,w:int,h:int,fineX:int,fineW:int}
      */
     public static function normalizeGeometry(array $geometry): array
     {
         $x = max(0, min(11, (int) ($geometry['x'] ?? 0)));
         $w = max(1, min(12 - $x, (int) ($geometry['w'] ?? 12)));
+        $fineX = max(0, min(119, (int) ($geometry['fineX'] ?? ($x * 10))));
+        $fineW = max(1, min(120 - $fineX, (int) ($geometry['fineW'] ?? ($w * 10))));
 
         return [
             'x' => $x,
             'y' => max(0, min(2000, (int) ($geometry['y'] ?? 0))),
             'w' => $w,
             'h' => max(1, min(2000, (int) ($geometry['h'] ?? 4))),
+            'fineX' => $fineX,
+            'fineW' => $fineW,
         ];
     }
 

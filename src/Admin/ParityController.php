@@ -414,7 +414,7 @@ final class ParityController
         echo '<div class="notice ' . ($status === 'error' ? 'notice-error' : 'notice-success') . ' is-dismissible"><p>' . esc_html($message) . '</p></div>';
     }
 
-    private static function redirect(string $slug, string $message, string $status = 'success'): never
+    private static function redirect(string $slug, string $message, string $status = 'success'): void
     {
         wp_safe_redirect(add_query_arg(['page' => $slug, 'vdm_status' => $status, 'vdm_message' => $message], admin_url('admin.php')));
         exit;

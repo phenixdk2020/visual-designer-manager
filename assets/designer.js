@@ -309,6 +309,8 @@
         element.style.setProperty('--vdm-' + prefix + '-y', String(geometry.y));
         element.style.setProperty('--vdm-' + prefix + '-w', String(geometry.w));
         element.style.setProperty('--vdm-' + prefix + '-h', String(geometry.h));
+        element.style.setProperty('--vdm-' + prefix + '-fx', String(geometry.fineX ?? (geometry.x * 10)));
+        element.style.setProperty('--vdm-' + prefix + '-fw', String(geometry.fineW ?? (geometry.w * 10)));
     }
 
     function interactionSurface(node) {
@@ -400,11 +402,15 @@
             geometry.x = node.type === 'section' && !node.parentId
                 ? 0
                 : Math.max(0, Math.min(maxX, interaction.startGeometry.x + deltaColumns));
+            geometry.fineX = geometry.x * 10;
+            geometry.fineW = geometry.w * 10;
             geometry.y = Math.max(0, interaction.startGeometry.y + deltaRows);
         } else {
             const direction = interaction.direction || 'se';
             if (direction.includes('e')) {
                 geometry.w = Math.max(1, Math.min(12 - geometry.x, interaction.startGeometry.w + deltaColumns));
+                geometry.fineX = geometry.x * 10;
+                geometry.fineW = geometry.w * 10;
             }
             if (direction.includes('s')) {
                 geometry.h = Math.max(1, Math.min(2000, interaction.startGeometry.h + deltaRows));
@@ -956,10 +962,14 @@
         if (key === 'x') {
             geometry.x = Math.max(0, Math.min(11, value));
             geometry.w = Math.min(geometry.w, 12 - geometry.x);
+            geometry.fineX = geometry.x * 10;
+            geometry.fineW = geometry.w * 10;
         } else if (key === 'y') {
             geometry.y = Math.max(0, value);
         } else if (key === 'w') {
             geometry.w = Math.max(1, Math.min(12 - geometry.x, value));
+            geometry.fineX = geometry.x * 10;
+            geometry.fineW = geometry.w * 10;
         } else if (key === 'h') {
             geometry.h = Math.max(1, value);
             if (['section', 'container'].includes(node.type)) node.props.minHeightRows = geometry.h;

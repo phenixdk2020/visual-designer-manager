@@ -90,7 +90,7 @@ final class Renderer
     {
         $responsive = is_array($node['responsive'] ?? null) ? $node['responsive'] : [];
         $resolved = [];
-        $last = ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4];
+        $last = ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 4, 'fineX' => 0, 'fineW' => 120];
 
         foreach (Breakpoint::ordered() as $breakpoint) {
             if (isset($responsive[$breakpoint]) && is_array($responsive[$breakpoint])) {
@@ -112,6 +112,8 @@ final class Renderer
             foreach (['x', 'y', 'w', 'h'] as $key) {
                 $parts[] = '--vdm-' . $prefix . '-' . $key . ':' . (int) $geometry[$key];
             }
+            $parts[] = '--vdm-' . $prefix . '-fx:' . (int) ($geometry['fineX'] ?? ((int) $geometry['x'] * 10));
+            $parts[] = '--vdm-' . $prefix . '-fw:' . (int) ($geometry['fineW'] ?? ((int) $geometry['w'] * 10));
         }
 
         return implode(';', $parts) . ';';
