@@ -4,7 +4,7 @@ Visual Designer Manager is a model-driven visual WordPress designer.
 
 ## Current version
 
-`2.0.0-rc.1`
+`2.0.0-rc.2`
 
 ## Version 2 principles
 
@@ -27,7 +27,9 @@ visual-designer-manager.php
 src/
   Admin/
   Core/
+  Diagnostics/
   Events/
+  Fields/
   Forms/
   Frontend/
   Gallery/
@@ -45,9 +47,9 @@ docs/
 .github/workflows/
 ```
 
-## RC.1 Designer foundation
+## Designer foundation
 
-RC.1 includes:
+VDM2 includes:
 
 - V2-only page layout storage and version history.
 - Section, Container, Text, Image, Button, Spacer and Divider node contracts.
@@ -60,7 +62,8 @@ RC.1 includes:
 - Desktop/Laptop/Tablet/Mobile geometry.
 - Palette, canvas, selection, Inspector and save/reload.
 - Pointer drag and resize on the canonical grid.
-- 12-column horizontal snap and 8 px vertical snap.
+- 12-column editor snap and 8 px vertical snap.
+- VDM2-native 120-step fine horizontal geometry for precise migrated placement.
 - Undo/Redo with bounded history and keyboard shortcuts.
 - Automatic Section/Container height reconciliation.
 - Rich text editing and WordPress Media Library image selection.
@@ -68,12 +71,18 @@ RC.1 includes:
 - Independent Header and Footer V2 documents with the same Designer toolchain.
 - Global Site Design tokens and an optional complete VDM site shell.
 - V2-native Events, Vehicles and Gallery detail rendering.
+- Native reusable vehicle and event field registries.
 - Server-validated Contact and Membership form submissions via WordPress mail.
 - Native V2 portable export/import with preflight, SHA-256 package validation and ID remapping.
 - Controlled schema `1.0` to native schema `2.0` package migration during preflight.
-- Migrated Text, Container and Button presentation properties retained by the normal V2 schema, Designer and renderer.
 
 The V2 layout document uses schema version `2` and an 8 px row grid.
+
+## Administration parity
+
+RC.2 restores the established user-facing administration flow and terminology, including Dashboard, Køretøjer, Køretøjsfelter, Events, Eventfelter, Billedgalleri, Sider, Backup, Opdateringer, Log, Brugermanual, Visual Designer, Eksport, Menu, Header / Footer, Tema and Siteindstillinger.
+
+The implementation behind those screens is native VDM2. Reusable field definitions use VDM-owned storage and are included in native portable transfer packages.
 
 ## Navigation and Siteindstillinger
 
@@ -85,19 +94,19 @@ The page Designer contains two form presets: `Kontaktformular` and `Bliv medlem`
 
 ## Portable transfer
 
-`Eksport / import` creates native V2 portable packages with schema `2.0`. The package contains pages/layouts, Header/Footer, Site Design, Siteindstillinger, Events, Vehicles, Gallery albums, WordPress menus and referenced original media. Every listed file has a size and SHA-256 record and the complete manifest has a deterministic content digest.
+`Eksport` creates native V2 portable packages with schema `2.0`. The package contains pages/layouts, Header/Footer, Tema/Site Design, Siteindstillinger, reusable fields, Events, Vehicles, Gallery albums, WordPress menus and referenced original media. Every listed file has a size and SHA-256 record and the complete manifest has a deterministic content digest.
 
-Import is a two-step operation: upload/preflight first, then explicit confirmation. Preflight rejects unsafe ZIP paths, duplicates, symlinks, unlisted files, size mismatches and SHA-256 mismatches. The staged ZIP is tied to the current administrator and its SHA-256 plus complete package are validated again immediately before import. Media, post, page, menu and menu-item source IDs are remapped to target IDs. Repeated native V2 imports can reuse records marked as originating from the same source.
+Import is a two-step operation: upload/preflight first, then explicit confirmation. Preflight rejects unsafe ZIP paths, duplicates, symlinks, unlisted files, size mismatches and SHA-256 mismatches. The staged ZIP is tied to the current administrator and its SHA-256 plus complete package are validated again immediately before import. Media, post, page, menu and menu-item source IDs are remapped to target IDs.
 
-RC.1 additionally accepts validated schema `1.0` site packages through an isolated conversion step. The original package is fully checked with its own manifest/content-digest rules, converted into a temporary native schema `2.0` package, and that native package is then validated again. The actual database import still runs only through the canonical V2 importer.
+The migration boundary can accept validated schema `1.0` site packages through an isolated conversion step. The source package is validated, converted into a temporary native schema `2.0` package, and that native package is validated again before the canonical V2 importer changes WordPress content.
 
-The conversion maps the previous 120-unit horizontal geometry to V2's 12-column grid while preserving the 8 px vertical grid. Native Event, Vehicle and Gallery list/detail components replace previous generated detail-layout constructs. Unsupported or unavailable source media are reported as migration warnings rather than fetched implicitly from arbitrary remote URLs.
+RC.2 preserves reusable field definitions and values, maps previous module-list styling into native V2 list nodes, and preserves previous 120-step horizontal placement through VDM2-native fine geometry while retaining the 12-column editor model.
 
-## RC.1 acceptance status
+## RC.2 acceptance status
 
-The automated RC.1 contract is complete and covers the entire alpha.1 → beta.3 regression chain plus schema `1.0` migration validation and migrated visual-property retention.
+RC.2 is the V1 functional and visual parity candidate. It restores the established administration structure, carries reusable field definitions through transfer, preserves module-list styling and adds VDM2-native fine horizontal geometry so converted positions are not rounded away.
 
-A production `2.0.0` release still requires environment acceptance on an actual WordPress target after importing the intended site package: Designer → Preview → Live parity, Header/Footer, navigation, forms, Events, Vehicles, Gallery, responsive breakpoints, images, Siteindstillinger and site-shell routing.
+The automated RC.2 contract extends the full alpha.1 → beta.3 and RC.1 regression chain. A production `2.0.0` release still requires environment acceptance on the designated WordPress test target after importing the intended site package: administration parity, Designer → Preview → Live parity, Header/Footer, Menu, Tema, forms, Events, Vehicles, Gallery, responsive breakpoints, images, Siteindstillinger and site-shell routing.
 
 ## Development sequence
 
@@ -112,8 +121,9 @@ A production `2.0.0` release still requires environment acceptance on an actual 
 9. `2.0.0-beta.1` — forms. **Done.**
 10. `2.0.0-beta.2` — navigation and site settings. **Done.**
 11. `2.0.0-beta.3` — portable export/import and package validation. **Done.**
-12. `2.0.0-rc.1` — controlled schema 1.0 migration and automated migration/parity QA. **Code complete; environment acceptance pending.**
-13. `2.0.0` — production release after successful WordPress acceptance QA.
+12. `2.0.0-rc.1` — controlled schema 1.0 migration and automated migration/parity QA. **Technical candidate completed; environment parity failed.**
+13. `2.0.0-rc.2` — V1 functional/admin/visual parity, fine geometry and migration hardening. **Candidate for environment acceptance.**
+14. `2.0.0` — production release after successful WordPress acceptance QA.
 
 ## QA rule
 
