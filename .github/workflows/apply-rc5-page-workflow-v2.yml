@@ -1,0 +1,107 @@
+name: Apply VDM 2 RC.5 Page Workflow v2
+
+on:
+  push:
+    branches: [rc5-v1-page-workflow]
+    paths:
+      - '.github/workflows/apply-rc5-page-workflow-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply RC.5 runtime changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one exact match, found {count}: {old[:100]!r}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+              print('updated', path)
+
+          replace('visual-designer-manager.php', ' * Version: 2.0.0-rc.4\n', ' * Version: 2.0.0-rc.5\n')
+          replace('visual-designer-manager.php', "define('VDM_VERSION', '2.0.0-rc.4');", "define('VDM_VERSION', '2.0.0-rc.5');")
+          replace('src/Core/Plugin.php', 'use VisualDesignerManager\\Admin\\NavigationController;\nuse VisualDesignerManager\\Admin\\ParityController;', 'use VisualDesignerManager\\Admin\\NavigationController;\nuse VisualDesignerManager\\Admin\\PageWorkflowController;\nuse VisualDesignerManager\\Admin\\ParityController;')
+          replace('src/Core/Plugin.php', 'use VisualDesignerManager\\Http\\RestController;\nuse VisualDesignerManager\\Update\\GitHubUpdater;', 'use VisualDesignerManager\\Http\\RestController;\nuse VisualDesignerManager\\Http\\PageWorkflowRestController;\nuse VisualDesignerManager\\Update\\GitHubUpdater;')
+          replace('src/Core/Plugin.php', '        ParityController::register();\n        DesignerController::register();', '        ParityController::register();\n        PageWorkflowController::register();\n        DesignerController::register();')
+          replace('src/Core/Plugin.php', '        RestController::register();\n        GitHubUpdater::register();', '        RestController::register();\n        PageWorkflowRestController::register();\n        GitHubUpdater::register();')
+          replace('src/Admin/ParityController.php', "        self::notice();\n        echo '<table class=\"widefat striped\"><thead><tr><th>Side</th><th>Status</th><th>Visual Designer</th><th>Version</th><th>Elementer</th><th>Handlinger</th></tr></thead><tbody>';", "        self::notice();\n        PageWorkflowController::renderCreateForm($pages);\n        echo '<table class=\"widefat striped\"><thead><tr><th>Side</th><th>Status</th><th>Visual Designer</th><th>Version</th><th>Elementer</th><th>Handlinger</th></tr></thead><tbody>';")
+          replace('src/Admin/DesignerController.php', "        wp_enqueue_style('vdm-designer', VDM_URL . 'assets/designer.css', ['vdm-frontend'], VDM_VERSION);\n        wp_enqueue_script('vdm-frontend-runtime', VDM_URL . 'assets/frontend.js', [], VDM_VERSION, true);\n        wp_enqueue_script('vdm-designer', VDM_URL . 'assets/designer.js', ['media-editor', 'vdm-frontend-runtime'], VDM_VERSION, true);", "        wp_enqueue_style('vdm-designer', VDM_URL . 'assets/designer.css', ['vdm-frontend'], VDM_VERSION);\n        wp_enqueue_style('vdm-page-workflow', VDM_URL . 'assets/page-workflow.css', ['vdm-designer'], VDM_VERSION);\n        wp_enqueue_script('vdm-frontend-runtime', VDM_URL . 'assets/frontend.js', [], VDM_VERSION, true);\n        wp_enqueue_script('vdm-designer', VDM_URL . 'assets/designer.js', ['media-editor', 'vdm-frontend-runtime'], VDM_VERSION, true);\n        wp_enqueue_script('vdm-page-workflow', VDM_URL . 'assets/page-workflow.js', ['vdm-designer'], VDM_VERSION, true);")
+          replace('src/Admin/DesignerController.php', "            'renderUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/render')),\n            'nonce' => wp_create_nonce('wp_rest'),", "            'renderUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/render')),\n            'viewUrl' => $postId > 0 ? esc_url_raw((string) get_permalink($postId)) : '',\n            'nonce' => wp_create_nonce('wp_rest'),")
+          replace('src/Admin/DesignerController.php', 'Visual Designer Manager · Designer', 'Visual Designer Manager · Visual Designer')
+          replace('src/Admin/DesignerController.php', '<button type="button" class="button button-primary" id="vdm-save" title="Gem (Ctrl+S)">Gem</button>', '<button type="button" class="button button-primary" id="vdm-save" title="Gem som ny version (Ctrl+S)">Gem som ny version</button>')
+          replace('assets/designer.js', "            renderInspector();\n            scheduleRender();\n        } catch (error) {\n            saveStatus.textContent = 'Fejl: ' + (error.message || String(error));\n        } finally {", "            renderInspector();\n            scheduleRender();\n            return true;\n        } catch (error) {\n            saveStatus.textContent = 'Fejl: ' + (error.message || String(error));\n            return false;\n        } finally {")
+          replace('assets/designer.js', '    function escapeHtml(value) {', "    window.VDMDesignerRuntime = Object.freeze({\n        getDocument() { return JSON.parse(serialize()); },\n        getSelectedId() { return selectedId; },\n        replaceDocument(nextDocument, nextSelectedId = null) {\n            if (!nextDocument || !Array.isArray(nextDocument.nodes)) return false;\n            const before = serialize();\n            documentState = JSON.parse(JSON.stringify(nextDocument));\n            selectedId = nextSelectedId && documentState.nodes.some(node => node.id === nextSelectedId) ? nextSelectedId : null;\n            applyAutoHeight(breakpoint);\n            return afterMutation(before);\n        },\n        save,\n        isDirty() { return dirty; },\n        getVersion() { return Number.parseInt(config.version || '0', 10) || 0; }\n    });\n\n    function escapeHtml(value) {")
+          replace('src/Frontend/FrontendController.php', 'use VisualDesignerManager\\Storage\\LayoutRepository;\nuse VisualDesignerManager\\Storage\\SiteDesignRepository;', 'use VisualDesignerManager\\Storage\\LayoutRepository;\nuse VisualDesignerManager\\Storage\\PreviewRepository;\nuse VisualDesignerManager\\Storage\\SiteDesignRepository;')
+          replace('src/Frontend/FrontendController.php', "        $postId = get_queried_object_id();\n        if ($postId <= 0 || (LayoutRepository::get($postId)['nodes'] ?? []) === []) {\n            return $template;\n        }", "        $postId = get_queried_object_id();\n        $document = $postId > 0 ? (PreviewRepository::resolve($postId) ?? LayoutRepository::get($postId)) : [];\n        if ($postId <= 0 || ($document['nodes'] ?? []) === []) {\n            return $template;\n        }")
+          replace('src/Frontend/FrontendController.php', "        $document = LayoutRepository::get($postId);\n        if (($document['nodes'] ?? []) === []) {\n            return $content;\n        }\n\n        self::enqueueAssets();\n        return Renderer::render($document);\n    }\n}", "        $previewDocument = PreviewRepository::resolve($postId);\n        $document = $previewDocument ?? LayoutRepository::get($postId);\n        if (($document['nodes'] ?? []) === []) {\n            return $content;\n        }\n\n        self::enqueueAssets();\n        $rendered = Renderer::render($document);\n        return $previewDocument !== null ? self::previewBanner() . $rendered : $rendered;\n    }\n\n    private static function previewBanner(): string\n    {\n        return '<div class=\"vdm-preview-banner\" role=\"status\" style=\"position:relative;z-index:99999;padding:10px 16px;background:#fff3cd;border:1px solid #dba617;color:#1d2327;font:600 14px/1.4 sans-serif;text-align:center\">'\n            . esc_html__('Ikke-gemt forhåndsvisning · kun synlig for dig', 'visual-designer-manager')\n            . '</div>';\n    }\n}")
+          replace('templates/page-shell.php', 'use VisualDesignerManager\\Storage\\LayoutRepository;\nuse VisualDesignerManager\\Storage\\SiteDesignRepository;', 'use VisualDesignerManager\\Storage\\LayoutRepository;\nuse VisualDesignerManager\\Storage\\PreviewRepository;\nuse VisualDesignerManager\\Storage\\SiteDesignRepository;')
+          replace('templates/page-shell.php', '$postId = get_queried_object_id();\n$vdmPageDocument = $postId > 0 ? LayoutRepository::get($postId) : [];', '$postId = get_queried_object_id();\n$vdmPreviewDocument = $postId > 0 ? PreviewRepository::resolve($postId) : null;\n$vdmPageDocument = is_array($vdmPreviewDocument) ? $vdmPreviewDocument : ($postId > 0 ? LayoutRepository::get($postId) : []);\n$vdmPreviewActive = is_array($vdmPreviewDocument);')
+          replace('templates/page-shell.php', '<div class="vdm-site-shell" style="<?php echo esc_attr($style); ?>">\n    <?php if (($vdmHeaderDocument[\'nodes\'] ?? []) !== []) : ?>', '<div class="vdm-site-shell" style="<?php echo esc_attr($style); ?>">\n    <?php if ($vdmPreviewActive) : ?>\n        <div class="vdm-preview-banner" role="status" style="position:relative;z-index:99999;padding:10px 16px;background:#fff3cd;border:1px solid #dba617;color:#1d2327;font:600 14px/1.4 sans-serif;text-align:center"><?php echo esc_html__(\'Ikke-gemt forhåndsvisning · kun synlig for dig\', \'visual-designer-manager\'); ?></div>\n    <?php endif; ?>\n    <?php if (($vdmHeaderDocument[\'nodes\'] ?? []) !== []) : ?>')
+          replace('.github/workflows/qa.yml', '          node --check assets/site-settings.js\n', '          node --check assets/site-settings.js\n          node --check assets/page-workflow.js\n')
+          replace('.github/workflows/qa.yml', '      - name: Install package contract\n        run: python3 tests/package_contract.py\n', '      - name: RC.5 V1 page workflow contract\n        run: python3 tests/rc5_page_workflow_contract.py\n\n      - name: Install package contract\n        run: python3 tests/package_contract.py\n')
+          replace('README.md', '`2.0.0-rc.4`', '`2.0.0-rc.5`')
+          rc5 = """## RC.5 V1 page workflow parity
+
+RC.5 restores the established daily page workflow from the shipped V1 product on top of the native VDM2 model. The `Sider` administration page can create a new WordPress page with title, optional slug, parent and draft/published status and open it directly in Visual Designer. The Designer exposes `Forhåndsvis`, `Gem som ny version` and `Gem & vis`, plus session clipboard controls for Copy/Paste/Duplicate.
+
+Unsaved preview is user-bound and temporary. VDM normalizes the unsaved document, stores it under a short-lived opaque token tied to the current administrator and renders that document through the actual page frontend/site-shell path. The saved page is not changed by preview.
+
+Saved page history is available directly under the Designer. Historical versions can be previewed, restored non-destructively as a new version, or copied to a new draft page with its own version history.
+
+RC.5 intentionally concentrates on V1 page lifecycle and editor productivity parity. General element parity and the richer named Header/Footer template/assignment model remain separate parity workstreams before production `2.0.0`.
+
+"""
+          replace('README.md', '## RC.4 acceptance status\n', rc5 + '## RC.4 acceptance status\n')
+          replace('README.md', '15. `2.0.0-rc.4` — controlled recovery of URL-only legacy upload images during schema 1.0 preflight, with explicit recovery reporting. **Candidate for environment acceptance.**\n16. `2.0.0` — production release after successful WordPress acceptance QA.', '15. `2.0.0-rc.4` — controlled recovery of URL-only legacy upload images during schema 1.0 preflight, with explicit recovery reporting. **Superseded by RC.5 acceptance.**\n16. `2.0.0-rc.5` — V1 page lifecycle, unsaved frontend preview, save/view, version restore/copy and Designer clipboard parity. **Candidate for environment acceptance.**\n17. `2.0.0` — production release after successful WordPress acceptance QA.')
+          changelog = """# Changelog
+
+## 2.0.0-rc.5
+
+- Restored the V1-style `Sider` workflow for creating a page with title, optional slug, parent and draft/published status and opening it directly in Visual Designer.
+- Renamed the canonical Designer save action to `Gem som ny version` and added `Gem & vis`.
+- Added user-bound, short-lived unsaved frontend preview through the real VDM page/frontend or site-shell rendering path without changing the saved page.
+- Added saved version history below the Designer with historical preview, non-destructive restore-as-new-version and copy-to-new-draft actions.
+- Added session clipboard controls for Copy, Paste and Duplicate of a selected Designer subtree, including Ctrl+C, Ctrl+V and Ctrl+D.
+- Exposed a minimal VDM2 Designer runtime bridge for controlled page-workflow extensions without introducing previous-generation runtime aliases.
+- Added diagnostic records for page creation, historical restore and historical page copy.
+- Added permanent RC.5 page-workflow regression coverage while retaining every earlier Alpha/Beta/RC gate.
+- Production `2.0.0` remains blocked on the remaining V1 element, Header/Footer and real reference→V2 visual parity workstreams.
+
+"""
+          replace('CHANGELOG.md', '# Changelog\n\n', changelog)
+          PY
+
+      - name: Validate RC.5 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -type f -name '*.php' -print0 | while IFS= read -r -d '' file; do php -l "$file" >/dev/null; done
+          node --check assets/designer.js
+          node --check assets/page-workflow.js
+          python3 tests/rc5_page_workflow_contract.py
+
+      - name: Commit RC.5 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add visual-designer-manager.php src/Core/Plugin.php src/Admin/ParityController.php src/Admin/DesignerController.php assets/designer.js src/Frontend/FrontendController.php templates/page-shell.php .github/workflows/qa.yml README.md CHANGELOG.md
+          git commit -m 'Implement RC.5 V1 page workflow parity [skip rc5 apply]'
+          git push origin HEAD:rc5-v1-page-workflow
