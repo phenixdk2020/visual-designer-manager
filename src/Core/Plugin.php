@@ -6,6 +6,7 @@ namespace VisualDesignerManager\Core;
 
 use VisualDesignerManager\Admin\AdminController;
 use VisualDesignerManager\Admin\DesignerController;
+use VisualDesignerManager\Admin\DesignerParityController;
 use VisualDesignerManager\Admin\EventController;
 use VisualDesignerManager\Admin\GalleryController;
 use VisualDesignerManager\Admin\ManualController;
@@ -49,6 +50,7 @@ final class Plugin
         UpdateCheckpointController::register();
         PageWorkflowController::register();
         DesignerController::register();
+        DesignerParityController::register();
         TemplateDesignerController::register();
         TemplateAssignmentController::register();
         SiteDesignController::register();
