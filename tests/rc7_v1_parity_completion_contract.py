@@ -69,12 +69,15 @@ checks = {
         'docx', 'wp_insert_post', 'Brugermanual'
     ),
     'form recipient and receipt parity': all(token in form for token in (
-        "$props['recipient']", 'vdm_form_recipient', 'sendReceipt', 'receiptSubject', 'wp_mail($fields[\'email\']'
+        "$props['recipient']", 'vdm_form_recipient', 'sendReceipt', 'receiptSubject', "wp_mail($fields['email']"
     )),
     'diagnostics parity': has(
         'src/Admin/DiagnosticsController.php',
-        'postId', 'DiagnosticStore', 'clear'
-    ) and has('src/Diagnostics/DiagnosticStore.php', 'pageUrl', 'filterByPost'),
+        'post_id', 'DiagnosticStore::supportUrl', 'Kopiér diagnose-link', 'clearForPost'
+    ) and has(
+        'src/Diagnostics/DiagnosticStore.php',
+        'clearForPost', 'supportUrl', "'post_id'"
+    ),
     'parity renderer and CSS': has(
         'src/Frontend/Renderer.php',
         'NodeSchema::LINK', 'NodeSchema::ICON', 'NodeSchema::BADGE', 'NodeSchema::DATA_LIST', 'NodeSchema::TABLE',
