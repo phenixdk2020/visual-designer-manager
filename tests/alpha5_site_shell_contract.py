@@ -20,25 +20,39 @@ version_ok = bool(version_match)
 if version_match and version_match.group(1) == 'alpha':
     version_ok = int(version_match.group(2) or 0) >= 5
 
+# Alpha.5 established a shared Header/Footer Designer. RC.7 extends that same
+# contract from one global slot to named templates with stable IDs. The test
+# therefore accepts the stronger named-template adapter while still requiring
+# the canonical Designer/render REST flow.
 header_footer_designer_ok = (
     "public const MENU_SLUG = 'vdm-header-footer';" in template_controller
-    and "$layoutId = 'global-' . $slot;" in template_controller
+    and "$layoutId = 'template-' . $slot . '-' . $templateId;" in template_controller
     and "'pageId' => $layoutId" in template_controller
     and "'saveUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/layouts/' . $layoutId))" in template_controller
     and "'renderUrl' => esc_url_raw(rest_url(RestController::NAMESPACE . '/render'))" in template_controller
-    and 'TemplateRepository::version($slot)' in template_controller
+    and 'TemplateRepository::versionTemplate($slot, $templateId)' in template_controller
+    and 'TemplateRepository::getTemplate($slot, $templateId)' in template_controller
+)
+
+template_rest_ok = (
+    "'/layouts/(?P<id>[a-z0-9-]+)'" in rest
+    and "'global-header'" in rest
+    and "'global-footer'" in rest
+    and "'template-' . $slot . '-'" in rest
+    and 'TemplateRepository::saveTemplate' in rest
+    and 'TemplateRepository::defaultId' in rest
 )
 
 checks = {
     'runtime version alpha.5 or newer': version_ok,
     'template repository': "public const HEADER = 'header';" in templates and "public const FOOTER = 'footer';" in templates and "vdm_template_" in templates and "_history_v2" in templates,
     'header footer designer': header_footer_designer_ok,
-    'template REST adapter': "'/layouts/(?P<id>[a-z0-9-]+)'" in rest and "'global-header'" in rest and "'global-footer'" in rest and 'TemplateRepository::save' in rest,
+    'template REST adapter': template_rest_ok,
     'site design repository': "public const OPTION = 'vdm_site_design_v2';" in site_design and "'shellEnabled' => false" in site_design and "'headingColor'" in site_design and 'cssVariables' in site_design,
     'site design admin': "public const MENU_SLUG = 'vdm-site-design';" in site_controller and 'vdm_save_site_design' in site_controller and 'Gem Site Design' in site_controller,
     'controllers booted': 'TemplateDesignerController::register();' in core and 'SiteDesignController::register();' in core,
     'frontend site shell routing': "add_filter('template_include'" in frontend and "templates/page-shell.php" in frontend and "shellEnabled" in frontend,
-    'canonical shell template': 'wp_head();' in shell and 'wp_footer();' in shell and 'TemplateRepository::HEADER' in shell and 'TemplateRepository::FOOTER' in shell and 'Renderer::render($vdmPageDocument)' in shell,
+    'canonical shell template': 'wp_head();' in shell and 'wp_footer();' in shell and 'Renderer::render($vdmPageDocument)' in shell and 'TemplateRepository' in shell,
     'global CSS variables': '--vdm-site-max-width' in css and '--vdm-site-heading' in css and '.vdm-site-region' in css and '.vdm-site-shell-active' in css,
 }
 

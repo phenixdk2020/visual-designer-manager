@@ -26,7 +26,11 @@ for node_type in ('section', 'container', 'text', 'image', 'button', 'spacer', '
     assert f"'{node_type}'" in schema, node_type
 
 hierarchy = (ROOT / 'src/Model/Hierarchy.php').read_text(encoding='utf-8')
-assert 'Only sections may exist at document root.' in hierarchy
+# Alpha.2 still protects the root-hierarchy invariant. RC.7 deliberately
+# extends it with one V1-compatible exception: floating buttons may be root
+# overlays while ordinary leaf nodes must remain inside a Section/Container.
+assert 'Only sections and floating buttons may exist at document root.' in hierarchy
+assert "(string) ($props['mode'] ?? 'normal') === 'floating'" in hierarchy
 assert 'VDM hierarchy contains a cycle.' in hierarchy
 
 renderer = (ROOT / 'src/Frontend/Renderer.php').read_text(encoding='utf-8')

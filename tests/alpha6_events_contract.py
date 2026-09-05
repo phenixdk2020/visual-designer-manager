@@ -21,13 +21,14 @@ version_match = re.search(r'Version:\s*2\.0\.0(?:-(alpha|beta|rc)\.(\d+))?', plu
 version_ok = bool(version_match)
 if version_match and version_match.group(1) == 'alpha':
     version_ok = int(version_match.group(2) or 0) >= 6
+compact_schema = re.sub(r'\s+', '', schema)
 
 checks = {
     'runtime version alpha.6 or newer': version_ok,
     'event post type and VDM meta': "public const POST_TYPE = 'vdm_event';" in repository and "'_vdm_event_start_date'" in repository and "'_vdm_event_contact'" in repository,
     'event admin registration': 'register_post_type(EventRepository::POST_TYPE' in admin and 'vdm_save_event' in admin and 'Eventoplysninger' in admin,
     'event fields': all(token in admin for token in ('Dato', 'Starttid', 'Sluttid', 'Sted', 'Adresse', 'Kontakt', 'Kort beskrivelse')),
-    'event node schema': "public const EVENTS = 'events';" in schema and "self::EVENTS => ['x' => 0, 'y' => 0, 'w' => 12, 'h' => 60]" in schema and "'showFacts' => true" in schema,
+    'event node schema': "publicconstEVENTS='events';" in compact_schema and "self::EVENTS,self::VEHICLES,self::GALLERIES=>['x'=>0,'y'=>0,'w'=>12,'h'=>60]" in compact_schema and "'showFacts'=>true" in compact_schema,
     'canonical event renderer': 'NodeSchema::EVENTS' in renderer and 'EventRenderer::renderList' in renderer,
     'event fact ribbon': all(token in event_renderer for token in ("$items['Dato']", "$items['Tid']", "$items['Sted']", "$items['Adresse']", "$items['Kontakt']")),
     'event list rendering': 'EventRepository::query' in event_renderer and 'vdm-events-grid' in event_renderer and 'Læs mere' in event_renderer,

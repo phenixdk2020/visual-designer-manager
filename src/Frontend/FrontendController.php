@@ -23,19 +23,9 @@ final class FrontendController
 
     public static function registerAssets(): void
     {
-        wp_register_style(
-            'vdm-frontend',
-            VDM_URL . 'assets/frontend.css',
-            [],
-            VDM_VERSION
-        );
-        wp_register_script(
-            'vdm-frontend-runtime',
-            VDM_URL . 'assets/frontend.js',
-            [],
-            VDM_VERSION,
-            true
-        );
+        wp_register_style('vdm-frontend', VDM_URL . 'assets/frontend.css', [], VDM_VERSION);
+        wp_register_style('vdm-parity', VDM_URL . 'assets/parity.css', ['vdm-frontend'], VDM_VERSION);
+        wp_register_script('vdm-frontend-runtime', VDM_URL . 'assets/frontend.js', [], VDM_VERSION, true);
     }
 
     public static function enqueueAssets(): void
@@ -43,10 +33,14 @@ final class FrontendController
         if (!wp_style_is('vdm-frontend', 'registered')) {
             wp_register_style('vdm-frontend', VDM_URL . 'assets/frontend.css', [], VDM_VERSION);
         }
+        if (!wp_style_is('vdm-parity', 'registered')) {
+            wp_register_style('vdm-parity', VDM_URL . 'assets/parity.css', ['vdm-frontend'], VDM_VERSION);
+        }
         if (!wp_script_is('vdm-frontend-runtime', 'registered')) {
             wp_register_script('vdm-frontend-runtime', VDM_URL . 'assets/frontend.js', [], VDM_VERSION, true);
         }
         wp_enqueue_style('vdm-frontend');
+        wp_enqueue_style('vdm-parity');
         wp_enqueue_script('vdm-frontend-runtime');
     }
 

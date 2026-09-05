@@ -20,6 +20,7 @@ theme_config_ok = (
     "'themeColors' => self::themeColors()" in controller
     or "'themeColors' => DesignerController::themeColors()" in controller
 )
+compact_schema = re.sub(r'\s+', '', schema)
 
 checks = {
     'runtime version alpha.4 or newer': version_ok,
@@ -30,7 +31,7 @@ checks = {
     'theme and recent colors': "themeTitle.textContent = 'Temafarver';" in designer and "recentTitle.textContent = 'Senest brugt';" in designer and 'vdm_recent_colors_v2' in designer,
     'no native color controls': "input.type = 'color'" not in designer,
     'rich text editor': 'function richTextControl(' in designer and "editor.contentEditable = 'true';" in designer and "document.execCommand('createLink'" in designer,
-    'button schema controls': "'target' => '_self'" in schema and "'align' => 'left'" in schema and "'paddingX' => 18" in schema and "'fontWeight' => 600" in schema,
+    'button schema controls': "'target'=>'_self'" in compact_schema and "'align'=>'left'" in compact_schema and "'paddingX'=>18" in compact_schema and "'fontWeight'=>600" in compact_schema,
     'button renderer parity': "--vdm-button-padding-x:" in renderer and "--vdm-button-font-size:" in renderer and "--vdm-button-justify:" in renderer and 'noopener noreferrer' in renderer,
 }
 

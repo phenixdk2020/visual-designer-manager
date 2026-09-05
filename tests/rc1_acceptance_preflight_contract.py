@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,6 +10,7 @@ renderer = (ROOT / 'src' / 'Frontend' / 'Renderer.php').read_text(encoding='utf-
 form_renderer = (ROOT / 'src' / 'Frontend' / 'FormRenderer.php').read_text(encoding='utf-8')
 designer = (ROOT / 'assets' / 'designer.js').read_text(encoding='utf-8')
 css = (ROOT / 'assets' / 'frontend.css').read_text(encoding='utf-8')
+compact_schema = re.sub(r'\s+', '', schema)
 
 checks = {
     'legacy responsive inheritDesktop uses desktop geometry': all(token in migrator for token in (
@@ -28,39 +30,30 @@ checks = {
         "'intro' => sanitize_textarea_field",
         "$props['buttonText'] ??",
     )),
-    'V2 form model owns heading and intro': all(token in schema for token in (
-        "'heading' => 'Kontakt os'",
-        "'heading' => 'Bliv medlem'",
-        "'intro' => sanitize_textarea_field",
-    )),
+    'V2 form model owns heading and intro': (
+        "'heading'=>'Kontaktos'" in compact_schema
+        and "'heading'=>'Blivmedlem'" in compact_schema
+        and "'intro'=>sanitize_textarea_field" in compact_schema
+    ),
     'canonical form renderer outputs heading and intro': all(token in form_renderer for token in (
-        'vdm-form-heading',
-        'vdm-form-intro',
-        "$props['heading']",
-        "$props['intro']",
+        'vdm-form-heading', 'vdm-form-intro', "$props['heading']", "$props['intro']",
     )),
     'canonical form styling includes heading and intro': '.vdm-form-heading{' in css and '.vdm-form-intro{' in css,
     'Designer exposes form heading and intro': "field('Overskrift'" in designer and "field('Introduktion'" in designer,
     'legacy image fit original avoids crop': all(token in migrator for token in (
-        "$props['fit'] ?? $props['objectFit']",
-        "['contain', 'original']",
-        "$objectFit =",
+        "$props['fit'] ?? $props['objectFit']", "['contain', 'original']", '$objectFit =',
     )),
     'legacy image alignment survives migration': all(token in migrator for token in (
-        "$props['imageAlignX']",
-        "$props['imageAlignY']",
-        "'positionX' => $positionX",
-        "'positionY' => $positionY",
+        "$props['imageAlignX']", "$props['imageAlignY']", "'positionX' => $positionX", "'positionY' => $positionY",
     )),
-    'V2 image position normalized': all(token in schema for token in (
-        "'positionX' => 'center'",
-        "'positionY' => 'center'",
-        "['left', 'center', 'right']",
-        "['top', 'center', 'bottom']",
-    )),
+    'V2 image position normalized': (
+        "'positionX'=>'center'" in compact_schema
+        and "'positionY'=>'center'" in compact_schema
+        and "['left','center','right']" in compact_schema
+        and "['top','center','bottom']" in compact_schema
+    ),
     'V2 image position rendered': all(token in renderer for token in (
-        '--vdm-object-position-x:',
-        '--vdm-object-position-y:',
+        '--vdm-object-position-x:', '--vdm-object-position-y:',
     )) and 'object-position:var(--vdm-object-position-x,center) var(--vdm-object-position-y,center)' in css,
     'Designer exposes image position': "field('Vandret placering'" in designer and "field('Lodret placering'" in designer,
     'legacy menu gap key is preserved': "$props['menuGap'] ?? $props['gap'] ?? 24" in migrator,
@@ -69,13 +62,11 @@ checks = {
         '$pageLinks = self::pageLinkMap($pageRecords, $site);',
         'self::canonicalizeLegacyLinks($model, $pageLinks)',
         'private static function normalizedPagePath',
-        "isset($byPath[$key])",
-        "$target = (string) $byPath[$key];",
+        'isset($byPath[$key])', "$target = (string) $byPath[$key];",
     )),
     'page-id links are canonicalized without broad external rewriting': all(token in migrator for token in (
         "sanitize_key((string) ($props['linkType'] ?? '')) === 'page'",
-        "$pageId = absint($props['pageId'] ?? 0);",
-        'isset($byId[$pageId])',
+        "$pageId = absint($props['pageId'] ?? 0);", 'isset($byId[$pageId])',
     )),
 }
 

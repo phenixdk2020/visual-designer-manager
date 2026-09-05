@@ -63,7 +63,7 @@ final class RestController
     public static function canEditLayout(\WP_REST_Request $request): bool
     {
         $id = sanitize_key((string) $request['id']);
-        if (self::templateSlot($id) !== null) {
+        if (self::templateTarget($id) !== null) {
             return current_user_can('edit_theme_options');
         }
 
@@ -74,11 +74,14 @@ final class RestController
     public static function getLayout(\WP_REST_Request $request): \WP_REST_Response
     {
         $id = sanitize_key((string) $request['id']);
-        $slot = self::templateSlot($id);
-        if ($slot !== null) {
+        $target = self::templateTarget($id);
+        if ($target !== null) {
+            [$slot, $templateId] = $target;
             return new \WP_REST_Response([
-                'document' => TemplateRepository::get($slot),
-                'version' => TemplateRepository::version($slot),
+                'document' => TemplateRepository::getTemplate($slot, $templateId),
+                'version' => TemplateRepository::versionTemplate($slot, $templateId),
+                'templateId' => $templateId,
+                'templateSlot' => $slot,
             ], 200);
         }
 
@@ -96,10 +99,15 @@ final class RestController
         $document = is_array($params['document'] ?? null) ? $params['document'] : [];
 
         try {
-            $slot = self::templateSlot($id);
-            $saved = $slot !== null
-                ? TemplateRepository::save($slot, $document, get_current_user_id())
-                : LayoutRepository::save(absint($id), $document, get_current_user_id());
+            $target = self::templateTarget($id);
+            if ($target !== null) {
+                [$slot, $templateId] = $target;
+                $saved = TemplateRepository::saveTemplate($slot, $templateId, $document, get_current_user_id());
+                $saved['templateId'] = $templateId;
+                $saved['templateSlot'] = $slot;
+            } else {
+                $saved = LayoutRepository::save(absint($id), $document, get_current_user_id());
+            }
             return new \WP_REST_Response($saved, 200);
         } catch (\Throwable $error) {
             return new \WP_REST_Response([
@@ -128,12 +136,30 @@ final class RestController
         }
     }
 
-    private static function templateSlot(string $id): ?string
+    /**
+     * @return array{0:string,1:string}|null
+     */
+    private static function templateTarget(string $id): ?array
     {
-        return match ($id) {
-            'global-header' => TemplateRepository::HEADER,
-            'global-footer' => TemplateRepository::FOOTER,
-            default => null,
-        };
+        if ($id === 'global-header') {
+            $templateId = TemplateRepository::defaultId(TemplateRepository::HEADER);
+            return $templateId !== '' ? [TemplateRepository::HEADER, $templateId] : null;
+        }
+        if ($id === 'global-footer') {
+            $templateId = TemplateRepository::defaultId(TemplateRepository::FOOTER);
+            return $templateId !== '' ? [TemplateRepository::FOOTER, $templateId] : null;
+        }
+
+        foreach (TemplateRepository::slots() as $slot) {
+            $prefix = 'template-' . $slot . '-';
+            if (!str_starts_with($id, $prefix)) {
+                continue;
+            }
+            $templateId = sanitize_key(substr($id, strlen($prefix)));
+            if ($templateId !== '' && TemplateRepository::exists($slot, $templateId)) {
+                return [$slot, $templateId];
+            }
+        }
+        return null;
     }
 }

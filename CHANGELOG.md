@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.0.0-rc.7
+
+- Restored named Header and Footer templates with stable IDs, independent histories, active/default state and template settings.
+- Added per-page Header/Footer assignment with automatic/default, explicit-template and no-region choices plus canonical resolver fallback.
+- Restored the in-manager WordPress Menu workflow for pages, custom links, headings, hierarchy, ordering, theme locations and 30 recoverable snapshots.
+- Added V1-parity Designer nodes for Link, Icon, Badge, Data List and Table.
+- Added composable Event Value, Event Image, Event Field and Event Facts nodes plus Vehicle Detail and Gallery Detail nodes.
+- Added floating Button mode with z-index/layer control and the controlled root-level overlay hierarchy exception.
+- Added V1-style Over, Under, Venstre, Højre and Ind i placement helpers.
+- Extended Text and Image presentation controls used by migrated/reference layouts.
+- Added page duplicate, publish/draft and trash lifecycle actions with independent VDM history on duplicates.
+- Restored public/admin user-manual parity and on-demand Word `.docx` export from one canonical manual source.
+- Added per-form recipient selection, controlled VDM recipient filtering and optional sender receipt mail.
+- Added page-filtered diagnostics, per-page clearing and copyable support/diagnostic links.
+- Registered the new page-lifecycle, diagnostics, Designer parity, template-assignment and manual controllers in the canonical V2 boot path.
+- Extended all earlier regression contracts for the deliberate named-template/root-floating schema evolution without weakening their behavioral invariants.
+- Added a permanent RC.7 V1 parity completion regression gate and JavaScript syntax checking for the parity runtime.
+- Production `2.0.0` remains blocked on the remaining module/export/theme parity work and real test3-to-test4 responsive visual acceptance.
+
 ## 2.0.0-rc.6
 
 - Restored V1-style update checkpoint history on the native VDM2 update channel.
@@ -44,7 +63,7 @@
 - Added a native VDM2 GitHub updater integrated with WordPress plugin update transients and plugin information.
 - Added direct update status, manual GitHub check and install actions to the `Opdateringer` administration page.
 - Restricted the updater to the Visual Designer Manager repository manifest and versioned `dist/` package path.
-- Added SHA-256 verification of downloaded update packages before WordPress can install them.
+- Added SHA-256 verification of downloaded update packages before WordPress can install it.
 - Added an automatic program backup of the installed VDM plugin before replacement, with bounded backup retention.
 - Extended the package workflow to publish the verified versioned ZIP under `dist/` and generate the canonical `update.json` manifest with version, package path and SHA-256.
 - Added a recursion guard so the updater publication commit cannot trigger another package publication loop.
@@ -99,7 +118,6 @@
 - Preflight state is tied to the current administrator and a staged-file SHA-256; the package is fully revalidated immediately before import.
 - Added guarded cleanup of newly created objects when import fails.
 - Beta.3 intentionally accepts native schema `2.0`; controlled schema `1.0` migration is deferred to RC.
-- Expanded the permanent QA chain with the beta.3 portable transfer contract.
 
 ## 2.0.0-beta.2
 
@@ -206,7 +224,7 @@
 - Added canonical node schema for Section, Container, Text, Image, Button, Spacer and Divider.
 - Added hierarchy validation with root and cycle rules.
 - Added one shared PHP renderer used by frontend and Designer preview.
-- Added responsive geometry for Desktop, Laptop, Tablet and Mobile.
+- Added responsive geometry for Desktop/Laptop/Tablet/Mobile.
 - Added the first V2 Designer workspace with palette, canvas, breakpoint selection and Inspector.
 - Added save/reload through the V2 REST API.
 - Added frontend rendering for pages that contain a V2 layout.

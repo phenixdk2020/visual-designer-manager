@@ -30,6 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check assets/designer.js
+          node --check assets/designer-parity.js
           node --check assets/frontend.js
           node --check assets/vehicle-admin.js
           node --check assets/gallery-admin.js
@@ -95,6 +96,9 @@ jobs:
 
       - name: RC.6 update checkpoint contract
         run: python3 tests/rc6_update_checkpoint_contract.py
+
+      - name: RC.7 V1 parity completion contract
+        run: python3 tests/rc7_v1_parity_completion_contract.py
 
       - name: Install package contract
         run: python3 tests/package_contract.py

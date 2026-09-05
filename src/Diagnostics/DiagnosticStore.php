@@ -38,6 +38,31 @@ final class DiagnosticStore
         delete_option(self::OPTION);
     }
 
+    public static function clearForPost(int $postId): void
+    {
+        if ($postId <= 0) {
+            return;
+        }
+        $entries = array_values(array_filter(self::all(), static function (array $entry) use ($postId): bool {
+            $context = is_array($entry['context'] ?? null) ? $entry['context'] : [];
+            return absint($context['postid'] ?? 0) !== $postId;
+        }));
+        if ($entries === []) {
+            delete_option(self::OPTION);
+        } else {
+            update_option(self::OPTION, array_slice($entries, 0, self::MAX_ENTRIES), false);
+        }
+    }
+
+    public static function supportUrl(int $postId = 0): string
+    {
+        $args = ['page' => 'vdm-log'];
+        if ($postId > 0) {
+            $args['post_id'] = $postId;
+        }
+        return add_query_arg($args, admin_url('admin.php'));
+    }
+
     /** @param array<string,mixed> $context @return array<string,string> */
     private static function sanitizeContext(array $context): array
     {

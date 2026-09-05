@@ -24,10 +24,21 @@ final class Hierarchy
             $parentId = $node['parentId'] ?? null;
 
             if ($parentId === null) {
-                if ($type !== NodeSchema::SECTION) {
-                    throw new \InvalidArgumentException('Only sections may exist at document root.');
+                if ($type === NodeSchema::SECTION) {
+                    continue;
                 }
-                continue;
+
+                // V1 parity: a floating button is a parent-relative overlay and
+                // may deliberately live on the document root. Normal buttons
+                // and every other leaf still require a Section/Container.
+                if ($type === NodeSchema::BUTTON) {
+                    $props = is_array($node['props'] ?? null) ? $node['props'] : [];
+                    if ((string) ($props['mode'] ?? 'normal') === 'floating') {
+                        continue;
+                    }
+                }
+
+                throw new \InvalidArgumentException('Only sections and floating buttons may exist at document root.');
             }
 
             if (!isset($byId[$parentId])) {

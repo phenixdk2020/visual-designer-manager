@@ -56,7 +56,7 @@ final class FormRenderer
         self::textField('email', 'E-mail', 'email', true, 'email');
 
         if (!empty($props['showPhone'])) {
-            self::textField('phone', 'Telefon', 'tel', false, 'tel');
+            self::textField('phone', 'Telefon', 'tel', $isMembership, 'tel');
         }
 
         if ($isMembership && !empty($props['showAddress'])) {
@@ -66,12 +66,16 @@ final class FormRenderer
         }
 
         if (!$isMembership && !empty($props['showSubject'])) {
-            self::textField('subject', 'Emne', 'text', false, 'off', true);
+            self::textField('subject', 'Emne', 'text', true, 'off', true);
         }
 
         if (!empty($props['showMessage'])) {
-            echo '<label class="vdm-form-field vdm-form-field--full"><span class="vdm-form-label">' . esc_html($isMembership ? 'Bemærkning' : 'Besked') . ' <span aria-hidden="true">*</span></span>';
-            echo '<textarea name="vdm_fields[message]" rows="' . esc_attr((string) max(3, min(12, (int) ($props['messageRows'] ?? 6)))) . '" required></textarea></label>';
+            $messageRequired = !$isMembership;
+            echo '<label class="vdm-form-field vdm-form-field--full"><span class="vdm-form-label">' . esc_html($isMembership ? 'Kommentar' : 'Besked');
+            if ($messageRequired) {
+                echo ' <span aria-hidden="true">*</span>';
+            }
+            echo '</span><textarea name="vdm_fields[message]" rows="' . esc_attr((string) max(3, min(12, (int) ($props['messageRows'] ?? 6)))) . '"' . ($messageRequired ? ' required' : '') . '></textarea></label>';
         }
 
         if (!empty($props['requireConsent'])) {
@@ -108,7 +112,7 @@ final class FormRenderer
             return '<div class="vdm-form-status vdm-form-status--success" role="status">' . esc_html($message) . '</div>';
         }
         if ($status === 'error') {
-            return '<div class="vdm-form-status vdm-form-status--error" role="alert">Formularen kunne ikke sendes. Kontroller felterne og prøv igen.</div>';
+            return '<div class="vdm-form-status vdm-form-status--error" role="alert">Formularen kunne ikke sendes. Kontroller de obligatoriske felter og prøv igen.</div>';
         }
 
         return '';
