@@ -1,15 +1,15 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "2.0.0-rc.7",
+  "version": "2.0.0-rc.8",
   "homepage": "https://github.com/phenixdk2020/visual-designer-manager",
   "requires": "6.4",
   "requires_php": "8.0",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/visual-designer-manager/main/dist/visual-designer-manager-v2.0.0-rc.7.zip",
-  "sha256": "ed0cf48e0c517424641d91cb8bc5679ddddade0f842248363d9fc83907b8726c",
-  "source_commit": "f805690104db60d40d7f4263db0b4c9ea42d1ddd",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/visual-designer-manager/main/dist/visual-designer-manager-v2.0.0-rc.8.zip",
+  "sha256": "05f19923b2cb553e7480d5ceb99ccd0f38b406157418b55b421af56d8cf2b6c5",
+  "source_commit": "118fbf98e91df8266274f0e775d76e66ccbc47f9",
   "sections": {
     "description": "Visual Designer Manager – modeldrevet visuel WordPress-designer.",
-    "changelog": "Version 2.0.0-rc.7. Se CHANGELOG.md i repository for komplette release-noter."
+    "changelog": "Version 2.0.0-rc.8. Se CHANGELOG.md i repository for komplette release-noter."
   }
 }
