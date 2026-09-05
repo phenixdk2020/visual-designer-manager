@@ -14,8 +14,14 @@ def has(path: str, *tokens: str) -> bool:
     return all(token in value for token in tokens)
 
 plugin = read('visual-designer-manager.php')
-match = re.search(r'Version:\s*2\.0\.0-rc\.(\d+)', plugin)
-version_ok = bool(match and int(match.group(1)) >= 7 and "define('VDM_VERSION', '2.0.0-rc.7');" in plugin)
+header_match = re.search(r'Version:\s*2\.0\.0-rc\.(\d+)', plugin)
+runtime_match = re.search(r"define\('VDM_VERSION',\s*'2\.0\.0-rc\.(\d+)'\);", plugin)
+version_ok = bool(
+    header_match
+    and runtime_match
+    and int(header_match.group(1)) >= 7
+    and header_match.group(1) == runtime_match.group(1)
+)
 
 schema = read('src/Model/NodeSchema.php')
 hierarchy = read('src/Model/Hierarchy.php')

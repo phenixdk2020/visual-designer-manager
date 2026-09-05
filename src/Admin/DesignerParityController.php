@@ -27,7 +27,9 @@ final class DesignerParityController
 
         wp_enqueue_style('vdm-parity', VDM_URL . 'assets/parity.css', ['vdm-frontend'], VDM_VERSION);
         wp_enqueue_style('vdm-designer-parity', VDM_URL . 'assets/designer-parity.css', ['vdm-designer'], VDM_VERSION);
+        wp_enqueue_style('vdm-designer-dragdrop', VDM_URL . 'assets/designer-dragdrop.css', ['vdm-designer-parity'], VDM_VERSION);
         wp_enqueue_script('vdm-designer-parity', VDM_URL . 'assets/designer-parity.js', ['vdm-designer'], VDM_VERSION, true);
+        wp_enqueue_script('vdm-designer-dragdrop', VDM_URL . 'assets/designer-dragdrop.js', ['vdm-designer-parity'], VDM_VERSION, true);
 
         // Header/Footer table actions are compact links, while their protected
         // handler consumes POST. Convert clicks to nonce-preserving POST forms.
