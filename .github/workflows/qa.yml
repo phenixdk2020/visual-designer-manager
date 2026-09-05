@@ -31,6 +31,7 @@ jobs:
           set -euo pipefail
           node --check assets/designer.js
           node --check assets/designer-parity.js
+          node --check assets/designer-dragdrop.js
           node --check assets/frontend.js
           node --check assets/vehicle-admin.js
           node --check assets/gallery-admin.js
@@ -99,6 +100,9 @@ jobs:
 
       - name: RC.7 V1 parity completion contract
         run: python3 tests/rc7_v1_parity_completion_contract.py
+
+      - name: RC.8 Designer drag/drop contract
+        run: python3 tests/rc8_designer_dragdrop_contract.py
 
       - name: Install package contract
         run: python3 tests/package_contract.py
