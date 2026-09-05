@@ -12,7 +12,7 @@
 - Extended Text and Image presentation controls used by migrated/reference layouts.
 - Added page duplicate, publish/draft and trash lifecycle actions with independent VDM history on duplicates.
 - Restored public/admin user-manual parity and on-demand Word `.docx` export from one canonical manual source.
-- Added per-form recipient selection, clean VDM recipient filtering and optional sender receipt mail.
+- Added per-form recipient selection, controlled VDM recipient filtering and optional sender receipt mail.
 - Added page-filtered diagnostics, per-page clearing and copyable support/diagnostic links.
 - Registered the new page-lifecycle, diagnostics, Designer parity, template-assignment and manual controllers in the canonical V2 boot path.
 - Extended all earlier regression contracts for the deliberate named-template/root-floating schema evolution without weakening their behavioral invariants.
@@ -118,7 +118,6 @@
 - Preflight state is tied to the current administrator and a staged-file SHA-256; the package is fully revalidated immediately before import.
 - Added guarded cleanup of newly created objects when import fails.
 - Beta.3 intentionally accepts native schema `2.0`; controlled schema `1.0` migration is deferred to RC.
-- Expanded the permanent QA chain with the beta.3 portable transfer contract.
 
 ## 2.0.0-beta.2
 
@@ -225,7 +224,7 @@
 - Added canonical node schema for Section, Container, Text, Image, Button, Spacer and Divider.
 - Added hierarchy validation with root and cycle rules.
 - Added one shared PHP renderer used by frontend and Designer preview.
-- Added responsive geometry for Desktop, Laptop, Tablet and Mobile.
+- Added responsive geometry for Desktop/Laptop/Tablet/Mobile.
 - Added the first V2 Designer workspace with palette, canvas, breakpoint selection and Inspector.
 - Added save/reload through the V2 REST API.
 - Added frontend rendering for pages that contain a V2 layout.
