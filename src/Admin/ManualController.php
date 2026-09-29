@@ -55,7 +55,7 @@ final class ManualController
             }
         }
         $existing = get_page_by_path(self::PAGE_SLUG, OBJECT, 'page');
-        if ($existing instanceof \WP_Post && $existing->post_status !== 'trash') {
+        if ($existing instanceof \WP_Post && $existing->post_type === 'page' && $existing->post_status !== 'trash') {
             if (!has_shortcode((string) $existing->post_content, self::SHORTCODE)) {
                 wp_update_post(['ID' => (int) $existing->ID, 'post_content' => '[' . self::SHORTCODE . ']']);
             }

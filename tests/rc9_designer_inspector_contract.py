@@ -27,6 +27,7 @@ manual = read('src/Admin/ManualController.php')
 submission = read('src/Forms/FormSubmissionController.php')
 form_renderer = read('src/Frontend/FormRenderer.php')
 frontend_css = read('assets/frontend.css')
+importer = read('src/Transfer/PortableImporter.php')
 
 header = re.search(r'Version:\s*2\.0\.0-rc\.(\d+)', plugin)
 runtime = re.search(r"define\('VDM_VERSION',\s*'2\.0\.0-rc\.(\d+)'\);", plugin)
@@ -55,6 +56,8 @@ checks = {
     'text element headings follow Tekstfarve': '.vdm-node--text .vdm-text :is(h1,h2,h3,h4,h5,h6){color:inherit}' in frontend_css,
     'text element paragraphs follow Skriftstørrelse': '.vdm-node--text .vdm-text :is(p,li,blockquote){font-size:inherit}' in frontend_css,
     'text element headings scale from Skriftstørrelse': '.vdm-node--text .vdm-text h2{font-size:1.5em}' in frontend_css,
+    'media import passes a variable to wp_handle_sideload': 'wp_handle_sideload($sideloadFile' in importer and 'wp_handle_sideload([' not in importer,
+    'import never reuses an attachment by slug': "$page->post_type === 'page'" in importer and '$post->post_type === $postType' in importer and '$post->post_type === GalleryRepository::POST_TYPE' in importer,
     'validation errors still use the field message': 'Kontroller de obligatoriske felter' in form_renderer,
 }
 

@@ -466,13 +466,15 @@ final class PortableImporter
                 throw new \RuntimeException('Portable media failed extraction integrity validation.');
             }
 
-            $sideload = wp_handle_sideload([
+            // wp_handle_sideload() takes the file array by reference, so it must be a variable.
+            $sideloadFile = [
                 'name' => $filename,
                 'type' => $extensionMime,
                 'tmp_name' => $temp,
                 'error' => 0,
                 'size' => $size,
-            ], ['test_form' => false]);
+            ];
+            $sideload = wp_handle_sideload($sideloadFile, ['test_form' => false]);
             if (!is_array($sideload) || isset($sideload['error'])) {
                 throw new \RuntimeException('Portable media could not be stored: ' . (string) ($sideload['error'] ?? 'unknown error'));
             }
@@ -531,8 +533,9 @@ final class PortableImporter
             $path = implode('/', $pathParts);
             $existing = self::findPostBySource('page', $sourceKey, $sourceId);
             if ($existing <= 0 && $path !== '') {
+                // get_page_by_path() also matches attachments; never let a page take over a media item.
                 $page = get_page_by_path($path, OBJECT, 'page');
-                if ($page instanceof \WP_Post) {
+                if ($page instanceof \WP_Post && $page->post_type === 'page') {
                     $existing = (int) $page->ID;
                 }
             }
@@ -596,8 +599,10 @@ final class PortableImporter
             if ($existing <= 0) {
                 $slug = sanitize_title((string) ($record['slug'] ?? ''));
                 if ($slug !== '') {
+                    // get_page_by_path() also matches attachments with the same slug (e.g. an image
+                    // named like a vehicle); only reuse a post of the imported type.
                     $post = get_page_by_path($slug, OBJECT, $postType);
-                    if ($post instanceof \WP_Post) {
+                    if ($post instanceof \WP_Post && $post->post_type === $postType) {
                         $existing = (int) $post->ID;
                     }
                 }
@@ -644,7 +649,7 @@ final class PortableImporter
                 $slug = sanitize_title((string) ($record['slug'] ?? ''));
                 if ($slug !== '') {
                     $post = get_page_by_path($slug, OBJECT, GalleryRepository::POST_TYPE);
-                    if ($post instanceof \WP_Post) {
+                    if ($post instanceof \WP_Post && $post->post_type === GalleryRepository::POST_TYPE) {
                         $existing = (int) $post->ID;
                     }
                 }

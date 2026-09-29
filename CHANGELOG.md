@@ -11,6 +11,8 @@
 - Contact and membership forms show a separate technical error message when mail cannot be sent, instead of asking the visitor to check required fields.
 - Headings inside a Text element now follow its Tekstfarve instead of the global or WordPress admin heading colour.
 - Text elements render at their Skriftstørrelse on the Designer canvas (WordPress admin forced paragraphs to 13px) and headings scale from it on both canvas and website (the theme previously fixed their size), so the canvas matches the published page.
+- Fixed portable import of media: `wp_handle_sideload()` was given an array literal for its by-reference argument, so every package containing images failed with a PHP error.
+- Fixed portable import turning an image into a page/event/vehicle/album with the same slug: `get_page_by_path()` also matches attachments, so only posts of the imported type are reused now.
 - Added a permanent RC.9 Designer inspector regression gate.
 
 ## 2.0.0-rc.8
