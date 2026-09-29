@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.0-rc.8
+
+- Restored V1-style drag and drop from the Designer palette onto the canvas for page and Header/Footer Designers.
+- Dropped elements land in the Section or Container under the pointer, or in an automatically created Section on an empty page, using the 12-column and 8 px grid.
+- All RC.7 parity palette elements can be dragged; click-to-add remains available.
+- Added visual drop-target feedback and drag cleanup.
+- Added a permanent RC.8 Designer drag/drop regression gate.
+
 ## 2.0.0-rc.7
 
 - Restored named Header and Footer templates with stable IDs, independent histories, active/default state and template settings.
