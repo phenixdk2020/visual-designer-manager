@@ -42,6 +42,12 @@
 .vdm-text{width:100%}
 .vdm-text,.vdm-text>*:first-child{margin-top:0}
 .vdm-text>*:last-child{margin-bottom:0}
+/* Text inside a Text element follows that element's Tekstfarve and Skriftstørrelse, not theme or admin styles,
+   so the Designer canvas and the website render the same. Headings scale from the element size. */
+.vdm-node--text .vdm-text :is(h1,h2,h3,h4,h5,h6){color:inherit}
+.vdm-node--text .vdm-text :is(p,li,blockquote){font-size:inherit}
+.vdm-node--text .vdm-text h1{font-size:2em}.vdm-node--text .vdm-text h2{font-size:1.5em}.vdm-node--text .vdm-text h3{font-size:1.17em}
+.vdm-node--text .vdm-text h4{font-size:1em}.vdm-node--text .vdm-text h5{font-size:.83em}.vdm-node--text .vdm-text h6{font-size:.67em}
 .vdm-node--image{overflow:hidden}
 .vdm-image{width:100%;height:100%;display:block;object-fit:var(--vdm-object-fit,cover);object-position:var(--vdm-object-position-x,center) var(--vdm-object-position-y,center)}
 .vdm-image-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f2f2f2;border:1px dashed #aaa;box-sizing:border-box}

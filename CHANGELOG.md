@@ -9,6 +9,8 @@
 - A new Navigation element (click or drag) selects the first available WordPress menu instead of rendering empty.
 - Fixed the Word manual export dropping text next to `Å` by splitting lines as UTF-8.
 - Contact and membership forms show a separate technical error message when mail cannot be sent, instead of asking the visitor to check required fields.
+- Headings inside a Text element now follow its Tekstfarve instead of the global or WordPress admin heading colour.
+- Text elements render at their Skriftstørrelse on the Designer canvas (WordPress admin forced paragraphs to 13px) and headings scale from it on both canvas and website (the theme previously fixed their size), so the canvas matches the published page.
 - Added a permanent RC.9 Designer inspector regression gate.
 
 ## 2.0.0-rc.8

@@ -26,6 +26,7 @@ dragdrop = read('assets/designer-dragdrop.js')
 manual = read('src/Admin/ManualController.php')
 submission = read('src/Forms/FormSubmissionController.php')
 form_renderer = read('src/Frontend/FormRenderer.php')
+frontend_css = read('assets/frontend.css')
 
 header = re.search(r'Version:\s*2\.0\.0-rc\.(\d+)', plugin)
 runtime = re.search(r"define\('VDM_VERSION',\s*'2\.0\.0-rc\.(\d+)'\);", plugin)
@@ -51,6 +52,9 @@ checks = {
     'new Navigation defaults to a menu (drag)': "type === 'navigation' && !node.props.menuId" in dragdrop,
     'manual docx splits lines as UTF-8': "preg_split('/\\R+/u'" in manual,
     'mail failure has its own form status': "'mail-error'" in submission and "$status === 'mail-error'" in form_renderer,
+    'text element headings follow Tekstfarve': '.vdm-node--text .vdm-text :is(h1,h2,h3,h4,h5,h6){color:inherit}' in frontend_css,
+    'text element paragraphs follow Skriftstørrelse': '.vdm-node--text .vdm-text :is(p,li,blockquote){font-size:inherit}' in frontend_css,
+    'text element headings scale from Skriftstørrelse': '.vdm-node--text .vdm-text h2{font-size:1.5em}' in frontend_css,
     'validation errors still use the field message': 'Kontroller de obligatoriske felter' in form_renderer,
 }
 
