@@ -196,7 +196,7 @@ final class ManualController
     private static function documentXml(): string
     {
         $plain = wp_strip_all_tags(str_replace(['</h1>', '</h2>', '</h3>', '</p>', '</li>', '</tr>'], "\n", self::manualHtml()));
-        $lines = preg_split('/\R+/', html_entity_decode($plain, ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?: [];
+        $lines = preg_split('/\R+/u', html_entity_decode($plain, ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?: [];
         $body = '';
         foreach ($lines as $line) {
             $line = trim($line);

@@ -64,7 +64,8 @@ final class FormSubmissionController
         }
         $recipient = (string) apply_filters('vdm_form_recipient', $recipient, $type, $pageId, $formId, $props);
         if (!is_email($recipient)) {
-            self::redirect($pageId, $formId, 'error');
+            DiagnosticStore::add('error', 'VDM-formular har ingen gyldig modtageradresse.', ['postId' => $pageId, 'formId' => $formId, 'type' => $type]);
+            self::redirect($pageId, $formId, 'mail-error');
         }
 
         $isMembership = $type === NodeSchema::MEMBERSHIP_FORM;
@@ -85,7 +86,7 @@ final class FormSubmissionController
         $sent = wp_mail($recipient, $subject, $body, $headers);
         if (!$sent) {
             DiagnosticStore::add('error', 'VDM-formular kunne ikke sendes.', ['postId' => $pageId, 'formId' => $formId, 'type' => $type]);
-            self::redirect($pageId, $formId, 'error');
+            self::redirect($pageId, $formId, 'mail-error');
         }
 
         if (!array_key_exists('sendReceipt', $props) || !empty($props['sendReceipt'])) {
@@ -211,7 +212,7 @@ final class FormSubmissionController
         $requested = isset($_POST['vdm_return_url']) ? esc_url_raw((string) wp_unslash($_POST['vdm_return_url'])) : '';
         $target = wp_validate_redirect($requested, $fallback);
         $target = remove_query_arg(['vdm_form_status', 'vdm_form_id'], $target);
-        $target = add_query_arg(['vdm_form_status' => $status === 'success' ? 'success' : 'error', 'vdm_form_id' => sanitize_key($formId)], $target);
+        $target = add_query_arg(['vdm_form_status' => in_array($status, ['success', 'mail-error'], true) ? $status : 'error', 'vdm_form_id' => sanitize_key($formId)], $target);
         nocache_headers();
         wp_safe_redirect($target, 303);
         exit;

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.0.0-rc.9
+
+- Fixed Designer Inspector edits being lost: the live preview response replaced the document behind the open Inspector, so only the first change (or the first typed letter) was kept. The preview result is now merged in place and older responses can no longer overwrite newer edits.
+- Inspector fields keep focus while typing, so multi-digit values and longer texts can be entered without re-selecting the element.
+- Arrow-key nudging now keeps fine geometry in step, so the move is no longer undone by the next preview.
+- Elements added by clicking the palette are placed below the existing content in the Section/Container instead of on top of it.
+- A new Navigation element (click or drag) selects the first available WordPress menu instead of rendering empty.
+- Fixed the Word manual export dropping text next to `Å` by splitting lines as UTF-8.
+- Contact and membership forms show a separate technical error message when mail cannot be sent, instead of asking the visitor to check required fields.
+- Added a permanent RC.9 Designer inspector regression gate.
+
 ## 2.0.0-rc.8
 
 - Restored V1-style drag and drop from the Designer palette onto the canvas for page and Header/Footer Designers.
