@@ -222,6 +222,8 @@ Header og footer laves i **Header / Footer** med den samme Designer som siderne.
 
 På mobil vises menuen automatisk som en **Menu**-knap. Teksten på knappen ændrer du under *Mobilknap tekst*. Husk også at tilpasse headeren i **Mobil**-visningen (se afsnit 6).
 
+> **Tip:** Giv Navigation-elementet en **Baggrund**, fx samme farve som headeren. Ellers bliver den åbne mobilmenu gennemsigtig og ligger oven på sidens tekst.
+
 ### Footer
 
 Skift til **Footer** med knappen øverst til højre, og byg footeren på samme måde, fx med en tekst med kontaktoplysninger.
@@ -332,6 +334,8 @@ Ved import på et *andet* site oprettes sider, indhold, menuer og billeder på n
 
 > Tag en backup af det site, du importerer til, hvis det allerede har indhold.
 
+> **Kendt fejl i 2.0.0-rc.9:** Importerer du en pakke på det *samme* site, som den blev lavet på, fx når du gendanner en backup, bliver menupunkterne dubleret. Sider og indhold dubleres ikke. Slet de dobbelte punkter under **Menu** bagefter med **Fjern** og **Gem menu**.
+
 ## 15. Backup, opdateringer og log
 
 **Backup** laver en komplet VDM-backup i samme format som Eksport. Gendannelse sker under Eksport → Import.
@@ -368,5 +372,7 @@ Under **Brugermanual** finder du en kort, indbygget vejledning. Den kan hentes s
 | Menuen i headeren er tom | Vælg en menu under **WordPress-menu** i Navigation-elementets indstillinger, og tjek at menuen har punkter under **Menu**. |
 | Elementer overlapper på mobil | Klik **Mobil** i Designeren, og placér elementerne under hinanden med Bredde 12. |
 | Stor tom plads under events/køretøjer | Gør modulets **Højde** mindre. |
+| Mobilmenuen ligger gennemsigtigt oven på teksten | Giv Navigation-elementet i headeren en **Baggrund**. |
+| Menupunkterne står der to gange efter en import | Kendt fejl ved import på samme site. Fjern de dobbelte punkter under **Menu**. |
 | Formularen siger "teknisk fejl" | WordPress kan ikke sende e-mail. Se **Log**, og få e-mail sat op på webhotellet, fx med et SMTP-plugin. |
 | Jeg kom til at ændre noget forkert | **Fortryd** (Ctrl+Z) før du gemmer, eller **Gendan original** under *Gemte versioner*. |
