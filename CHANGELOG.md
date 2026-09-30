@@ -13,6 +13,10 @@
 - Text elements render at their Skriftstørrelse on the Designer canvas (WordPress admin forced paragraphs to 13px) and headings scale from it on both canvas and website (the theme previously fixed their size), so the canvas matches the published page.
 - Fixed portable import of media: `wp_handle_sideload()` was given an array literal for its by-reference argument, so every package containing images failed with a PHP error.
 - Fixed portable import turning an image into a page/event/vehicle/album with the same slug: `get_page_by_path()` also matches attachments, so only posts of the imported type are reused now.
+- Fixed duplicated menu items when a package or backup is imported on the site it was exported from: the original menu items are now reused.
+- The open mobile menu is now a dropdown panel with a background (the menu background, or the submenu colours when the menu is transparent) instead of transparent links over the page.
+- Removed a 3 px frame around buttons on the website, caused by WordPress core styling any element whose inline style mentions `border-width`.
+- Colour fields in the Designer show `Transparent` instead of `#FFFFFF` when no colour is set.
 - Added a permanent RC.9 Designer inspector regression gate.
 
 ## 2.0.0-rc.8

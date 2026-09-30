@@ -682,12 +682,19 @@
     }
 
     function setColorControl(button, color) {
-        const value = normalizeHex(color);
+        // Show a transparent value as such instead of pretending it is white.
+        const transparent = String(color || '').trim().toLowerCase() === 'transparent';
+        const value = transparent ? '#ffffff' : normalizeHex(color);
         button.dataset.color = value;
         const swatch = button.querySelector('.vdm-color-trigger-swatch');
         const text = button.querySelector('.vdm-color-trigger-value');
-        if (swatch) swatch.style.backgroundColor = value;
-        if (text) text.textContent = value.toUpperCase();
+        if (swatch) {
+            swatch.style.backgroundColor = transparent ? '#ffffff' : value;
+            swatch.style.backgroundImage = transparent ? 'linear-gradient(45deg,#c3c4c7 25%,transparent 25%,transparent 75%,#c3c4c7 75%),linear-gradient(45deg,#c3c4c7 25%,transparent 25%,transparent 75%,#c3c4c7 75%)' : '';
+            swatch.style.backgroundSize = transparent ? '8px 8px' : '';
+            swatch.style.backgroundPosition = transparent ? '0 0,4px 4px' : '';
+        }
+        if (text) text.textContent = transparent ? 'Transparent' : value.toUpperCase();
     }
 
     function closeColorPopover() {
@@ -1082,7 +1089,7 @@
                 node.props.autoHeight = value;
                 if (value) node.props.minHeightRows = Math.max(1, geometry.h);
             }))));
-            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? '#ffffff' : node.props.background, value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? 'transparent' : node.props.background, value => commitMutation(() => { node.props.background = value; }))));
             inspector.append(field('Padding', numberInput(node.props.padding || 0, 0, 120, value => commitMutation(() => { node.props.padding = value; }))));
             inspector.append(field('Radius', numberInput(node.props.radius || 0, 0, 80, value => commitMutation(() => { node.props.radius = value; }))));
             inspector.append(field('Kantbredde', numberInput(node.props.borderWidth || 0, 0, 20, value => commitMutation(() => { node.props.borderWidth = value; }))));
@@ -1097,7 +1104,7 @@
             inspector.append(field('Linjehøjde ×100', numberInput(Math.round((node.props.lineHeight || 1.5) * 100), 80, 300, value => commitMutation(() => { node.props.lineHeight = value / 100; }))));
             inspector.append(field('Justering', selectInput([['left','Venstre'],['center','Centreret'],['right','Højre']], node.props.align || 'left', value => commitMutation(() => { node.props.align = value; }))));
             inspector.append(field('Lodret placering', selectInput([['top','Top'],['center','Centreret'],['bottom','Bund']], node.props.verticalAlign || 'top', value => commitMutation(() => { node.props.verticalAlign = value; }))));
-            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? '#ffffff' : (node.props.background || '#ffffff'), value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? 'transparent' : (node.props.background || '#ffffff'), value => commitMutation(() => { node.props.background = value; }))));
             inspector.append(field('Padding', numberInput(node.props.padding || 0, 0, 120, value => commitMutation(() => { node.props.padding = value; }))));
             inspector.append(field('Radius', numberInput(node.props.radius || 0, 0, 80, value => commitMutation(() => { node.props.radius = value; }))));
         }
@@ -1285,7 +1292,7 @@
             ], String(node.props.fontWeight || 600), value => commitMutation(() => { node.props.fontWeight = Number.parseInt(value, 10); }))));
             inspector.append(field('Tekstfarve', colorControl(node.props.textColor || '#222222', value => commitMutation(() => { node.props.textColor = value; }))));
             inspector.append(field('Hoverfarve', colorControl(node.props.hoverColor || '#2271b1', value => commitMutation(() => { node.props.hoverColor = value; }))));
-            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? '#ffffff' : (node.props.background || '#ffffff'), value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? 'transparent' : (node.props.background || '#ffffff'), value => commitMutation(() => { node.props.background = value; }))));
             inspector.append(field('Undermenu-baggrund', colorControl(node.props.submenuBackground || '#ffffff', value => commitMutation(() => { node.props.submenuBackground = value; }))));
             inspector.append(field('Undermenu-tekst', colorControl(node.props.submenuTextColor || '#222222', value => commitMutation(() => { node.props.submenuTextColor = value; }))));
             inspector.append(field('Mobilknap tekst', textInput(node.props.toggleLabel || 'Menu', value => commitMutation(() => { node.props.toggleLabel = value; }))));

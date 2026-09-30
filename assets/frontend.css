@@ -28,7 +28,11 @@
     width:calc(var(--vdm-fw) * 100% / 120);
     min-width:0;
     box-sizing:border-box;
-    position:relative
+    position:relative;
+    /* WordPress core styles any element whose inline style merely mentions "border-width"
+       (html :where([style*="border-width"])) with a solid border; our --vdm-*-border-width
+       variables trigger it, so start every node borderless. Node types that draw a border set it below. */
+    border:0 none
 }
 .vdm-node--section,.vdm-node--container{
     background:var(--vdm-background,transparent);
@@ -208,15 +212,19 @@
 .vdm-navigation-placeholder{display:flex;align-items:center;min-height:48px;padding:10px 12px;border:1px dashed #a7aaad;background:#f6f7f7;color:#50575e;font-size:14px;font-weight:400;box-sizing:border-box}
 @media (max-width:782px){
     .vdm-navigation-toggle{display:inline-flex}
-    .vdm-navigation-panel{display:none;margin-top:8px}
+    .vdm-navigation-panel{display:none;position:absolute;z-index:100;top:100%;left:0;min-width:220px;margin-top:8px;padding:6px 0;background:var(--vdm-navigation-panel-background,#fff);box-shadow:0 8px 24px rgba(0,0,0,.18);border-radius:4px}
     .vdm-navigation.is-open .vdm-navigation-panel{display:block}
+    .vdm-navigation--align-right .vdm-navigation-panel{left:auto;right:0}
+    .vdm-navigation-panel .vdm-navigation-menu a,.vdm-navigation-panel .vdm-navigation-menu .sub-menu a{padding:4px 14px;color:var(--vdm-navigation-panel-text,#222)!important}
     .vdm-navigation-menu,.vdm-navigation--vertical .vdm-navigation-menu{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0}
     .vdm-navigation-menu a{min-height:42px;padding:4px 8px;white-space:normal}
     .vdm-navigation-menu .sub-menu,.vdm-navigation-menu .sub-menu .sub-menu,.vdm-navigation--vertical .vdm-navigation-menu>.menu-item>.sub-menu{display:block;position:static;min-width:0;padding:0 0 0 16px;background:transparent;box-shadow:none}
     .vdm-navigation-menu .sub-menu a{padding:4px 8px;color:var(--vdm-navigation-text,#222)!important}
 }
 #vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-toggle{display:inline-flex}
-#vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-panel{display:none;margin-top:8px}
+#vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-panel{display:none;position:absolute;z-index:100;top:100%;left:0;min-width:220px;margin-top:8px;padding:6px 0;background:var(--vdm-navigation-panel-background,#fff);box-shadow:0 8px 24px rgba(0,0,0,.18);border-radius:4px}
+#vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation--align-right .vdm-navigation-panel{left:auto;right:0}
+#vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-panel .vdm-navigation-menu a{padding:4px 14px;color:var(--vdm-navigation-panel-text,#222)!important}
 #vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation.is-open .vdm-navigation-panel{display:block}
 #vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-menu{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0}
 #vdm-canvas[data-vdm-breakpoint="mobile"] .vdm-navigation-menu a{min-height:42px;padding:4px 8px;white-space:normal}

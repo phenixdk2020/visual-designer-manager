@@ -222,7 +222,7 @@ Header og footer laves i **Header / Footer** med den samme Designer som siderne.
 
 På mobil vises menuen automatisk som en **Menu**-knap. Teksten på knappen ændrer du under *Mobilknap tekst*. Husk også at tilpasse headeren i **Mobil**-visningen (se afsnit 6).
 
-> **Tip:** Giv Navigation-elementet en **Baggrund**, fx samme farve som headeren. Ellers bliver den åbne mobilmenu gennemsigtig og ligger oven på sidens tekst.
+Den åbne mobilmenu vises som et panel oven på siden. Har Navigation-elementet en **Baggrund**, bruger panelet den og elementets tekstfarve. Ellers bruger det **Undermenu-baggrund** og **Undermenu-tekst**, som er hvid med mørk tekst fra start.
 
 ### Footer
 
@@ -330,11 +330,9 @@ Under **Eksport** kan du pakke hele VDM-sitet i én ZIP-fil: sider og layouts, h
 
 ![Preflight godkendt](billeder/40-import-preflight.jpg)
 
-Ved import på et *andet* site oprettes sider, indhold, menuer og billeder på ny, og alle interne henvisninger rettes til det nye site. Hvis du importerer den samme pakke igen, bliver det eksisterende indhold opdateret. Der oprettes ingen dubletter.
+Ved import på et *andet* site oprettes sider, indhold, menuer og billeder på ny, og alle interne henvisninger rettes til det nye site. Hvis du importerer den samme pakke igen, eller gendanner en backup på det site den kom fra, bliver det eksisterende indhold og menuerne opdateret. Der oprettes ingen dubletter.
 
 > Tag en backup af det site, du importerer til, hvis det allerede har indhold.
-
-> **Kendt fejl i 2.0.0-rc.9:** Importerer du en pakke på det *samme* site, som den blev lavet på, fx når du gendanner en backup, bliver menupunkterne dubleret. Sider og indhold dubleres ikke. Slet de dobbelte punkter under **Menu** bagefter med **Fjern** og **Gem menu**.
 
 ## 15. Backup, opdateringer og log
 
@@ -372,7 +370,6 @@ Under **Brugermanual** finder du en kort, indbygget vejledning. Den kan hentes s
 | Menuen i headeren er tom | Vælg en menu under **WordPress-menu** i Navigation-elementets indstillinger, og tjek at menuen har punkter under **Menu**. |
 | Elementer overlapper på mobil | Klik **Mobil** i Designeren, og placér elementerne under hinanden med Bredde 12. |
 | Stor tom plads under events/køretøjer | Gør modulets **Højde** mindre. |
-| Mobilmenuen ligger gennemsigtigt oven på teksten | Giv Navigation-elementet i headeren en **Baggrund**. |
-| Menupunkterne står der to gange efter en import | Kendt fejl ved import på samme site. Fjern de dobbelte punkter under **Menu**. |
+| Mobilmenuens farver passer ikke til headeren | Ret **Undermenu-baggrund** og **Undermenu-tekst**, eller giv Navigation-elementet en **Baggrund**. |
 | Formularen siger "teknisk fejl" | WordPress kan ikke sende e-mail. Se **Log**, og få e-mail sat op på webhotellet, fx med et SMTP-plugin. |
 | Jeg kom til at ændre noget forkert | **Fortryd** (Ctrl+Z) før du gemmer, eller **Gendan original** under *Gemte versioner*. |

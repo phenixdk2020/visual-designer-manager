@@ -795,9 +795,12 @@ final class PortableImporter
 
             $items = is_array($menu['items'] ?? null) ? array_values(array_filter($menu['items'], 'is_array')) : [];
             $itemMap = [];
+            // A package re-imported on the site it came from (e.g. restoring a backup) refers to the
+            // original, unmarked menu items by their own IDs; reuse them instead of adding duplicates.
+            $sameSite = $sourceHome !== '' && strtolower(rtrim($sourceHome, '/')) === strtolower(rtrim(home_url(), '/'));
             foreach ($items as $item) {
                 $itemSourceId = (int) ($item['sourceId'] ?? 0);
-                $existingItem = self::findMenuItemBySource($menuId, $sourceKey, $itemSourceId);
+                $existingItem = self::findMenuItemBySource($menuId, $sourceKey, $itemSourceId, $sameSite);
                 $args = self::menuItemArgs($item, $postMap, $sourceHome, $sourceSite, 0);
                 $targetItem = wp_update_nav_menu_item($menuId, $existingItem, $args);
                 if (is_wp_error($targetItem)) {
@@ -848,17 +851,23 @@ final class PortableImporter
         return (int) $terms[0]->term_id;
     }
 
-    private static function findMenuItemBySource(int $menuId, string $sourceKey, int $sourceId): int
+    private static function findMenuItemBySource(int $menuId, string $sourceKey, int $sourceId, bool $sameSite = false): int
     {
         $items = wp_get_nav_menu_items($menuId, ['post_status' => 'publish,draft']);
-        foreach (is_array($items) ? $items : [] as $item) {
-            if (!$item instanceof \WP_Post) {
-                continue;
-            }
+        $items = is_array($items) ? array_filter($items, static fn ($item): bool => $item instanceof \WP_Post) : [];
+        foreach ($items as $item) {
             if ((string) get_post_meta((int) $item->ID, self::SOURCE_SITE_META, true) === $sourceKey
                 && (int) get_post_meta((int) $item->ID, self::SOURCE_ID_META, true) === $sourceId
             ) {
                 return (int) $item->ID;
+            }
+        }
+        if ($sameSite && $sourceId > 0) {
+            foreach ($items as $item) {
+                $marked = (string) get_post_meta((int) $item->ID, self::SOURCE_SITE_META, true);
+                if ((int) $item->ID === $sourceId && ($marked === '' || $marked === $sourceKey)) {
+                    return (int) $item->ID;
+                }
             }
         }
         return 0;

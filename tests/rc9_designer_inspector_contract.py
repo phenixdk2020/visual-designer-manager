@@ -28,6 +28,7 @@ submission = read('src/Forms/FormSubmissionController.php')
 form_renderer = read('src/Frontend/FormRenderer.php')
 frontend_css = read('assets/frontend.css')
 importer = read('src/Transfer/PortableImporter.php')
+renderer = read('src/Frontend/Renderer.php')
 
 header = re.search(r'Version:\s*2\.0\.0-rc\.(\d+)', plugin)
 runtime = re.search(r"define\('VDM_VERSION',\s*'2\.0\.0-rc\.(\d+)'\);", plugin)
@@ -58,6 +59,10 @@ checks = {
     'text element headings scale from Skriftstørrelse': '.vdm-node--text .vdm-text h2{font-size:1.5em}' in frontend_css,
     'media import passes a variable to wp_handle_sideload': 'wp_handle_sideload($sideloadFile' in importer and 'wp_handle_sideload([' not in importer,
     'import never reuses an attachment by slug': "$page->post_type === 'page'" in importer and '$post->post_type === $postType' in importer and '$post->post_type === GalleryRepository::POST_TYPE' in importer,
+    'same-site import reuses original menu items': 'findMenuItemBySource($menuId, $sourceKey, $itemSourceId, $sameSite)' in importer and 'if ($sameSite && $sourceId > 0)' in importer,
+    'mobile navigation panel has its own background': '--vdm-navigation-panel-background' in renderer and 'background:var(--vdm-navigation-panel-background,#fff)' in frontend_css,
+    'nodes start borderless despite WordPress border-width rule': 'border:0 none\n}' in frontend_css,
+    'transparent colours are shown as Transparent': "transparent ? 'Transparent' : value.toUpperCase()" in designer,
     'validation errors still use the field message': 'Kontroller de obligatoriske felter' in form_renderer,
 }
 
