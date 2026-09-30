@@ -82,7 +82,7 @@ Klik **Gem Site Design**.
 
 Listen nederst på siden **Sider** viser alle sider med VDM-version og antal elementer. Her kan du også:
 
-- **Sæt som Hjem** – gør siden til websitets forside. Det er den side, man ser på `www.ditdomæne.dk`.
+- **Sæt som Hjem** – gør siden til websitets forside. Det er den side, man ser på `www.ditdomæne.dk`. Forsiden er markeret med et lille hus ved sidens navn.
 - **Duplikér**, **Gør til kladde / Publicér** og **Papirkurv**.
 
 ![Sidelisten med "Sæt som Hjem"](billeder/15b-sider-liste.jpg)
