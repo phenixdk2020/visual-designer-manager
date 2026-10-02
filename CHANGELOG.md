@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.0.0-rc.9
+
+- Fixed Designer Inspector edits being lost: the live preview response replaced the document behind the open Inspector, so only the first change (or the first typed letter) was kept. The preview result is now merged in place and older responses can no longer overwrite newer edits.
+- Inspector fields keep focus while typing, so multi-digit values and longer texts can be entered without re-selecting the element.
+- Arrow-key nudging now keeps fine geometry in step, so the move is no longer undone by the next preview.
+- Elements added by clicking the palette are placed below the existing content in the Section/Container instead of on top of it.
+- A new Navigation element (click or drag) selects the first available WordPress menu instead of rendering empty.
+- Fixed the Word manual export dropping text next to `Å` by splitting lines as UTF-8.
+- Contact and membership forms show a separate technical error message when mail cannot be sent, instead of asking the visitor to check required fields.
+- Headings inside a Text element now follow its Tekstfarve instead of the global or WordPress admin heading colour.
+- Text elements render at their Skriftstørrelse on the Designer canvas (WordPress admin forced paragraphs to 13px) and headings scale from it on both canvas and website (the theme previously fixed their size), so the canvas matches the published page.
+- Fixed portable import of media: `wp_handle_sideload()` was given an array literal for its by-reference argument, so every package containing images failed with a PHP error.
+- Fixed portable import turning an image into a page/event/vehicle/album with the same slug: `get_page_by_path()` also matches attachments, so only posts of the imported type are reused now.
+- Fixed duplicated menu items when a package or backup is imported on the site it was exported from: the original menu items are now reused.
+- The open mobile menu is now a dropdown panel with a background (the menu background, or the submenu colours when the menu is transparent) instead of transparent links over the page.
+- Removed a 3 px frame around buttons on the website, caused by WordPress core styling any element whose inline style mentions `border-width`.
+- Colour fields in the Designer show `Transparent` instead of `#FFFFFF` when no colour is set.
+- Added a permanent RC.9 Designer inspector regression gate.
+
+## 2.0.0-rc.8
+
+- Restored V1-style drag and drop from the Designer palette onto the canvas for page and Header/Footer Designers.
+- Dropped elements land in the Section or Container under the pointer, or in an automatically created Section on an empty page, using the 12-column and 8 px grid.
+- All RC.7 parity palette elements can be dragged; click-to-add remains available.
+- Added visual drop-target feedback and drag cleanup.
+- Added a permanent RC.8 Designer drag/drop regression gate.
+
 ## 2.0.0-rc.7
 
 - Restored named Header and Footer templates with stable IDs, independent histories, active/default state and template settings.

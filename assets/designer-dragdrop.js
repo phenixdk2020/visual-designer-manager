@@ -219,6 +219,10 @@
             props:clone(props),
             responsive:{desktop:geometry},
         };
+        if (type === 'navigation' && !node.props.menuId) {
+            const menus = Array.isArray(window.VDMDesignerConfig?.navigationMenus) ? window.VDMDesignerConfig.navigationMenus : [];
+            if (menus.length) node.props.menuId = Number.parseInt(menus[0].id || 0, 10) || 0;
+        }
         doc.nodes.push(node);
         return api.replaceDocument(doc, node.id) !== false;
     }

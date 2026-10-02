@@ -111,6 +111,9 @@ final class FormRenderer
             $message = sanitize_text_field((string) ($props['successMessage'] ?? 'Tak. Din henvendelse er sendt.'));
             return '<div class="vdm-form-status vdm-form-status--success" role="status">' . esc_html($message) . '</div>';
         }
+        if ($status === 'mail-error') {
+            return '<div class="vdm-form-status vdm-form-status--error" role="alert">Din henvendelse kunne ikke sendes lige nu på grund af en teknisk fejl. Prøv igen senere, eller kontakt os direkte.</div>';
+        }
         if ($status === 'error') {
             return '<div class="vdm-form-status vdm-form-status--error" role="alert">Formularen kunne ikke sendes. Kontroller de obligatoriske felter og prøv igen.</div>';
         }

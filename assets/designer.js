@@ -88,6 +88,19 @@
             }, 0);
     }
 
+    // A new Navigation element shows the first available WordPress menu instead of rendering empty.
+    function defaultMenuId() {
+        const menus = Array.isArray(config.navigationMenus) ? config.navigationMenus : [];
+        return menus.length ? (Number.parseInt(menus[0].id || 0, 10) || 0) : 0;
+    }
+
+    function nextChildY(parentId) {
+        return childrenOf(parentId).reduce((max, child) => {
+            const g = effectiveGeometry(child, 'desktop');
+            return Math.max(max, g.y + g.h + 1);
+        }, 0);
+    }
+
     function nodeById(id) {
         return documentState.nodes.find(node => node.id === id) || null;
     }
@@ -184,12 +197,24 @@
         pushUndo(before);
         updateDirtyState();
         if (render) scheduleRender();
-        if (inspectorRefresh) {
+        if (inspectorRefresh && isTypingInInspector()) {
+            // Rebuilding the Inspector would drop focus after the first keystroke; keep the
+            // fields and only mirror geometry that the change may have clamped or adjusted.
+            const node = nodeById(selectedId);
+            if (node) updateInspectorGeometryValues(ensureExplicitGeometry(node, breakpoint));
+            updateHistoryButtons();
+        } else if (inspectorRefresh) {
             renderInspector();
         } else {
             updateHistoryButtons();
         }
         return true;
+    }
+
+    function isTypingInInspector() {
+        const active = document.activeElement;
+        return Boolean(active && inspector.contains(active)
+            && active.matches('input:not([type="checkbox"]):not([type="radio"]),textarea,[contenteditable="true"]'));
     }
 
     function commitMutation(callback, options = {}) {
@@ -204,7 +229,10 @@
         }
         const before = serialize();
         const base = defaults(type);
+        if (type === 'navigation' && !base.props.menuId) base.props.menuId = defaultMenuId();
         const parentId = selectedParentFor(type);
+        // Stack below existing content instead of covering it at the top-left corner.
+        if (parentId) base.geometry.y = nextChildY(parentId);
         const node = {
             id: uuid(),
             type,
@@ -268,22 +296,70 @@
         renderTimer = window.setTimeout(renderPreview, 70);
     }
 
+    function isPlainObject(value) {
+        return value !== null && typeof value === 'object' && !Array.isArray(value);
+    }
+
+    // Copies source into target without replacing nested plain objects, so references
+    // held by the open Inspector (node, geometry) stay attached to documentState.
+    function syncObjectInPlace(target, source) {
+        for (const key of Object.keys(target)) {
+            if (!Object.prototype.hasOwnProperty.call(source, key)) delete target[key];
+        }
+        for (const [key, value] of Object.entries(source)) {
+            if (isPlainObject(value) && isPlainObject(target[key])) {
+                syncObjectInPlace(target[key], value);
+            } else {
+                target[key] = value;
+            }
+        }
+    }
+
+    function syncDocumentInPlace(nextDocument) {
+        if (!isPlainObject(nextDocument) || !Array.isArray(nextDocument.nodes)) return;
+        const existing = new Map(documentState.nodes.map(node => [node.id, node]));
+        const nodes = nextDocument.nodes.map(next => {
+            const current = existing.get(next.id);
+            if (!current) return next;
+            syncObjectInPlace(current, next);
+            return current;
+        });
+        const {nodes: _ignored, ...rest} = nextDocument;
+        const {nodes: _current, ...currentRest} = documentState;
+        for (const key of Object.keys(currentRest)) {
+            if (!Object.prototype.hasOwnProperty.call(rest, key)) delete documentState[key];
+        }
+        for (const [key, value] of Object.entries(rest)) {
+            if (isPlainObject(value) && isPlainObject(documentState[key])) syncObjectInPlace(documentState[key], value);
+            else documentState[key] = value;
+        }
+        documentState.nodes = nodes;
+    }
+
+    let renderSequence = 0;
+
     async function renderPreview() {
+        const sequence = ++renderSequence;
+        const sent = serialize();
         try {
             const renderUrl = config.renderUrl || (config.restBase + '/render');
             const response = await fetch(renderUrl, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'X-WP-Nonce': config.nonce},
-                body: JSON.stringify({document: documentState})
+                body: '{"document":' + sent + '}'
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Preview kunne ikke renderes.');
-            documentState = data.document;
+            // A newer render has started, or the document changed while this one was in flight
+            // (a new render is already scheduled): never let an older response overwrite newer edits.
+            if (sequence !== renderSequence || serialize() !== sent) return;
+            syncDocumentInPlace(data.document);
             canvas.innerHTML = data.html || '<div class="vdm-empty">Tilføj en sektion.</div>';
             canvas.dataset.vdmBreakpoint = breakpoint;
             bindCanvas();
             updateDirtyState();
         } catch (error) {
+            if (sequence !== renderSequence) return;
             canvas.innerHTML = '<div class="notice notice-error"><p>' + escapeHtml(error.message || String(error)) + '</p></div>';
         }
     }
@@ -606,12 +682,19 @@
     }
 
     function setColorControl(button, color) {
-        const value = normalizeHex(color);
+        // Show a transparent value as such instead of pretending it is white.
+        const transparent = String(color || '').trim().toLowerCase() === 'transparent';
+        const value = transparent ? '#ffffff' : normalizeHex(color);
         button.dataset.color = value;
         const swatch = button.querySelector('.vdm-color-trigger-swatch');
         const text = button.querySelector('.vdm-color-trigger-value');
-        if (swatch) swatch.style.backgroundColor = value;
-        if (text) text.textContent = value.toUpperCase();
+        if (swatch) {
+            swatch.style.backgroundColor = transparent ? '#ffffff' : value;
+            swatch.style.backgroundImage = transparent ? 'linear-gradient(45deg,#c3c4c7 25%,transparent 25%,transparent 75%,#c3c4c7 75%),linear-gradient(45deg,#c3c4c7 25%,transparent 25%,transparent 75%,#c3c4c7 75%)' : '';
+            swatch.style.backgroundSize = transparent ? '8px 8px' : '';
+            swatch.style.backgroundPosition = transparent ? '0 0,4px 4px' : '';
+        }
+        if (text) text.textContent = transparent ? 'Transparent' : value.toUpperCase();
     }
 
     function closeColorPopover() {
@@ -953,6 +1036,7 @@
 
     function updateInspectorGeometryValues(geometry) {
         inspector.querySelectorAll('[data-geometry-key]').forEach(input => {
+            if (input === document.activeElement) return;
             const key = input.dataset.geometryKey;
             if (Object.prototype.hasOwnProperty.call(geometry, key)) input.value = String(geometry[key]);
         });
@@ -1005,7 +1089,7 @@
                 node.props.autoHeight = value;
                 if (value) node.props.minHeightRows = Math.max(1, geometry.h);
             }))));
-            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? '#ffffff' : node.props.background, value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? 'transparent' : node.props.background, value => commitMutation(() => { node.props.background = value; }))));
             inspector.append(field('Padding', numberInput(node.props.padding || 0, 0, 120, value => commitMutation(() => { node.props.padding = value; }))));
             inspector.append(field('Radius', numberInput(node.props.radius || 0, 0, 80, value => commitMutation(() => { node.props.radius = value; }))));
             inspector.append(field('Kantbredde', numberInput(node.props.borderWidth || 0, 0, 20, value => commitMutation(() => { node.props.borderWidth = value; }))));
@@ -1020,7 +1104,7 @@
             inspector.append(field('Linjehøjde ×100', numberInput(Math.round((node.props.lineHeight || 1.5) * 100), 80, 300, value => commitMutation(() => { node.props.lineHeight = value / 100; }))));
             inspector.append(field('Justering', selectInput([['left','Venstre'],['center','Centreret'],['right','Højre']], node.props.align || 'left', value => commitMutation(() => { node.props.align = value; }))));
             inspector.append(field('Lodret placering', selectInput([['top','Top'],['center','Centreret'],['bottom','Bund']], node.props.verticalAlign || 'top', value => commitMutation(() => { node.props.verticalAlign = value; }))));
-            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? '#ffffff' : (node.props.background || '#ffffff'), value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? 'transparent' : (node.props.background || '#ffffff'), value => commitMutation(() => { node.props.background = value; }))));
             inspector.append(field('Padding', numberInput(node.props.padding || 0, 0, 120, value => commitMutation(() => { node.props.padding = value; }))));
             inspector.append(field('Radius', numberInput(node.props.radius || 0, 0, 80, value => commitMutation(() => { node.props.radius = value; }))));
         }
@@ -1208,7 +1292,7 @@
             ], String(node.props.fontWeight || 600), value => commitMutation(() => { node.props.fontWeight = Number.parseInt(value, 10); }))));
             inspector.append(field('Tekstfarve', colorControl(node.props.textColor || '#222222', value => commitMutation(() => { node.props.textColor = value; }))));
             inspector.append(field('Hoverfarve', colorControl(node.props.hoverColor || '#2271b1', value => commitMutation(() => { node.props.hoverColor = value; }))));
-            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? '#ffffff' : (node.props.background || '#ffffff'), value => commitMutation(() => { node.props.background = value; }))));
+            inspector.append(field('Baggrund', colorControl(node.props.background === 'transparent' ? 'transparent' : (node.props.background || '#ffffff'), value => commitMutation(() => { node.props.background = value; }))));
             inspector.append(field('Undermenu-baggrund', colorControl(node.props.submenuBackground || '#ffffff', value => commitMutation(() => { node.props.submenuBackground = value; }))));
             inspector.append(field('Undermenu-tekst', colorControl(node.props.submenuTextColor || '#222222', value => commitMutation(() => { node.props.submenuTextColor = value; }))));
             inspector.append(field('Mobilknap tekst', textInput(node.props.toggleLabel || 'Menu', value => commitMutation(() => { node.props.toggleLabel = value; }))));
@@ -1239,6 +1323,8 @@
             geometry.x = node.type === 'section' && !node.parentId
                 ? 0
                 : Math.max(0, Math.min(12 - geometry.w, geometry.x + dx));
+            // The server derives x from fine geometry, so keep fineX in step or the move is undone.
+            geometry.fineX = geometry.x * 10;
             geometry.y = Math.max(0, geometry.y + dy);
         });
     }

@@ -55,7 +55,7 @@ final class ManualController
             }
         }
         $existing = get_page_by_path(self::PAGE_SLUG, OBJECT, 'page');
-        if ($existing instanceof \WP_Post && $existing->post_status !== 'trash') {
+        if ($existing instanceof \WP_Post && $existing->post_type === 'page' && $existing->post_status !== 'trash') {
             if (!has_shortcode((string) $existing->post_content, self::SHORTCODE)) {
                 wp_update_post(['ID' => (int) $existing->ID, 'post_content' => '[' . self::SHORTCODE . ']']);
             }
@@ -196,7 +196,7 @@ final class ManualController
     private static function documentXml(): string
     {
         $plain = wp_strip_all_tags(str_replace(['</h1>', '</h2>', '</h3>', '</p>', '</li>', '</tr>'], "\n", self::manualHtml()));
-        $lines = preg_split('/\R+/', html_entity_decode($plain, ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?: [];
+        $lines = preg_split('/\R+/u', html_entity_decode($plain, ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?: [];
         $body = '';
         foreach ($lines as $line) {
             $line = trim($line);

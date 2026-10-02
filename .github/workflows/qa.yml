@@ -104,5 +104,8 @@ jobs:
       - name: RC.8 Designer drag/drop contract
         run: python3 tests/rc8_designer_dragdrop_contract.py
 
+      - name: RC.9 Designer inspector contract
+        run: python3 tests/rc9_designer_inspector_contract.py
+
       - name: Install package contract
         run: python3 tests/package_contract.py

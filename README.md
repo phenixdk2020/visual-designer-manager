@@ -4,7 +4,7 @@ Visual Designer Manager is a model-driven visual WordPress designer.
 
 ## Current version
 
-`2.0.0-rc.7`
+`2.0.0-rc.9`
 
 ## Version 2 principles
 
@@ -174,8 +174,10 @@ Acceptance includes administration parity, Designer → Preview → Live parity,
 15. `2.0.0-rc.4` — controlled recovery of URL-only legacy upload images during schema 1.0 preflight, with explicit recovery reporting. **Superseded by RC.5 acceptance.**
 16. `2.0.0-rc.5` — V1 page lifecycle, unsaved frontend preview, save/view, version restore/copy and Designer clipboard parity. **Superseded by RC.6 acceptance.**
 17. `2.0.0-rc.6` — V1-style dual update checkpoints with full portable VDM-data backup and 12-entry history. **Superseded by RC.7 acceptance.**
-18. `2.0.0-rc.7` — major V1 parity completion batch for Designer elements, named Header/Footer, Menu, page lifecycle, manual, forms and diagnostics. **Candidate for environment acceptance.**
-19. `2.0.0` — production release after successful WordPress acceptance QA.
+18. `2.0.0-rc.7` — major V1 parity completion batch for Designer elements, named Header/Footer, Menu, page lifecycle, manual, forms and diagnostics. **Superseded by RC.8.**
+19. `2.0.0-rc.8` — Designer palette drag and drop parity with visual drop feedback. **Superseded by RC.9.**
+20. `2.0.0-rc.9` — Designer Inspector editing reliability, keyboard nudge, non-overlapping click-add, default Navigation menu, Word manual encoding and form mail-error message. **Candidate for environment acceptance.**
+21. `2.0.0` — production release after successful WordPress acceptance QA.
 
 ## QA rule
 
